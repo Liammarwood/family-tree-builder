@@ -11,47 +11,16 @@ import htmlToImage from "html-to-image";
 import jsPDF from "jspdf";
 import { Dialog, TextField, Button, Typography, Box, Paper, Divider, Stack } from "@mui/material";
 import FamilyDialog from "./FamilyDialog";
+import { FamilyNodeType, FamilyTreeData, generateId, getInitialTree, initialRootId, nodeTypes } from "@/libs/familyTreeUtils";
 
 const GRID_SIZE = 20;
 
-export type FamilyNodeType = {
-  id: string;
-  name: string;
-  dob: string;
-  parentId?: string;
-  children: string[];
-  generation: number;
-  x?: number;
-  y?: number;
-};
-
-export type FamilyTreeData = {
-  [id: string]: FamilyNodeType;
-};
-
-function generateId() {
-  return Math.random().toString(36).substr(2, 9);
-}
-
-const initialRootId = generateId();
-const initialTree: FamilyTreeData = {
-  [initialRootId]: {
-    id: initialRootId,
-    name: "Root Person",
-    dob: "",
-    children: [],
-    generation: 0,
-  },
-};
-
-const nodeTypes = { family: FamilyNode };
-
 export default function FamilyTree() {
-  const [tree, setTree] = useState<FamilyTreeData>(initialTree);
+  const [tree, setTree] = useState<FamilyTreeData>(getInitialTree());
   const [selectedId, setSelectedId] = useState<string | null>(initialRootId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<"parent" | "sibling" | "child" | null>(null);
-  const [form, setForm] = useState({ name: "", dob: "" });
+  const [form, setForm] = useState({ name: "", dob: "" });``
   const [nodeEditor, setNodeEditor] = useState<{ open: boolean; nodeId: string | null }>({ open: false, nodeId: null });
   const [showGrid, setShowGrid] = useState(true);
   const [history, setHistory] = useState<FamilyTreeData[]>([]);
@@ -282,8 +251,8 @@ export default function FamilyTree() {
 
   // New tree
   const handleNew = () => {
-    setTree(initialTree);
-    setSelectedId(Object.keys(initialTree)[0]);
+    setTree(getInitialTree());
+    setSelectedId(Object.keys(getInitialTree())[0]);
     setHistory([]);
     setFuture([]);
   };
