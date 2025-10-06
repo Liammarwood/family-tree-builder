@@ -1,14 +1,21 @@
 // Utility types and functions for the family tree
 
-import FamilyNode from "../components/FamilyNode";
+import { FamilyTreeNode } from "../components/FamilyNode";
 
 export type FamilyNodeType = {
   id: string;
   name: string;
   dob: string;
-  parentId?: string;
+  countryOfBirth?: string;
+  gender?: 'Male' | 'Female';
+  occupation?: string;
+  dod?: string; // date of death
+  maidenName?: string;
+  photo?: string; // URL or base64
+  // Relationships
+  parentIds?: string[]; // multiple parents
   children: string[];
-  generation: number;
+  partners?: string[]; // partner node ids
   x?: number;
   y?: number;
 };
@@ -17,7 +24,7 @@ export type FamilyTreeData = {
   [id: string]: FamilyNodeType;
 };
 
-export const nodeTypes = { family: FamilyNode };
+export const nodeTypes = { family: FamilyTreeNode };
 
 export function generateId() {
   return Math.random().toString(36).substr(2, 9);
@@ -30,8 +37,29 @@ export function getInitialTree(): FamilyTreeData {
       id: initialRootId,
       name: "Root Person",
       dob: "",
+      countryOfBirth: "",
+      gender: undefined,
       children: [],
-      generation: 0,
+      parentIds: [],
+      partners: [],
     },
   };
+}
+
+// Recursively compute generation for each node (root = 0)
+export function computeGenerations(tree: FamilyTreeData): Record<string, number> {
+  // Find root(s): nodes with no parentIds or empty parentIds
+  const roots = Object.values(tree).filter(n => !n.parentIds || n.parentIds.length === 0);
+  const generations: Record<string, number> = {};
+  function dfs(node: FamilyNodeType, gen: number, visited = new Set<string>()) {
+    if (visited.has(node.id)) return;
+    visited.add(node.id);
+    generations[node.id] = gen;
+    node.children.forEach(childId => {
+      const child = tree[childId];
+      if (child) dfs(child, gen + 1, visited);
+    });
+  }
+  roots.forEach(root => dfs(root, 0));
+  return generations;
 }
