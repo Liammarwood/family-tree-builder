@@ -52,7 +52,7 @@ export async function getElkLayout(
 ) {
   const direction = options?.direction ?? 'TB';
   // Build base elk graph
-  const baseSpacing = options?.compact ? 20 : 40;
+  const baseSpacing = options?.compact ? 15 : 30;
 
   const elkGraph: any = {
     id: "root",

@@ -162,9 +162,11 @@ export const FamilyTreeNode = ({
       <Handle type="target" position={Position.Top} id="parent" style={{ left: '50%' }} />
       {/* Child (source) - bottom */}
       <Handle type="source" position={Position.Bottom} id="child" style={{ left: '50%' }} />
-  {/* Sibling/Partner (source/target) - left/right, single handle for both */}
-  <Handle type="source" position={Position.Left} id="side" style={{ top: "50%" }} />
-  <Handle type="target" position={Position.Right} id="side" style={{ top: "50%" }} />
+      {/* Side handles for partner/sibling links
+          - right source: used when this node is the left node in a pair (edge source uses 'right')
+          - left target: used when this node is the right node in a pair (edge target uses 'left') */}
+      <Handle type="source" position={Position.Right} id="right" style={{ top: "50%" }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ top: "50%" }} />
     </Card>
   );
 };

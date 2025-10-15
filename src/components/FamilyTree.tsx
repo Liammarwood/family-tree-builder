@@ -184,15 +184,15 @@ export default function FamilyTree() {
             source: a,
             target: b,
             style: { stroke: "#888", strokeDasharray: "4 2" },
-            type: "default",
+            type: "smoothstep",
             markerEnd: undefined,
             animated: true,
             label: "Sibling",
             labelBgPadding: [4, 2],
             labelBgBorderRadius: 4,
             labelBgStyle: { fill: '#fff', color: '#333', fillOpacity: 0.8 },
-            sourceHandle: "side",
-            targetHandle: "side",
+            sourceHandle: "right",
+            targetHandle: "left",
           });
         }
       });
@@ -205,15 +205,15 @@ export default function FamilyTree() {
           source: node.id,
           target: partnerId,
           style: { stroke: "#b77", strokeDasharray: "2 2" },
-          type: "default",
+          type: "smoothstep",
           markerEnd: undefined,
           animated: false,
           label: "Partner",
           labelBgPadding: [4, 2],
           labelBgBorderRadius: 4,
           labelBgStyle: { fill: '#fff', color: '#b77', fillOpacity: 0.8 },
-          sourceHandle: 'side',
-          targetHandle: 'side',
+          sourceHandle: 'right',
+          targetHandle: 'left',
         });
       }
     });

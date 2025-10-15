@@ -28,6 +28,7 @@ type ToolbarProps = {
   onAddSibling: () => void;
   onAddChild: () => void;
   onAddPartner: () => void;
+  canAddSibling?: boolean;
   onDelete: () => void;
   onToggleOrientation?: () => void;
   onToggleCompact?: () => void;
@@ -36,12 +37,16 @@ type ToolbarProps = {
 export default function Toolbar({
   onNew, onOpen, onSave, onSaveAs, onExportPNG, onExportPDF, onAutoLayout, onToggleGrid, onZoomFit,
   onAddParent, onAddSibling, onAddChild, onAddPartner, onDelete
-  , onToggleOrientation, onToggleCompact
+  , onToggleOrientation, onToggleCompact, canAddSibling = true
 }: ToolbarProps) {
   return (
     <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center', background: '#fff', boxShadow: 1, p: 1 }}>
       <Tooltip title="Add Parent"><IconButton onClick={onAddParent}><FamilyRestroomIcon /></IconButton></Tooltip>
-      <Tooltip title="Add Sibling"><IconButton onClick={onAddSibling}><GroupAddIcon /></IconButton></Tooltip>
+      <Tooltip title={canAddSibling ? "Add Sibling" : "Add Sibling (requires parents)"}>
+        <span>
+          <IconButton onClick={onAddSibling} disabled={!canAddSibling}><GroupAddIcon /></IconButton>
+        </span>
+      </Tooltip>
       <Tooltip title="Add Child"><IconButton onClick={onAddChild}><PersonAddIcon /></IconButton></Tooltip>
       <Tooltip title="Add Partner"><IconButton onClick={onAddPartner}><FavoriteIcon /></IconButton></Tooltip>
       <Tooltip title="New Tree"><IconButton onClick={onNew}><AddIcon /></IconButton></Tooltip>

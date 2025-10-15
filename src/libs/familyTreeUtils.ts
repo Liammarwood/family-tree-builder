@@ -16,6 +16,7 @@ export type FamilyNodeType = {
   parentIds?: string[]; // multiple parents
   children: string[];
   partners?: string[]; // partner node ids
+  createdAt?: number;
   x?: number;
   y?: number;
 };
@@ -35,10 +36,11 @@ export function getInitialTree(): FamilyTreeData {
   return {
     [initialRootId]: {
       id: initialRootId,
-      name: "Root Person",
+      name: "Me",
       dob: "",
       countryOfBirth: "",
       gender: undefined,
+      createdAt: Date.now(),
       children: [],
       parentIds: [],
       partners: [],
