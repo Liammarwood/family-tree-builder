@@ -26,7 +26,9 @@ export default function FamilyDetailsPane({
   const [form, setForm] = useState<{ name: string; dob: string; countryOfBirth?: string; gender?: 'Male' | 'Female'; occupation?: string; maidenName?: string; dod?: string }>({ name: "", dob: "", countryOfBirth: "", gender: undefined, occupation: "", maidenName: "", dod: "" });
 
   useEffect(() => {
-    if (selectedNode) {
+    if (editMode?.type === "add") {
+      setForm({ name: "", dob: "", countryOfBirth: "", gender: undefined, occupation: "", maidenName: "", dod: ""});
+    } else if (selectedNode) {
       setForm({
         name: selectedNode.name,
         dob: selectedNode.dob,
@@ -36,9 +38,7 @@ export default function FamilyDetailsPane({
         maidenName: selectedNode.maidenName || "",
         dod: selectedNode.dod || ""
       });
-    } else if (editMode?.type === "add") {
-      setForm({ name: "", dob: "", countryOfBirth: "", gender: undefined, occupation: "", maidenName: "", dod: ""});
-    }
+    } 
   }, [selectedNode, editMode]);
 
   const countryList = getNames();
@@ -53,29 +53,36 @@ export default function FamilyDetailsPane({
             value={form.name}
             onChange={e => setForm({ ...form, name: e.target.value })}
             fullWidth
+            variant="outlined" 
             autoFocus
           />
           <TextField
             label="Date of Birth"
             type="date"
+            variant="outlined" 
             value={form.dob}
             onChange={e => setForm({ ...form, dob: e.target.value })}
+            slotProps={{ inputLabel: { shrink: true } }}
             fullWidth
           />
           <TextField
             label="Date of Death"
             type="date"
+            variant="outlined" 
             value={form.dod}
             onChange={e => setForm({ ...form, dod: e.target.value })}
+            slotProps={{ inputLabel: { shrink: true } }}
             fullWidth
           />
           <TextField
-            label="Maiden Name"
+          variant="outlined"
+                      label="Maiden Name"
             value={form.maidenName}
             onChange={e => setForm({ ...form, maidenName: e.target.value })}
             fullWidth
           />
           <TextField
+          variant="outlined" 
             label="Occupation"
             value={form.occupation}
             onChange={e => setForm({ ...form, occupation: e.target.value })}
@@ -84,6 +91,7 @@ export default function FamilyDetailsPane({
           <FormControl fullWidth>
             <InputLabel id="country-label">Country of Birth</InputLabel>
             <Select
+            variant="outlined" 
               labelId="country-label"
               value={form.countryOfBirth || ""}
               label="Country of Birth"

@@ -29,11 +29,14 @@ type ToolbarProps = {
   onAddChild: () => void;
   onAddPartner: () => void;
   onDelete: () => void;
+  onToggleOrientation?: () => void;
+  onToggleCompact?: () => void;
 };
 
 export default function Toolbar({
   onNew, onOpen, onSave, onSaveAs, onExportPNG, onExportPDF, onAutoLayout, onToggleGrid, onZoomFit,
   onAddParent, onAddSibling, onAddChild, onAddPartner, onDelete
+  , onToggleOrientation, onToggleCompact
 }: ToolbarProps) {
   return (
     <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center', background: '#fff', boxShadow: 1, p: 1 }}>
@@ -48,6 +51,8 @@ export default function Toolbar({
       <Tooltip title="Export PNG"><IconButton onClick={onExportPNG}><ImageIcon /></IconButton></Tooltip>
       <Tooltip title="Export PDF"><IconButton onClick={onExportPDF}><PictureAsPdfIcon /></IconButton></Tooltip>
       <Tooltip title="Auto Layout"><IconButton onClick={onAutoLayout}><AutorenewIcon /></IconButton></Tooltip>
+      <Tooltip title="Toggle Orientation"><IconButton onClick={onToggleOrientation}><ZoomOutMapIcon /></IconButton></Tooltip>
+      <Tooltip title="Compact Layout"><IconButton onClick={onToggleCompact}><GridOnIcon /></IconButton></Tooltip>
       <Tooltip title="Toggle Snap/Grid"><IconButton onClick={onToggleGrid}><GridOnIcon /></IconButton></Tooltip>
       <Tooltip title="Delete Node"><IconButton onClick={onDelete}><Delete /></IconButton></Tooltip>
       <Tooltip title="Zoom Fit"><IconButton onClick={onZoomFit}><ZoomOutMapIcon /></IconButton></Tooltip>

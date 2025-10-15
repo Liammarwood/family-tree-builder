@@ -6,7 +6,7 @@ import ReactFlow, { Background, Controls, MiniMap, Node, Edge, MarkerType, React
 import "reactflow/dist/style.css";
 import { FamilyNodeData } from "./FamilyNode";
 import Toolbar from "./Toolbar";
-import { getDagreLayout } from "./autoLayout";
+import { getElkLayout } from "./autoLayout";
 import * as htmlToImage from "html-to-image";
 import jsPDF from "jspdf";
 import { Dialog, TextField, Button, Typography, Box, Divider, Stack, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
@@ -20,8 +20,8 @@ export default function FamilyTree() {
   const [selectedId, setSelectedId] = useState<string | null>(initialRootId);
   const [editMode, setEditMode] = useState<EditMode>(null);
 
-  const [nodeEditor, setNodeEditor] = useState<{ open: boolean; nodeId: string | null }>({ open: false, nodeId: null });
   const [showGrid, setShowGrid] = useState(true);
+  const [compactLayout, setCompactLayout] = useState(false);
   // For manual connect
   const [connectDialog, setConnectDialog] = useState<{ open: boolean; source: string; target: string } | null>(null);
   const [connectType, setConnectType] = useState<'partner' | 'child' | 'parent' | 'sibling'>('partner');
@@ -468,11 +468,6 @@ export default function FamilyTree() {
     setSelectedId(node.id);
   }, []);
 
-  // Double click node: open NodeEditor
-  const onNodeDoubleClick = useCallback((_: any, node: Node) => {
-    setNodeEditor({ open: true, nodeId: node.id });
-  }, []);
-
   // Drag end: update node position in model
   const onNodeDragStop = useCallback((_: any, node: Node) => {
     setTree((prev) => ({
@@ -486,8 +481,8 @@ export default function FamilyTree() {
   }, []);
 
   // Auto layout
-  const handleAutoLayout = () => {
-    const newNodes = getDagreLayout(nodes, edges);
+  const handleAutoLayout = async () => {
+    const newNodes = await getElkLayout(nodes, edges, { compact: compactLayout });
     const updatedTree = { ...tree };
     newNodes.forEach((n) => {
       updatedTree[n.id] = {
@@ -498,6 +493,10 @@ export default function FamilyTree() {
     });
     setTree(updatedTree);
   };
+  const toggleCompact = () => setCompactLayout(c => !c);
+
+  // NOTE: layout is applied only when the user clicks "Auto Layout".
+  // Orientation/compact changes update state but do not trigger an automatic re-layout.
 
   // Toggle grid
   const handleToggleGrid = () => setShowGrid((g) => !g);
@@ -558,6 +557,8 @@ export default function FamilyTree() {
             onAddSibling={() => handleAddNode('sibling')}
             onAddChild={() => handleAddNode('child')}
             onAddPartner={() => handleAddNode('partner')}
+            onToggleOrientation={undefined}
+            onToggleCompact={toggleCompact}
           />
           <Box ref={reactFlowWrapper} sx={{ flex: 1, minHeight: 0, background: '#f5f5f5', borderRadius: 2, boxShadow: 1, mx: 2, mb: 2 }}>
             <ReactFlow
@@ -565,7 +566,6 @@ export default function FamilyTree() {
               edges={edges}
               nodeTypes={nodeTypes}
               onNodeClick={onNodeClick}
-              onNodeDoubleClick={onNodeDoubleClick}
               onNodeDragStop={onNodeDragStop}
               fitView
               snapToGrid={showGrid}
@@ -604,38 +604,6 @@ export default function FamilyTree() {
           </Box>
         </Box>
       </Stack>
-      {/* NodeEditor modal (scaffold) */}
-      <Dialog open={nodeEditor.open} onClose={() => setNodeEditor({ open: false, nodeId: null })}>
-        <Box sx={{ p: 2, minWidth: 320 }}>
-          <Typography variant="h6">Edit Node</Typography>
-          <TextField
-            label="Name"
-            fullWidth
-            margin="dense"
-            value={nodeEditor.nodeId ? tree[nodeEditor.nodeId]?.name : ""}
-            onChange={e => {
-              if (!nodeEditor.nodeId) return;
-              setTree(prev => ({ ...prev, [nodeEditor.nodeId!]: { ...prev[nodeEditor.nodeId!], name: e.target.value } }));
-            }}
-          />
-          <TextField
-            label="Date of Birth"
-            type="date"
-            fullWidth
-            margin="dense"
-            InputLabelProps={{ shrink: true }}
-            value={nodeEditor.nodeId ? tree[nodeEditor.nodeId]?.dob : ""}
-            onChange={e => {
-              if (!nodeEditor.nodeId) return;
-              setTree(prev => ({ ...prev, [nodeEditor.nodeId!]: { ...prev[nodeEditor.nodeId!], dob: e.target.value } }));
-            }}
-          />
-          {/* Add more fields: placeOfBirth, dod, occupation, relationship meta controls */}
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button onClick={() => setNodeEditor({ open: false, nodeId: null })}>Close</Button>
-          </Box>
-        </Box>
-      </Dialog>
     </Box>
   );
 }
