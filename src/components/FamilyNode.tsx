@@ -23,8 +23,7 @@ export type FamilyNodeData = {
   gender?: 'Male' | 'Female';
 };
 
-export const NODE_WIDTH = 180;
-export const NODE_HEIGHT = 320;
+import { NODE_WIDTH, NODE_HEIGHT } from '@/libs/spacing';
 
 export const FamilyTreeNode = ({
   selected,

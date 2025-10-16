@@ -45,7 +45,7 @@ export default function FamilyDetailsPane({
 
   return (
     <Box sx={{ width: 320, minWidth: 260, maxWidth: 400, p: 3, borderRadius: 0, bgcolor: '#fff', display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Typography variant="h6" sx={{ mb: 1 }}>{editMode?.type === "add" ? "Add Node" : "Edit Node"}</Typography>
+      <Typography variant="h6" sx={{ mb: 1 }}>{editMode?.type === "add" ? "Add Person" : "Edit Person"}</Typography>
       {editMode?.type === "add" || selectedNode ? (
         <Stack spacing={2}>
           <TextField

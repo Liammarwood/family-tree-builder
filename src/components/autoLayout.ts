@@ -1,6 +1,6 @@
 import ELK from "elkjs/lib/elk.bundled.js";
 import { Node, Edge } from "reactflow";
-import { NODE_WIDTH, NODE_HEIGHT } from "./FamilyNode";
+import { NODE_WIDTH, NODE_HEIGHT, BASE_SPACING, PARTNER_SPACING } from '@/libs/spacing';
 
 // Use the bundled version of ELK (no web worker)
 const elk = new ELK();
@@ -47,21 +47,17 @@ export type ElkLayoutOptions = {
 export async function getElkLayout(
   nodes: Node[],
   edges: Edge[],
-  options: ElkLayoutOptions | undefined = { direction: 'TB', compact: false, partnerSide: 'auto' },
-  elkInstance: any = elk,
+  options: ElkLayoutOptions | undefined = { direction: 'TB', compact: true, partnerSide: 'auto' }
 ) {
-  const direction = options?.direction ?? 'TB';
   // Build base elk graph
-  const baseSpacing = options?.compact ? 15 : 30;
-
   const elkGraph: any = {
     id: "root",
     layoutOptions: {
       "elk.algorithm": "layered",
-      "elk.direction": direction === "TB" ? "DOWN" : "RIGHT",
+      "elk.direction": "DOWN",
       // spacing tuned for family trees
-      "elk.spacing.nodeNode": String(baseSpacing),
-      "elk.layered.spacing.nodeNodeBetweenLayers": String(baseSpacing),
+      "elk.spacing.nodeNode": String(BASE_SPACING),
+      "elk.layered.spacing.nodeNodeBetweenLayers": String(BASE_SPACING),
       "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
       "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
       "elk.layered.layering.strategy": "NETWORK_SIMPLEX",
@@ -207,10 +203,9 @@ export async function getElkLayout(
     pb.y = y;
     // Position side-by-side: center around the original midpoint
     const midX = (pa.x + pb.x) / 2;
-    const spacing = (pa.width + pb.width) / 2 + baseSpacing / 2;
     // Put a left and right placement depending on original order
-    pa.x = midX - spacing / 2;
-    pb.x = midX + spacing / 2;
+    pa.x = midX - PARTNER_SPACING / 2;
+    pb.x = midX + PARTNER_SPACING / 2;
   });
 
   // Siblings: group children sharing same parents and align their Y
@@ -230,6 +225,18 @@ export async function getElkLayout(
     if (ys.length === 0) return;
     const avgY = ys.reduce((s, v) => s + v, 0) / ys.length;
     group.forEach(id => { if (positioned[id]) positioned[id].y = avgY; });
+  });
+
+  // Ensure parent->child vertical spacing is at least NODE_HEIGHT + BASE_SPACINGs
+  edges.forEach((edge: Edge) => {
+    if (edge.label !== 'Parent') return;
+    const parentId = edge.source as string;
+    const childId = edge.target as string;
+    const p = positioned[parentId];
+    const c = positioned[childId];
+    if (!p || !c) return;
+    const minChildY = p.y + NODE_HEIGHT + BASE_SPACING;
+    if (c.y < minChildY || c.y > minChildY) c.y = minChildY;
   });
 
   // Map back to nodes array

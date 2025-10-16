@@ -1,17 +1,16 @@
 "use client";
 
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import ReactFlow, { Background, Controls, MiniMap, Node, Edge, MarkerType, ReactFlowInstance, BackgroundVariant } from "reactflow";
+import React, { useState, useCallback, useRef } from "react";
+import ReactFlow, { Background, Controls, Node, Edge, ReactFlowInstance, BackgroundVariant, useNodesState, useEdgesState, applyNodeChanges, applyEdgeChanges } from "reactflow";
 import "reactflow/dist/style.css";
 import { FamilyNodeData } from "./FamilyNode";
 import Toolbar from "./Toolbar";
 import { getElkLayout } from "./autoLayout";
-import * as htmlToImage from "html-to-image";
-import jsPDF from "jspdf";
-import { Dialog, TextField, Button, Typography, Box, Divider, Stack, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
+import { Dialog, Button, Typography, Box, Stack, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
 import FamilyDetailsPane, { EditMode } from "./FamilyDetailsPane";
-import { FamilyNodeType, FamilyTreeData, generateId, getInitialTree, initialRootId, nodeTypes, computeGenerations } from "@/libs/familyTreeUtils";
+import { FamilyNodeType, FamilyTreeData, generateId, getInitialTree, initialRootId, nodeTypes } from "@/libs/familyTreeUtils";
+import { treeToFlow, flowToTree } from '@/libs/flowConverters';
 
 const GRID_SIZE = 20;
 
@@ -19,9 +18,7 @@ export default function FamilyTree() {
   const [tree, setTree] = useState<FamilyTreeData>(getInitialTree());
   const [selectedId, setSelectedId] = useState<string | null>(initialRootId);
   const [editMode, setEditMode] = useState<EditMode>(null);
-
   const [showGrid, setShowGrid] = useState(true);
-  const [compactLayout, setCompactLayout] = useState(false);
   // For manual connect
   const [connectDialog, setConnectDialog] = useState<{ open: boolean; source: string; target: string } | null>(null);
   const [connectType, setConnectType] = useState<'partner' | 'child' | 'parent' | 'sibling'>('partner');
@@ -87,149 +84,33 @@ export default function FamilyTree() {
       });
     }
     setTree(updatedTree);
+    // sync flow representation
+    syncFlowFromTree(updatedTree);
     setConnectDialog(null);
   };
-
   const handleConnectCancel = () => setConnectDialog(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
 
-  // Convert tree to reactflow nodes/edges
-  // Compute generations dynamically
-  const generations = computeGenerations(tree);
-  const nodes: Node<FamilyNodeData>[] = Object.values(tree).map((node) => ({
-    id: node.id,
-    type: "family",
-    data: { name: node.name, dob: node.dob, countryOfBirth: node.countryOfBirth, dod: node.dod, occupation: node.occupation, maidenName: node.maidenName, photo: node.photo },
-    position: node.x !== undefined && node.y !== undefined ? { x: node.x, y: node.y } : { x: (generations[node.id] || 0) * 250, y: 100 * Math.random() },
-    selected: selectedId === node.id,
-  }));
+  const syncFlowFromTree = (treeState?: FamilyTreeData) => {
+    const src = treeState || tree;
+    const flow = treeToFlow(src);
+    setRfNodes(flow.nodes as any);
+    setRfEdges(flow.edges as any);
+  };
 
-  // --- Shared parent connection logic ---
-  // 1. Find all unique parent groups (with >1 parent and >1 child)
-  const parentGroupMap: { [groupKey: string]: { parents: string[], children: string[] } } = {};
-  Object.values(tree).forEach(node => {
-    const parents = node.parentIds?.slice().sort() || [];
-    if (parents.length > 1) {
-      const key = parents.join(",");
-      if (!parentGroupMap[key]) parentGroupMap[key] = { parents, children: [] };
-      parentGroupMap[key].children.push(node.id);
-    }
-  });
+  // Convert tree to flow using converter
+  const initialFlow = treeToFlow(tree);
+  const initialNodes = initialFlow.nodes as Node<FamilyNodeData>[];
+  const initialEdges = initialFlow.edges as Edge[];
 
-  // 2. Build nodes: add dummy nodes for each parent group
-  const dummyNodes: Node[] = [];
-  Object.entries(parentGroupMap).forEach(([key, group], i) => {
-    if (group.children.length > 1) {
-      dummyNodes.push({
-        id: `parentgroup-${key}`,
-        type: 'input', // invisible, but must exist
-        data: { label: '' },
-        position: { x: 0, y: 0 },
-        hidden: true,
-      });
-    }
-  });
-
-  // 3. Build edges: use dummy node for shared parent group, otherwise direct parent->child
-  const edges: Edge[] = [];
-  const siblingEdgeIds = new Set<string>();
-  Object.values(tree).forEach((node) => {
-    const parents = node.parentIds?.slice().sort() || [];
-    let usedDummy = false;
-    if (parents.length > 1) {
-      const key = parents.join(",");
-      const group = parentGroupMap[key];
-      if (group && group.children.length > 1) {
-        // Use dummy node for this group
-        edges.push({
-          id: `pg-${key}->${node.id}`,
-          source: `parentgroup-${key}`,
-          target: node.id,
-          markerEnd: { type: MarkerType.ArrowClosed },
-          label: 'Parent',
-          labelBgPadding: [4, 2],
-          labelBgBorderRadius: 4,
-          labelBgStyle: { fill: '#fff', color: '#333', fillOpacity: 0.8 },
-        });
-        usedDummy = true;
-      }
-    }
-    if (!usedDummy) {
-      // Direct parent->child edges
-      parents.forEach(parentId => {
-        edges.push({
-          id: `${parentId}->${node.id}`,
-          source: parentId,
-          target: node.id,
-          markerEnd: { type: MarkerType.ArrowClosed },
-          label: 'Parent',
-          labelBgPadding: [4, 2],
-          labelBgBorderRadius: 4,
-          labelBgStyle: { fill: '#fff', color: '#333', fillOpacity: 0.8 },
-        });
-      });
-    }
-    // Sibling edges: link all nodes with the same parent(s)
-    (node.parentIds || []).forEach((parentId) => {
-      const siblings = (tree[parentId]?.children || []).filter((id) => id !== node.id);
-      siblings.forEach((sibId) => {
-        // Always sort ids to ensure uniqueness regardless of order
-        const [a, b] = [node.id, sibId].sort();
-        const edgeId = `sib-${a}-${b}`;
-        if (!siblingEdgeIds.has(edgeId)) {
-          siblingEdgeIds.add(edgeId);
-          edges.push({
-            id: edgeId,
-            source: a,
-            target: b,
-            style: { stroke: "#888", strokeDasharray: "4 2" },
-            type: "smoothstep",
-            markerEnd: undefined,
-            animated: true,
-            label: "Sibling",
-            labelBgPadding: [4, 2],
-            labelBgBorderRadius: 4,
-            labelBgStyle: { fill: '#fff', color: '#333', fillOpacity: 0.8 },
-            sourceHandle: "right",
-            targetHandle: "left",
-          });
-        }
-      });
-    });
-    // Partner edges (use side handles)
-    (node.partners || []).forEach((partnerId) => {
-      if (node.id < partnerId) {
-        edges.push({
-          id: `partner-${node.id}-${partnerId}`,
-          source: node.id,
-          target: partnerId,
-          style: { stroke: "#b77", strokeDasharray: "2 2" },
-          type: "smoothstep",
-          markerEnd: undefined,
-          animated: false,
-          label: "Partner",
-          labelBgPadding: [4, 2],
-          labelBgBorderRadius: 4,
-          labelBgStyle: { fill: '#fff', color: '#b77', fillOpacity: 0.8 },
-          sourceHandle: 'right',
-          targetHandle: 'left',
-        });
-      }
-    });
-  });
-
-  // Add dummy nodes to nodes array
-  const allNodes = [...nodes, ...dummyNodes];
+  // Use React Flow state hooks
+  const [rfNodes, setRfNodes, onNodesChange] = useNodesState(initialNodes);
+  const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   // Add node logic (stage in left pane)
   const handleAddNode = (relation: "parent" | "sibling" | "child" | "partner") => {
     if (!selectedId) return;
-    const selected = tree[selectedId];
-    if (relation === "parent") {
-      // Allow multiple parents
-      // Optionally, check for duplicate parent
-    }
     setEditMode({ type: "add", relation });
   };
 
@@ -237,7 +118,6 @@ export default function FamilyTree() {
   const handleEditNode = () => {
     if (!selectedId) return;
     setEditMode({ type: "edit", nodeId: selectedId });
-    // form will be set by useEffect above
   };
 
 
@@ -259,6 +139,7 @@ export default function FamilyTree() {
     // Select another node if any left
     const remainingIds = Object.keys(updated);
     setTree(updated);
+    syncFlowFromTree(updated);
     setSelectedId(remainingIds.length > 0 ? remainingIds[0] : null);
   }
 
@@ -289,7 +170,7 @@ export default function FamilyTree() {
           parentIds: [...(selected.parentIds || []), newId],
         };
         setTree(updatedTree);
-        setSelectedId(newId); // select new parent
+        syncFlowFromTree(updatedTree);
         setEditMode(null);
         return;
       } else if (editMode.relation === "sibling") {
@@ -370,6 +251,7 @@ export default function FamilyTree() {
         });
       }
       setTree(updatedTree);
+      syncFlowFromTree(updatedTree);
       setEditMode(null);
     } else if (editMode?.type === "edit" && editMode.nodeId) {
       setTree(prev => ({
@@ -385,82 +267,9 @@ export default function FamilyTree() {
           maidenName: form.maidenName || "",
         },
       }));
+      syncFlowFromTree();
       setEditMode(null);
     }
-  };
-
-  // Export tree as JSON
-  const handleExport = () => {
-    const data = JSON.stringify(tree, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    let filename = prompt("Enter filename to save as:", "family-tree.json");
-    if (!filename || !filename.trim()) filename = "family-tree.json";
-    if (!filename.endsWith('.json')) filename += '.json';
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // Save as PNG
-  const handleExportPNG = async () => {
-    if (!reactFlowWrapper.current) return;
-    try {
-      const dataUrl = await htmlToImage.toPng(reactFlowWrapper.current, {
-        cacheBust: true,
-        backgroundColor: '#fff',
-        pixelRatio: 2,
-      });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = "family-tree.png";
-      a.click();
-    } catch (err) {
-      alert("Failed to export image. Try a different browser or check for unsupported elements.");
-      console.error(err);
-    }
-  };
-
-  // Save as PDF
-  const handleExportPDF = async () => {
-    if (!reactFlowWrapper.current) return;
-    try {
-      const dataUrl = await htmlToImage.toPng(reactFlowWrapper.current, {
-        cacheBust: true,
-        backgroundColor: '#fff',
-        pixelRatio: 2,
-      });
-      const pdf = new jsPDF({ orientation: "landscape" });
-      // Fit image to page size
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      // Use a margin
-      const margin = 10;
-      pdf.addImage(dataUrl, "PNG", margin, margin, pageWidth - 2 * margin, pageHeight - 2 * margin);
-      pdf.save("family-tree.pdf");
-    } catch (err) {
-      alert("Failed to export PDF. Try a different browser or check for unsupported elements.");
-      console.error(err);
-    }
-  };
-
-  // Import tree from JSON
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const imported = JSON.parse(event.target?.result as string);
-        setTree(imported);
-        setSelectedId(Object.keys(imported)[0]);
-      } catch {
-        alert("Invalid JSON file");
-      }
-    };
-    reader.readAsText(file);
   };
 
   // Node click handler
@@ -470,6 +279,9 @@ export default function FamilyTree() {
 
   // Drag end: update node position in model
   const onNodeDragStop = useCallback((_: any, node: Node) => {
+    // update rfNodes position via setRfNodes
+    setRfNodes((nds) => nds.map(n => n.id === node.id ? { ...n, position: { x: Math.round(node.position.x / GRID_SIZE) * GRID_SIZE, y: Math.round(node.position.y / GRID_SIZE) * GRID_SIZE } } : n));
+    // and sync to tree
     setTree((prev) => ({
       ...prev,
       [node.id]: {
@@ -482,21 +294,16 @@ export default function FamilyTree() {
 
   // Auto layout
   const handleAutoLayout = async () => {
-    const newNodes = await getElkLayout(nodes, edges, { compact: compactLayout });
-    const updatedTree = { ...tree };
-    newNodes.forEach((n) => {
-      updatedTree[n.id] = {
-        ...updatedTree[n.id],
-        x: n.position.x,
-        y: n.position.y,
-      };
-    });
+    const newNodes = await getElkLayout(rfNodes, rfEdges);
+    // Update rfNodes positions
+    setRfNodes((nds) => nds.map(n => {
+      const found = newNodes.find(nn => nn.id === n.id);
+      return found ? { ...n, position: found.position } : n;
+    }));
+    // Sync back to tree
+    const updatedTree = flowToTree(newNodes, rfEdges, tree);
     setTree(updatedTree);
   };
-  const toggleCompact = () => setCompactLayout(c => !c);
-
-  // NOTE: layout is applied only when the user clicks "Auto Layout".
-  // Orientation/compact changes update state but do not trigger an automatic re-layout.
 
   // Toggle grid
   const handleToggleGrid = () => setShowGrid((g) => !g);
@@ -508,20 +315,9 @@ export default function FamilyTree() {
 
   // New tree
   const handleNew = () => {
-    setTree(getInitialTree());
-    setSelectedId(Object.keys(getInitialTree())[0]);
-  };
-
-  // Save as (download JSON)
-  const handleSaveAs = handleExport;
-
-  // Open (import JSON)
-  const handleOpen = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/json";
-    input.onchange = (e: any) => handleImport(e);
-    input.click();
+    const nt = getInitialTree();
+    setTree(nt);
+    syncFlowFromTree(nt);
   };
 
   return (
@@ -545,11 +341,6 @@ export default function FamilyTree() {
           <Toolbar
             onDelete={handleDeleteNode}
             onNew={handleNew}
-            onOpen={handleOpen}
-            onSave={handleExport}
-            onSaveAs={handleSaveAs}
-            onExportPNG={handleExportPNG}
-            onExportPDF={handleExportPDF}
             onAutoLayout={handleAutoLayout}
             onToggleGrid={handleToggleGrid}
             onZoomFit={handleZoomFit}
@@ -557,13 +348,22 @@ export default function FamilyTree() {
             onAddSibling={() => handleAddNode('sibling')}
             onAddChild={() => handleAddNode('child')}
             onAddPartner={() => handleAddNode('partner')}
-            onToggleOrientation={undefined}
-            onToggleCompact={toggleCompact}
           />
           <Box ref={reactFlowWrapper} sx={{ flex: 1, minHeight: 0, background: '#f5f5f5', borderRadius: 2, boxShadow: 1, mx: 2, mb: 2 }}>
             <ReactFlow
-              nodes={nodes}
-              edges={edges}
+              nodes={rfNodes}
+              edges={rfEdges}
+              onNodesChange={(changes) => {
+                const next = applyNodeChanges(changes, rfNodes);
+                setRfNodes(next as any);
+                // sync positional/data changes back to tree
+                setTree(flowToTree(next, rfEdges, tree));
+              }}
+              onEdgesChange={(changes) => {
+                const next = applyEdgeChanges(changes, rfEdges);
+                setRfEdges(next as any);
+                setTree(flowToTree(rfNodes, next, tree));
+              }}
               nodeTypes={nodeTypes}
               onNodeClick={onNodeClick}
               onNodeDragStop={onNodeDragStop}
@@ -597,7 +397,6 @@ export default function FamilyTree() {
                   </Stack>
                 </Box>
               </Dialog>
-              <MiniMap />
               <Controls />
               <Background gap={GRID_SIZE} color="#e0e0e0" variant={showGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots} />
             </ReactFlow>
