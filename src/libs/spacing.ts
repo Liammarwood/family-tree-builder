@@ -5,3 +5,5 @@ export const NODE_HEIGHT = 320;
 export const BASE_SPACING = 30;
 
 export const PARTNER_SPACING = 1.5 * NODE_WIDTH + BASE_SPACING;
+
+export const SIBLING_SPACING = 1.5 * NODE_WIDTH + BASE_SPACING;

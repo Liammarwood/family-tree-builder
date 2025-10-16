@@ -34,8 +34,6 @@ export function treeToFlow(tree: FamilyTreeData) {
   });
 
   const edges: Edge[] = [];
-  const siblingEdgeIds = new Set<string>();
-
   // parent - child edges
   Object.values(tree).forEach(node => {
     const parents = (node.parentIds || []).slice().sort();
@@ -54,18 +52,7 @@ export function treeToFlow(tree: FamilyTreeData) {
       });
     }
 
-    // siblings
-    (node.parentIds || []).forEach(parentId => {
-      const siblings = (tree[parentId]?.children || []).filter(id => id !== node.id);
-      siblings.forEach(sibId => {
-        const [a, b] = [node.id, sibId].sort();
-        const edgeId = `sib-${a}-${b}`;
-        if (!siblingEdgeIds.has(edgeId)) {
-          siblingEdgeIds.add(edgeId);
-          edges.push({ id: edgeId, source: a, target: b, style: { stroke: '#888', strokeDasharray: '4 2' }, type: 'straight', markerEnd: undefined, animated: true, label: 'Sibling' });
-        }
-      });
-    });
+    // no sibling edges: children are represented via shared parent->child edges only
 
     // partners (draw side-to-side: right -> left)
     (node.partners || []).forEach(partnerId => {

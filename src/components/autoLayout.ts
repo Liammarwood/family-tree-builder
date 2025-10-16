@@ -1,6 +1,6 @@
 import ELK from "elkjs/lib/elk.bundled.js";
 import { Node, Edge } from "reactflow";
-import { NODE_WIDTH, NODE_HEIGHT, BASE_SPACING, PARTNER_SPACING } from '@/libs/spacing';
+import { NODE_WIDTH, NODE_HEIGHT, BASE_SPACING, PARTNER_SPACING, SIBLING_SPACING } from '@/libs/spacing';
 
 // Use the bundled version of ELK (no web worker)
 const elk = new ELK();
@@ -24,31 +24,13 @@ function getGroups(nodes: Node[], edges: Edge[], label: string): string[][] {
   return groups;
 }
 
-/*
-  Contract:
-  - Inputs: React Flow nodes and edges (edges may have labels: 'Parent', 'Partner', 'Sibling')
-  - Output: array of nodes with updated .position suitable for React Flow
-  - Error modes: if elk fails, return original nodes unchanged
-  - Success: Nodes get x/y positions with partners/siblings horizontally aligned and parents above children
-*/
-
-export type ElkLayoutOptions = {
-  direction?: 'TB' | 'LR';
-  compact?: boolean; // reduce spacing
-  partnerSide?: 'auto' | 'left' | 'right';
-};
-
 /**
  * getElkLayout
  * - nodes, edges: React Flow Node/Edge arrays
- * - options: layout hints
- * - elkInstance: optional injected ELK instance (useful for tests/mocks)
  */
 export async function getElkLayout(
   nodes: Node[],
-  edges: Edge[],
-  options: ElkLayoutOptions | undefined = { direction: 'TB', compact: true, partnerSide: 'auto' }
-) {
+  edges: Edge[]) {
   // Build base elk graph
   const elkGraph: any = {
     id: "root",
@@ -209,22 +191,25 @@ export async function getElkLayout(
   });
 
   // Siblings: group children sharing same parents and align their Y
-  const childrenByParents: Record<string, string[]> = {};
-  edges.forEach((edge: Edge) => {
-    if (edge.label === 'Parent') {
-      const parent = edge.source as string;
-      const child = edge.target as string;
-      if (!childrenByParents[parent]) childrenByParents[parent] = [];
-      childrenByParents[parent].push(child);
-    }
-  });
-  Object.values(childrenByParents).forEach(group => {
-    if (group.length <= 1) return;
-    // compute avg Y and set for all siblings
-    const ys = group.map(id => positioned[id]?.y).filter(y => y !== undefined) as number[];
-    if (ys.length === 0) return;
+  // Siblings: align children that share the same parent SET horizontally and on the same Y
+  Object.values(siblingGroups).forEach(group => {
+    if (!group || group.length <= 1) return;
+    // filter to nodes we have positions for
+    const members = group.filter(id => positioned[id]);
+    if (members.length === 0) return;
+    // compute average Y and set for all siblings
+    const ys = members.map(id => positioned[id].y);
     const avgY = ys.reduce((s, v) => s + v, 0) / ys.length;
-    group.forEach(id => { if (positioned[id]) positioned[id].y = avgY; });
+    // determine midpoint X from current positions
+    const xs = members.map(id => positioned[id].x);
+    const midX = xs.reduce((s, v) => s + v, 0) / xs.length;
+    // sort deterministically (by id) for stable layout
+    const sorted = members.slice().sort();
+    const halfSpan = (sorted.length - 1) * SIBLING_SPACING / 2;
+    sorted.forEach((id, idx) => {
+      positioned[id].y = avgY;
+      positioned[id].x = midX - halfSpan + idx * SIBLING_SPACING;
+    });
   });
 
   // Ensure parent->child vertical spacing is at least NODE_HEIGHT + BASE_SPACINGs

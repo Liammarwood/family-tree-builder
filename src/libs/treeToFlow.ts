@@ -23,28 +23,7 @@ export function treeToFlow(tree: FamilyTreeData, selectedId: string | null) {
         type: "default",
       });
     });
-    // Sibling edges
-    if (node.parentIds && node.parentIds.length > 0) {
-      node.parentIds.forEach((parentId) => {
-        const siblings = tree[parentId]?.children.filter((id) => id !== node.id) || [];
-        siblings.forEach((sibId) => {
-          if (node.id < sibId) {
-            edges.push({
-              id: `sib-${node.id}-${sibId}`,
-              source: node.id,
-              target: sibId,
-              style: { stroke: "#888", strokeDasharray: "4 2" },
-              type: "default",
-              markerEnd: undefined,
-              animated: true,
-              label: "Sibling",
-              sourceHandle: "sibling",
-              targetHandle: "sibling",
-            });
-          }
-        });
-      });
-    }
+    // No sibling edges: siblings are represented by shared parent->child relationships only
   });
   return { nodes, edges };
 }
