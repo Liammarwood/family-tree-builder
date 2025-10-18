@@ -13,7 +13,7 @@ Quick architecture and important files
 - `src/components/Toolbar.tsx` — toolbar actions and the list of supported actions (add parent/child/partner/sibling, export PNG/PDF, auto-layout, etc.). When adding new UI actions, wire them here and in `FamilyTree.tsx`.
 
 Data shapes and contracts
-- FamilyNodeType keys: id, name, dob, countryOfBirth?, gender?, occupation?, dod?, maidenName?, photo?, parentIds?, children, partners?, createdAt?, x?, y?. See `familyTreeUtils.ts`.
+- FamilyNodeType keys: id, name, dob, countryOfBirth?, gender?, occupation?, dod?, maidenName?, photo?, parents?, children, partners?, createdAt?, x?, y?. See `familyTreeUtils.ts`.
 - React Flow nodes: type `family`, data shaped as `FamilyNodeData` (see `FamilyNode.tsx`). NODE_WIDTH / NODE_HEIGHT are used by ELK so keep them in sync.
 - Edge labels are used by `autoLayout.ts` to identify relationships: use labels 'Parent', 'Partner', 'Sibling' for parent/partner/sibling relationships respectively. The layout code expects parent edges to have source=parent and target=child.
 
@@ -22,9 +22,9 @@ Developer workflows (commands discovered in README)
 - Run tests: `npm run test`. The repo uses Jest + ts-jest; tests live in `src/components/__tests__` (e.g., `autoLayout.test.ts`). If running tests locally, ensure dev dependencies include `jest ts-jest @types/jest jsdom @types/jsdom`.
 
 Project-specific patterns and pitfalls
-- Multiple parents supported: parentIds is an array. Shared-parent groups are collapsed into a dummy parent node in the React Flow graph — don't break the parent-group keying (implemented by sorting/joining parent IDs).
+- Multiple parents supported: parents is an array. Shared-parent groups are collapsed into a dummy parent node in the React Flow graph — don't break the parent-group keying (implemented by sorting/joining parent IDs).
 - Partners are stored bidirectionally (each node lists partners). Code often checks ordering (node.id < partnerId) when emitting partner edges to avoid duplicates.
-- When adding/removing nodes, `FamilyTree.tsx` updates related arrays (children, parentIds, partners) across affected nodes. Keep updates atomic to avoid inconsistent graphs.
+- When adding/removing nodes, `FamilyTree.tsx` updates related arrays (children, parents, partners) across affected nodes. Keep updates atomic to avoid inconsistent graphs.
 - Auto-layout: ELK is used synchronously (bundled). Changes to node sizes, labels, or the way groups are created must be reflected in `autoLayout.ts` so partner/sibling alignment remains stable. The function returns nodes with `data.autoPositioned` true when layout applied.
 
 Testing hints

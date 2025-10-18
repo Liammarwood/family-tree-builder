@@ -1,0 +1,69 @@
+import { Edge } from "reactflow"
+import { DivorcedRelationship, MarriedRelationship, ParentRelationship } from "./constants"
+
+export const PartnerEdge = (source: string, target: string, dom: string) => {
+    return ({
+        id: `partner-${source}-${target}`,
+        source,
+        target,
+        type: "partner",
+        style: { stroke: '#b77', strokeDasharray: '2 2' },
+        markerEnd: undefined,
+        animated: false,
+        sourceHandle: 'right',
+        targetHandle: 'left',
+        data: { relationship: MarriedRelationship, dom: dom }
+    })
+}
+
+export const DivorcedEdge = (source: string, target: string, dom: string, dod: string) => {
+    return ({
+        id: `divorced-${source}-${target}`,
+        source,
+        target,
+        type: "partner",
+        style: { stroke: '#b77', strokeDasharray: '2 2' },
+        markerEnd: undefined,
+        animated: false,
+        sourceHandle: 'right',
+        targetHandle: 'left',
+        data: { relationship: DivorcedRelationship, dom, dod }
+    })
+}
+
+// source (child), target (parent)
+export const ParentEdge = (child: string, parent: string) => {
+    return ({
+        id: `parent-${parent}-${child}`,
+        source: parent,
+        target: child,
+        type: "step",
+        markerEnd: undefined,
+        animated: false,
+        sourceHandle: 'child',
+        targetHandle: 'parent',
+        data: { relationship: ParentRelationship }
+    })
+}
+
+export const ChildEdge = (child: string, parent: string) => {
+    return ({
+        id: `parent-${child}-${parent}`,
+        source: child,
+        target: parent,
+        type: "step",
+        markerEnd: undefined,
+        animated: false,
+        sourceHandle: 'child',
+        targetHandle: 'parent',
+        data: { relationship: ParentRelationship }
+    })
+}
+
+export const SiblingEdge = (target: string, parentEdges: Edge[]) => {
+    const siblingEdges: Edge[] = [];
+    parentEdges.forEach((pe) => {
+        siblingEdges.push(ParentEdge(pe.source, target));
+    });
+    return siblingEdges;
+}

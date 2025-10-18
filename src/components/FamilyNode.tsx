@@ -11,19 +11,8 @@ import { Male, Female } from "@mui/icons-material";
 import CountryFlag from "react-country-flag";
 import { getCode } from "country-list";
 import { Work, Cake, CalendarToday } from "@mui/icons-material";
-
-export type FamilyNodeData = {
-  name: string;
-  dob: string;
-  dod?: string;
-  maidenName?: string;
-  photo?: string;
-  occupation?: string;
-  countryOfBirth?: string;
-  gender?: 'Male' | 'Female';
-};
-
 import { NODE_WIDTH, NODE_HEIGHT } from '@/libs/spacing';
+import { FamilyNodeData } from "@/types/FamilyNodeData";
 
 export const FamilyTreeNode = ({
   selected,
