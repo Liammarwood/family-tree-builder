@@ -1,5 +1,6 @@
 import FamilyTree from "@/components/FamilyTree";
+import Test from "@/components/Test";
 
 export default function Home() {
-  return <FamilyTree />;
+  return <Test />;
 }

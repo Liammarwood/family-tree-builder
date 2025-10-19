@@ -13,7 +13,8 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { Delete, HeartBroken } from "@mui/icons-material";
 
 type ToolbarProps = {
-  isNodeSelected: boolean
+  isNodeSelected: boolean;
+  canAddSibling: boolean;
   onNew: () => void;
   onToggleGrid: () => void;
   onZoomFit: () => void;
@@ -28,14 +29,14 @@ type ToolbarProps = {
   onExportPDF: () => void;
 };
 
-export default function Toolbar({
+export default function FamilyTreeToolbar({
   onNew, onToggleGrid, onZoomFit,
-  onAddParent, onAddSibling, onAddChild, onAddPartner, onAddDivorcedPartner, onAddPerson, onDelete, onExportPDF, onExportPNG, isNodeSelected
+  onAddParent, onAddSibling, onAddChild, onAddPartner, onAddDivorcedPartner, onAddPerson, onDelete, onExportPDF, onExportPNG, canAddSibling, isNodeSelected
 }: ToolbarProps) {
   return (
     <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center', background: '#fff', boxShadow: 1, p: 1 }}>
       <Tooltip title="Add Parent"><IconButton onClick={onAddParent} disabled={!isNodeSelected}><FamilyRestroomIcon /></IconButton></Tooltip>
-      <Tooltip title="Add Sibling"><IconButton onClick={onAddSibling} disabled={!isNodeSelected}><GroupAddIcon /></IconButton></Tooltip>
+      <Tooltip title="Add Sibling"><IconButton onClick={onAddSibling} disabled={!isNodeSelected || !canAddSibling}><GroupAddIcon /></IconButton></Tooltip>
       <Tooltip title="Add Child"><IconButton onClick={onAddChild} disabled={!isNodeSelected}><PersonAddIcon /></IconButton></Tooltip>
       <Tooltip title="Add Partner"><IconButton onClick={onAddPartner} disabled={!isNodeSelected}><FavoriteIcon /></IconButton></Tooltip>
       <Tooltip title="Add Divorced Partner"><IconButton onClick={onAddDivorcedPartner} disabled={!isNodeSelected}><HeartBroken /></IconButton></Tooltip>

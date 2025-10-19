@@ -3,9 +3,8 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import ReactFlow, { Background, Controls, Node, Edge, ReactFlowInstance, BackgroundVariant, useNodesState, useEdgesState } from "reactflow";
 import "reactflow/dist/style.css";
-import Toolbar from "./Toolbar";
-import { Typography, Box, Stack, styled } from "@mui/material";
-import FamilyDetailsPane from "./FamilyDetailsPane";
+import { Typography, Box, Stack, styled, AppBar, Toolbar } from "@mui/material";
+import FamilyDetailsPane from "./PersonDetailsPane";
 import { edgeTypes, generateId, initialNode, initialRootId, nodeTypes } from "@/libs/familyTreeUtils";
 import jsPDF from "jspdf";
 import * as htmlToImage from "html-to-image";
@@ -15,65 +14,16 @@ import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { ChildEdge, DivorcedEdge, ParentEdge, PartnerEdge, SiblingEdge } from "@/libs/edges";
 import { ParentRelationship } from "@/libs/constants";
 import { EditMode } from "@/types/EditMode";
-
+import { Loading } from "@/components/Loading";
+import PersonDetailsPane from "@/components/PersonDetailsPane";
+import RelationshipDetailsPane from "@/components/RelationshipDetailsPane";
+import FamilyTreeToolbar from "./FamilyTreeToolbar";
 const GRID_SIZE = 20;
 
 type FamilyTreeSaveData = {
   nodes: Node<FamilyNodeData>[];
   edges: Edge[];
 }
-
-const drawerWidth = 240;
-
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
-  open?: boolean;
-}>(({ theme }) => ({
-  flexGrow: 1,
-  padding: theme.spacing(3),
-  transition: theme.transitions.create('margin', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  marginLeft: `-${drawerWidth}px`,
-  variants: [
-    {
-      props: ({ open }) => open,
-      style: {
-        transition: theme.transitions.create('margin', {
-          easing: theme.transitions.easing.easeOut,
-          duration: theme.transitions.duration.enteringScreen,
-        }),
-        marginLeft: 0,
-      },
-    },
-  ],
-}));
-
-// interface AppBarProps extends MuiAppBarProps {
-//   open?: boolean;
-// }
-
-// const AppBar = styled(MuiAppBar, {
-//   shouldForwardProp: (prop) => prop !== 'open',
-// })<AppBarProps>(({ theme }) => ({
-//   transition: theme.transitions.create(['margin', 'width'], {
-//     easing: theme.transitions.easing.sharp,
-//     duration: theme.transitions.duration.leavingScreen,
-//   }),
-//   variants: [
-//     {
-//       props: ({ open }) => open,
-//       style: {
-//         width: `calc(100% - ${drawerWidth}px)`,
-//         marginLeft: `${drawerWidth}px`,
-//         transition: theme.transitions.create(['margin', 'width'], {
-//           easing: theme.transitions.easing.easeOut,
-//           duration: theme.transitions.duration.enteringScreen,
-//         }),
-//       },
-//     },
-//   ],
-// }));
 
 export default function FamilyTree() {
   const { value, setValue, isLoaded } = useIndexedDBState<FamilyTreeSaveData>("family-tree", { nodes: [initialNode], edges: [] });
@@ -236,6 +186,11 @@ export default function FamilyTree() {
     }
   };
 
+  // Used to check if "Add Sibling" should be enabled
+  const doesSelectedPersonHaveParents = () => {
+    return selectedNode !== undefined && edges.filter((e) => (e.target === selectedNode.id) && e.data?.relationship === ParentRelationship).length > 0;
+  }
+
   const handleSave = (form: {
     name: string;
     dob: string;
@@ -371,6 +326,7 @@ export default function FamilyTree() {
     setEdges([]);
   };
 
+  // Used to deselect nodes/edges when clicking on pane
   const handlePaneClick = () => {
     // Deselect all nodes and edges
     setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
@@ -379,21 +335,31 @@ export default function FamilyTree() {
 
   return (
     <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
-      <Box sx={{ px: 0, py: 1, width: '100%', boxShadow: 2, bgcolor: 'primary.main', color: 'primary.contrastText', mb: 2 }}>
-        <Typography variant="h6" sx={{ px: 3, py: 0, fontWeight: 700, letterSpacing: 1 }}>Family Tree Builder</Typography>
-      </Box>
+      {/* Title bar */}
+      <AppBar position="fixed" color="primary" sx={{ zIndex: (theme) => theme.zIndex.drawer + 2 }}>
+        <Toolbar>
+          <Typography variant="h6" sx={{ px: 3, py: 0, fontWeight: 700, letterSpacing: 1 }}>Family Tree Builder</Typography>
+        </Toolbar>
+      </AppBar>
+
       <Stack direction="row" spacing={0} sx={{ height: 'calc(100vh - 64px)' }}>
         {/* Left: Node details */}
-        <FamilyDetailsPane
+        <PersonDetailsPane
           selectedNode={selectedNode}
           editMode={editMode}
           onSave={handleSave}
           onCancel={handleCancel}
           onDelete={handleDeleteNode}
         />
+        <RelationshipDetailsPane
+          selectedEdge={selectedEdge}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          onDelete={handleDeleteNode}
+        />
         {/* Main: Toolbar + Graph */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#f3f6fa' }}>
-          <Toolbar
+          <FamilyTreeToolbar
             onDelete={handleDeleteNode}
             onNew={handleNew}
             onToggleGrid={handleToggleGrid}
@@ -403,12 +369,13 @@ export default function FamilyTree() {
             onAddSibling={() => handleAddNode('sibling')}
             onAddChild={() => handleAddNode('child')}
             onAddPartner={() => handleAddNode('partner')}
+            onAddDivorcedPartner={() => handleAddNode("divorced-partner")}
             onExportPDF={handleExportPDF}
             onExportPNG={handleExportPNG}
             isNodeSelected={selectedNode != undefined}
-            onAddDivorcedPartner={() => handleAddNode("divorced-partner")} />
+            canAddSibling={doesSelectedPersonHaveParents()} />
           <Box ref={reactFlowWrapper} sx={{ flex: 1, minHeight: 0, background: '#f5f5f5', borderRadius: 2, boxShadow: 1, mx: 2, mb: 2 }}>
-            {!isLoaded ? <p>Loading saved progress...</p> :
+            {!isLoaded ? <Loading message="Loading family tree..." /> :
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
