@@ -4,8 +4,8 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import ReactFlow, { Background, Controls, Node, Edge, ReactFlowInstance, BackgroundVariant, useNodesState, useEdgesState } from "reactflow";
 import "reactflow/dist/style.css";
 import Toolbar from "./Toolbar";
-import { Typography, Box, Stack } from "@mui/material";
-import FamilyDetailsPane, { EditMode } from "./FamilyDetailsPane";
+import { Typography, Box, Stack, styled } from "@mui/material";
+import FamilyDetailsPane from "./FamilyDetailsPane";
 import { edgeTypes, generateId, initialNode, initialRootId, nodeTypes } from "@/libs/familyTreeUtils";
 import jsPDF from "jspdf";
 import * as htmlToImage from "html-to-image";
@@ -14,6 +14,7 @@ import { ManualConnectionDialog, ManualConnectionForm } from "./ManualConnection
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { ChildEdge, DivorcedEdge, ParentEdge, PartnerEdge, SiblingEdge } from "@/libs/edges";
 import { ParentRelationship } from "@/libs/constants";
+import { EditMode } from "@/types/EditMode";
 
 const GRID_SIZE = 20;
 
@@ -21,16 +22,71 @@ type FamilyTreeSaveData = {
   nodes: Node<FamilyNodeData>[];
   edges: Edge[];
 }
+
+const drawerWidth = 240;
+
+const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
+  open?: boolean;
+}>(({ theme }) => ({
+  flexGrow: 1,
+  padding: theme.spacing(3),
+  transition: theme.transitions.create('margin', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  marginLeft: `-${drawerWidth}px`,
+  variants: [
+    {
+      props: ({ open }) => open,
+      style: {
+        transition: theme.transitions.create('margin', {
+          easing: theme.transitions.easing.easeOut,
+          duration: theme.transitions.duration.enteringScreen,
+        }),
+        marginLeft: 0,
+      },
+    },
+  ],
+}));
+
+// interface AppBarProps extends MuiAppBarProps {
+//   open?: boolean;
+// }
+
+// const AppBar = styled(MuiAppBar, {
+//   shouldForwardProp: (prop) => prop !== 'open',
+// })<AppBarProps>(({ theme }) => ({
+//   transition: theme.transitions.create(['margin', 'width'], {
+//     easing: theme.transitions.easing.sharp,
+//     duration: theme.transitions.duration.leavingScreen,
+//   }),
+//   variants: [
+//     {
+//       props: ({ open }) => open,
+//       style: {
+//         width: `calc(100% - ${drawerWidth}px)`,
+//         marginLeft: `${drawerWidth}px`,
+//         transition: theme.transitions.create(['margin', 'width'], {
+//           easing: theme.transitions.easing.easeOut,
+//           duration: theme.transitions.duration.enteringScreen,
+//         }),
+//       },
+//     },
+//   ],
+// }));
+
 export default function FamilyTree() {
   const { value, setValue, isLoaded } = useIndexedDBState<FamilyTreeSaveData>("family-tree", { nodes: [initialNode], edges: [] });
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [editMode, setEditMode] = useState<EditMode>(null);
+  const [editMode, setEditMode] = useState<EditMode | null>(null);
   const [showGrid, setShowGrid] = useState(true);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
   const [connectDialog, setConnectDialog] = useState<{ open: boolean; source: string; target: string } | null>(null);
-  const [selectedNode, setSelectedNode] = useState<Node<FamilyNodeData> | undefined>(undefined);
+
+  const selectedEdge = useMemo(() => edges.find((e) => e.selected), [edges]);
+  const selectedNode = useMemo(() => nodes.find((e) => e.selected), [nodes]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -54,32 +110,6 @@ export default function FamilyTree() {
     setConnectDialog({ open: true, source: params.source, target: params.target });
   }, []);
 
-  const handleNewEdges = (source: string, target: string, form: ManualConnectionForm) => {
-    // Update edges depending on relationship type
-    const newEdges: Edge[] = [];
-    switch (form.type) {
-      case "partner":
-        newEdges.push(PartnerEdge(source, target, form.dom || ""));
-        break;
-      case "ex-partner":
-        newEdges.push(DivorcedEdge(source, target, form.dom || "", form.dod || ""));
-        break;
-      case "child":
-        newEdges.push(ParentEdge(target, source));
-        break;
-      case "parent":
-        newEdges.push(ParentEdge(source, target));
-        break;
-      case "sibling":
-        newEdges.push(...SiblingEdge(target, edges.filter((e) => e.target === source && e.data?.relationship === ParentRelationship)));
-        break;
-      default:
-        break;
-    }
-
-    return newEdges;
-  }
-
   const handleConnectConfirm = (form: ManualConnectionForm) => {
     console.log("ConnectConfirm");
     if (!connectDialog) return;
@@ -90,7 +120,26 @@ export default function FamilyTree() {
     if (!source || !target || source === target) return;
 
     // Update edges depending on relationship type
-    const newEdges: Edge[] = handleNewEdges(source, target, form);
+    const newEdges: Edge[] = [];
+    switch (form.type) {
+      case "partner":
+        newEdges.push(PartnerEdge(source, target, form.dom || ""));
+        break;
+      case "divorced-partner":
+        newEdges.push(DivorcedEdge(source, target, form.dom || "", form.dod || ""));
+        break;
+      case "child":
+        newEdges.push(ChildEdge(source, target));
+        break;
+      case "parent":
+        newEdges.push(ParentEdge(target, source));
+        break;
+      case "sibling":
+        newEdges.push(...SiblingEdge(target, edges.filter((e) => e.target === source && e.data?.relationship === ParentRelationship)));
+        break;
+      default:
+        break;
+    }
 
     // Update edges state
     setEdges((prev) => [
@@ -154,28 +203,37 @@ export default function FamilyTree() {
   };
 
   // Add node logic (stage in left pane)
-  const handleAddNode = (relation: "parent" | "sibling" | "child" | "partner") => {
+  const handleAddNode = (relation?: "parent" | "sibling" | "child" | "partner" | "divorced-partner") => {
     console.log('add node');
 
-    if (!selectedNode) return;
+    if (!selectedNode && relation) return;
+    console.log('Setting edit mode to add', relation);
+    console.log(selectedNode);
     setEditMode({ type: "add", relation });
   };
 
   // Cancel add/edit
   const handleCancel = () => {
-    console.log('cancel');
+    handlePaneClick();
     setEditMode(null);
   };
 
   const handleDeleteNode = () => {
-    if (!selectedNode) return;
-    console.log(selectedNode)
-    console.log("Deleting node:", selectedNode.id);
-    setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
-    setEdges((eds) =>
-      eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id)
-    );
-
+    const currentSelectedEdge = selectedEdge;
+    if (currentSelectedEdge) {
+      console.log("Deleting edge:", currentSelectedEdge.id);
+      setEdges((eds) =>
+        eds.filter((e) => e.id !== currentSelectedEdge.id)
+      );
+    } else if (selectedNode) {
+      console.log("Deleting node:", selectedNode.id);
+      setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+      setEdges((eds) =>
+        eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id)
+      );
+    } else {
+      return;
+    }
   };
 
   const handleSave = (form: {
@@ -190,6 +248,7 @@ export default function FamilyTree() {
     console.log('save');
     if (!editMode) return;
     console.log(editMode);
+    console.log(selectedNode);
 
     // EDIT MODE
     if (editMode.type === "edit" && selectedNode) {
@@ -218,16 +277,15 @@ export default function FamilyTree() {
     }
 
     // ADD MODE
-    if (editMode.type === "add" && selectedNode) {
+    if (editMode.type === "add") {
       const newId = generateId();
-      if (!selectedNode) return;
 
       const newNode: Node = {
         id: newId,
         type: "family",
         position: {
-          x: selectedNode.position.x + 200, // simple offset
-          y: selectedNode.position.y + 200,
+          x: selectedNode ? selectedNode.position.x + 200 : 0, // simple offset
+          y: selectedNode ? selectedNode.position.y + 200 : 0,
         },
         data: {
           name: form.name,
@@ -240,19 +298,23 @@ export default function FamilyTree() {
         },
       };
 
+      console.log(newNode)
+
       // Add node
-      setNodes((nds) => [...nds, newNode]);
+      setNodes([...nodes, newNode]);
 
       // Add edge(s) based on relationship
       setEdges((currentEdges) => {
-        const newEdges: Edge[] = [];
+        // If no node is selected then there can't be any relationships
+        if (!selectedNode || editMode.relation === undefined) return [...currentEdges]
 
+        const newEdges: Edge[] = [];
         switch (editMode.relation) {
           case "parent":
             newEdges.push(ParentEdge(selectedNode.id, newId));
             break;
           case "child":
-            newEdges.push(ChildEdge(newId, selectedNode.id));
+            newEdges.push(ChildEdge(selectedNode.id, newId));
             break;
           case "partner":
             newEdges.push(PartnerEdge(selectedNode.id, newId, ""));
@@ -272,14 +334,7 @@ export default function FamilyTree() {
 
   // Node click handler
   const onNodeClick = useCallback((_: any, node: Node) => {
-    setNodes((nds) =>
-      nds.map((n) => ({
-        ...n,
-        selected: n.id === node.id,
-      }))
-    );
-    setSelectedNode(node);
-    setEditMode( { type: 'edit', nodeId: node.id })
+    setEditMode({ type: 'edit', nodeId: node.id })
   }, []);
 
   // Drag end: update node position in model by snapping to the grid
@@ -316,6 +371,12 @@ export default function FamilyTree() {
     setEdges([]);
   };
 
+  const handlePaneClick = () => {
+    // Deselect all nodes and edges
+    setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+    setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
       <Box sx={{ px: 0, py: 1, width: '100%', boxShadow: 2, bgcolor: 'primary.main', color: 'primary.contrastText', mb: 2 }}>
@@ -337,13 +398,15 @@ export default function FamilyTree() {
             onNew={handleNew}
             onToggleGrid={handleToggleGrid}
             onZoomFit={handleZoomFit}
+            onAddPerson={() => handleAddNode()}
             onAddParent={() => handleAddNode('parent')}
             onAddSibling={() => handleAddNode('sibling')}
             onAddChild={() => handleAddNode('child')}
             onAddPartner={() => handleAddNode('partner')}
             onExportPDF={handleExportPDF}
             onExportPNG={handleExportPNG}
-          />
+            isNodeSelected={selectedNode != undefined}
+            onAddDivorcedPartner={() => handleAddNode("divorced-partner")} />
           <Box ref={reactFlowWrapper} sx={{ flex: 1, minHeight: 0, background: '#f5f5f5', borderRadius: 2, boxShadow: 1, mx: 2, mb: 2 }}>
             {!isLoaded ? <p>Loading saved progress...</p> :
               <ReactFlow
@@ -352,9 +415,12 @@ export default function FamilyTree() {
                 edgeTypes={edgeTypes}
                 nodeTypes={nodeTypes}
                 onNodeClick={onNodeClick}
-                onEdgeClick={(event, edge) => {
-                  console.log('Clicked edge:', edge);
-                }}
+                onEdgesChange={onEdgesChange}
+                onNodesChange={onNodesChange}
+                // onEdgeClick={(event, edge) => {
+                //   console.log('Clicked edge:', edge);
+                // }}
+                onPaneClick={handlePaneClick}
                 onNodeDragStop={onNodeDragStop}
                 fitView
                 snapToGrid={showGrid}
@@ -369,6 +435,7 @@ export default function FamilyTree() {
               </ReactFlow>}
           </Box>
         </Box>
+
       </Stack>
     </Box>
   );

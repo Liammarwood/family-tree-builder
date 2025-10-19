@@ -1,0 +1,5 @@
+// Add Child - Uses wrong handles
+// Add Siblinbg - Uses wrong handles
+// Add Partner - Should ask for marriage date ( if blank, then status is Partner )
+// Add Person  - Should be an option
+// Manual Connect Parent - Uses wrong handles

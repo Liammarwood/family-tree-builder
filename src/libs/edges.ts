@@ -1,5 +1,5 @@
 import { Edge } from "reactflow"
-import { DivorcedRelationship, MarriedRelationship, ParentRelationship } from "./constants"
+import { DivorcedRelationship, MarriedRelationship, ParentRelationship, PartnerRelationship } from "./constants"
 
 export const PartnerEdge = (source: string, target: string, dom: string) => {
     return ({
@@ -12,7 +12,7 @@ export const PartnerEdge = (source: string, target: string, dom: string) => {
         animated: false,
         sourceHandle: 'right',
         targetHandle: 'left',
-        data: { relationship: MarriedRelationship, dom: dom }
+        data: { relationship: dom === "" ? PartnerRelationship : MarriedRelationship, dom: dom }
     })
 }
 
@@ -63,7 +63,7 @@ export const ChildEdge = (child: string, parent: string) => {
 export const SiblingEdge = (target: string, parentEdges: Edge[]) => {
     const siblingEdges: Edge[] = [];
     parentEdges.forEach((pe) => {
-        siblingEdges.push(ParentEdge(pe.source, target));
+        siblingEdges.push(ParentEdge(target, pe.source));
     });
     return siblingEdges;
 }

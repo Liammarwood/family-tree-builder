@@ -8,7 +8,7 @@ export type ManualConnectionDialogProps = {
 };
 
 export type ManualConnectionForm = {
-    type: 'parent' | 'sibling' | 'child' | 'partner' | 'ex-partner';
+    type: 'parent' | 'sibling' | 'child' | 'partner' | 'divorced-partner';
     dom?: string; 
     dod?: string
 }
@@ -34,13 +34,13 @@ export function ManualConnectionDialog({ isOpen, onClose, onConfirm }: ManualCon
                             onChange={e => setForm({ type: e.target.value, dod: "", dom: "" })}
                         >
                             <MenuItem value="partner">Married Partner</MenuItem>
-                            <MenuItem value="ex-partner">Divorced Partner</MenuItem>
+                            <MenuItem value="divorced-partner">Divorced Partner</MenuItem>
                             <MenuItem value="child">Child</MenuItem>
                             <MenuItem value="parent">Parent</MenuItem>
                             <MenuItem value="sibling">Sibling</MenuItem>
                         </Select>
                     </FormControl>
-                    {["partner", "ex-partner"].includes(form.type) && <TextField
+                    {["partner", "divorced-partner"].includes(form.type) && <TextField
                         label="Date of Marriage"
                         type="date"
                         variant="outlined"
@@ -49,7 +49,7 @@ export function ManualConnectionDialog({ isOpen, onClose, onConfirm }: ManualCon
                         slotProps={{ inputLabel: { shrink: true } }}
                         fullWidth
                     />}
-                    {form.type === "ex-partner" && <TextField
+                    {form.type === "divorced-partner" && <TextField
                         label={"Date of Divorce"}
                         type="date"
                         variant="outlined"
