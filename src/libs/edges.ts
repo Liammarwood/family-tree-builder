@@ -37,11 +37,12 @@ export const ParentEdge = (child: string, parent: string) => {
         id: `parent-${parent}-${child}`,
         source: parent,
         target: child,
-        type: "step",
+        type: "draggable",
         markerEnd: undefined,
         animated: false,
         sourceHandle: 'child',
         targetHandle: 'parent',
+        label: "Handle",
         data: { relationship: ParentRelationship }
     })
 }
@@ -51,11 +52,12 @@ export const ChildEdge = (child: string, parent: string) => {
         id: `parent-${child}-${parent}`,
         source: child,
         target: parent,
-        type: "step",
+        type: "draggable",
         markerEnd: undefined,
         animated: false,
         sourceHandle: 'child',
         targetHandle: 'parent',
+        label: "Handle",
         data: { relationship: ParentRelationship }
     })
 }

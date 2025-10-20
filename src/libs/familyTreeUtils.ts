@@ -1,12 +1,13 @@
 // Utility types and functions for the family tree
 
+import DraggableEdge from "@/components/DraggableEdge";
 import { FamilyTreeNode } from "../components/FamilyNode";
 import {RelationshipEdge} from "../components/RelationshipEdge";
 import { FamilyNodeData } from "@/types/FamilyNodeData"
 import { Node } from "reactflow";
 
 export const nodeTypes = { family: FamilyTreeNode };
-export const edgeTypes = { partner: RelationshipEdge}
+export const edgeTypes = { partner: RelationshipEdge, draggable: DraggableEdge }
 export function generateId() {
   return Math.random().toString(36).substring(2, 9);
 }

@@ -156,7 +156,8 @@ export const FamilyTreeNode = ({
       <Handle type="target" position={Position.Top} id="parent" style={{ left: '50%' }} />
       {/* Child (source) - bottom */}
       <Handle type="source" position={Position.Bottom} id="child" style={{ left: '50%' }} />
-      {connectedEdges.filter(edge => edge.data && edge.data.relationship === RelationshipType.DivorcedPartner).map(edge => <Handle type="source" position={Position.Bottom} id={`${id === edge.source ? edge.target : edge.source}-child`} style={{ left: '50%' }} />)}
+      {/* TODO Fixup this so it works logically */}
+      {connectedEdges.filter(edge => edge.data && (edge.data.relationship === RelationshipType.DivorcedPartner || edge.data.relationship === RelationshipType.Partner)).map(edge => <Handle type="source" position={Position.Bottom} id={`${id === edge.source ? edge.target : edge.source}-child`} key={`${id === edge.source ? edge.target : edge.source}-child`} style={{ left: '25%' }} />)}
       {/* Side handles for partner/sibling links
           - right source: used when this node is the left node in a pair (edge source uses 'right')
           - left target: used when this node is the right node in a pair (edge target uses 'left') */}
