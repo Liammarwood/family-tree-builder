@@ -9,15 +9,15 @@ export type ManualConnectionDialogProps = {
 
 export type ManualConnectionForm = {
     type: 'parent' | 'sibling' | 'child' | 'partner' | 'divorced-partner';
-    dom?: string; 
-    dod?: string
+    dateOfMarriage?: string; 
+    dateOfDivorce?: string
 }
 
 export function ManualConnectionDialog({ isOpen, onClose, onConfirm }: ManualConnectionDialogProps) {
-    const [form, setForm] = useState<ManualConnectionForm>({ type: "partner", dod: "", dom: "" });
+    const [form, setForm] = useState<ManualConnectionForm>({ type: "partner", dateOfDivorce: "", dateOfMarriage: "" });
 
     useEffect(() => {
-        setForm({ type: "partner", dod: "", dom: "" });
+        setForm({ type: "partner", dateOfDivorce: "", dateOfMarriage: "" });
     }, [isOpen]);
 
     return (
@@ -31,7 +31,7 @@ export function ManualConnectionDialog({ isOpen, onClose, onConfirm }: ManualCon
                             labelId="rel-type-label"
                             value={form.type}
                             label="Relationship"
-                            onChange={e => setForm({ type: e.target.value, dod: "", dom: "" })}
+                            onChange={e => setForm({ type: e.target.value, dateOfDivorce: "", dateOfMarriage: "" })}
                         >
                             <MenuItem value="partner">Married Partner</MenuItem>
                             <MenuItem value="divorced-partner">Divorced Partner</MenuItem>
@@ -44,8 +44,8 @@ export function ManualConnectionDialog({ isOpen, onClose, onConfirm }: ManualCon
                         label="Date of Marriage"
                         type="date"
                         variant="outlined"
-                        value={form.dom}
-                        onChange={e => setForm({ ...form, dom: e.target.value })}
+                        value={form.dateOfMarriage}
+                        onChange={e => setForm({ ...form, dateOfMarriage: e.target.value })}
                         slotProps={{ inputLabel: { shrink: true } }}
                         fullWidth
                     />}
@@ -53,8 +53,8 @@ export function ManualConnectionDialog({ isOpen, onClose, onConfirm }: ManualCon
                         label={"Date of Divorce"}
                         type="date"
                         variant="outlined"
-                        value={form.dod}
-                        onChange={e => setForm({ ...form, dod: e.target.value })}
+                        value={form.dateOfDivorce}
+                        onChange={e => setForm({ ...form, dateOfDivorce: e.target.value })}
                         slotProps={{ inputLabel: { shrink: true } }}
                         fullWidth
                     />}

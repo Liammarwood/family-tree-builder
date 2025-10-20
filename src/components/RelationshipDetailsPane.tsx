@@ -8,26 +8,26 @@ import { RelationshipEdgeData, RelationshipType } from "@/types/RelationshipEdge
 
 export type FamilyDetailsPaneForm = {
   name: string;
-  dob: string;
+  dateOfBirth: string;
   countryOfBirth: string;
   gender: 'Male' | 'Female';
   occupation: string;
   maidenName: string;
-  dod: string;
-  dom: string;
-  dodiv: string;
+  dateOfDeath: string;
+  dateOfMarriage: string;
+  dateOfDivorce: string;
 }
 
 const initialFormState: FamilyDetailsPaneForm = {
   name: "",
-  dob: "",
+  dateOfBirth: "",
   countryOfBirth: "",
   gender: 'Male',
   occupation: "",
   maidenName: "",
-  dod: "",
-  dom: "",
-  dodiv: ""
+  dateOfDeath: "",
+  dateOfMarriage: "",
+  dateOfDivorce: ""
 }
 
 export default function RelationshipDetailsPane({
@@ -60,51 +60,36 @@ export default function RelationshipDetailsPane({
   }
 
   return (
-    <Drawer
-      variant="persistent"
-      anchor="left"
-      open={selectedEdge !== undefined}
-      sx={{
-        width: 320, minWidth: 260, maxWidth: 400,
-        flexShrink: 0,
-        "& .MuiDrawer-paper": {
-          overflow: 'hidden',
-          width: 320, minWidth: 260, maxWidth: 400,
-          boxSizing: "border-box",
-        },
-      }}
-    >
-      <Box sx={{ width: 320, minWidth: 260, maxWidth: 400, p: 3, borderRadius: 0, bgcolor: '#fff', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>{getTitle()}</Typography>
-        {selectedEdge !== undefined ? (<Stack spacing={2}>
-          <TextField
-            label="Date of Marriage"
-            type="date"
-            variant="outlined"
-            value={form.dom}
-            onChange={e => setForm({ ...form, dom: e.target.value })}
-            slotProps={{ inputLabel: { shrink: true } }}
-            fullWidth
-          />
-          <TextField
-            label={"Date of Divorce"}
-            type="date"
-            variant="outlined"
-            value={form.dod}
-            onChange={e => setForm({ ...form, dodiv: e.target.value })}
-            slotProps={{ inputLabel: { shrink: true } }}
-            fullWidth
-          />
-          <Stack direction="row" spacing={1}>
-            <Button variant="contained" onClick={() => onSave(form)}>Save</Button>
-            <Button onClick={onCancel}>Cancel</Button>
-            <Button variant="outlined" color="error" onClick={onDelete}>Delete</Button>
-          </Stack>
+    <Box sx={{ width: 320, minWidth: 260, maxWidth: 400, p: 3, borderRadius: 0, bgcolor: '#fff', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Typography variant="h6" sx={{ mb: 1 }}>{getTitle()}</Typography>
+      {selectedEdge !== undefined ? (<Stack spacing={2}>
+        <TextField
+          label="Date of Marriage"
+          type="date"
+          variant="outlined"
+          value={form.dateOfMarriage}
+          onChange={e => setForm({ ...form, dateOfMarriage: e.target.value })}
+          slotProps={{ inputLabel: { shrink: true } }}
+          fullWidth
+        />
+        <TextField
+          label={"Date of Divorce"}
+          type="date"
+          variant="outlined"
+          value={form.dateOfDivorce}
+          onChange={e => setForm({ ...form, dateOfDivorce: e.target.value })}
+          slotProps={{ inputLabel: { shrink: true } }}
+          fullWidth
+        />
+        <Stack direction="row" spacing={1}>
+          <Button variant="contained" onClick={() => onSave(form)}>Save</Button>
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button variant="outlined" color="error" onClick={onDelete}>Delete</Button>
         </Stack>
-        ) : (
-          <Typography variant="body2" color="text.secondary">No relationship selected</Typography>
-        )}
-      </Box>
-    </Drawer>
+      </Stack>
+      ) : (
+        <Typography variant="body2" color="text.secondary">No relationship selected</Typography>
+      )}
+    </Box>
   );
 }

@@ -18,6 +18,7 @@ import { Loading } from "@/components/Loading";
 import PersonDetailsPane from "@/components/PersonDetailsPane";
 import RelationshipDetailsPane from "@/components/RelationshipDetailsPane";
 import FamilyTreeToolbar from "./FamilyTreeToolbar";
+import { PersonDetailsForm } from "@/types/PersonDetailsForm";
 const GRID_SIZE = 20;
 
 type FamilyTreeSaveData = {
@@ -37,6 +38,8 @@ export default function FamilyTree() {
 
   const selectedEdge = useMemo(() => edges.find((e) => e.selected), [edges]);
   const selectedNode = useMemo(() => nodes.find((e) => e.selected), [nodes]);
+  const selectedNodes = useMemo(() => nodes.filter((e) => e.selected), [nodes]);
+  const isOneNodeSelected = selectedNode !== undefined && selectedNodes.length === 1;
 
   useEffect(() => {
     if (isLoaded) {
@@ -73,10 +76,10 @@ export default function FamilyTree() {
     const newEdges: Edge[] = [];
     switch (form.type) {
       case "partner":
-        newEdges.push(PartnerEdge(source, target, form.dom || ""));
+        newEdges.push(PartnerEdge(source, target, form.dateOfMarriage || ""));
         break;
       case "divorced-partner":
-        newEdges.push(DivorcedEdge(source, target, form.dom || "", form.dod || ""));
+        newEdges.push(DivorcedEdge(source, target, form.dateOfMarriage || "", form.dateOfDivorce || ""));
         break;
       case "child":
         newEdges.push(ChildEdge(source, target));
@@ -164,8 +167,8 @@ export default function FamilyTree() {
 
   // Cancel add/edit
   const handleCancel = () => {
-    handlePaneClick();
     setEditMode(null);
+    deselectAll();
   };
 
   const handleDeleteNode = () => {
@@ -175,7 +178,7 @@ export default function FamilyTree() {
       setEdges((eds) =>
         eds.filter((e) => e.id !== currentSelectedEdge.id)
       );
-    } else if (selectedNode) {
+    } else if (selectedNode && isOneNodeSelected) {
       console.log("Deleting node:", selectedNode.id);
       setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
       setEdges((eds) =>
@@ -191,21 +194,12 @@ export default function FamilyTree() {
     return selectedNode !== undefined && edges.filter((e) => (e.target === selectedNode.id) && e.data?.relationship === ParentRelationship).length > 0;
   }
 
-  const handleSave = (form: {
-    name: string;
-    dob: string;
-    dod?: string;
-    countryOfBirth?: string;
-    gender?: "Male" | "Female";
-    occupation?: string;
-    maidenName?: string;
-  }) => {
+  const handleSave = (form: PersonDetailsForm) => {
     console.log('save');
     if (!editMode) return;
     console.log(editMode);
     console.log(selectedNode);
 
-    // EDIT MODE
     if (editMode.type === "edit" && selectedNode) {
       console.log('save edit')
       setNodes((nds) =>
@@ -216,23 +210,19 @@ export default function FamilyTree() {
               data: {
                 ...n.data,
                 name: form.name,
-                dob: form.dob,
-                dod: form.dod || "",
+                dateOfBirth: form.dateOfBirth,
+                dateOfDeath: form.dateOfDeath || "",
                 countryOfBirth: form.countryOfBirth || "",
                 gender: form.gender,
                 occupation: form.occupation || "",
                 maidenName: form.maidenName || "",
+                image: form.image
               },
             }
             : n
         )
       );
-      setEditMode(null);
-      return;
-    }
-
-    // ADD MODE
-    if (editMode.type === "add") {
+    } else if (editMode.type === "add") {
       const newId = generateId();
 
       const newNode: Node = {
@@ -244,12 +234,13 @@ export default function FamilyTree() {
         },
         data: {
           name: form.name,
-          dob: form.dob,
-          dod: form.dod || "",
+          dateOfBirth: form.dateOfBirth,
+          dateOfDeath: form.dateOfDeath || "",
           countryOfBirth: form.countryOfBirth || "",
           gender: form.gender,
           occupation: form.occupation || "",
           maidenName: form.maidenName || "",
+          image: form.image
         },
       };
 
@@ -282,14 +273,32 @@ export default function FamilyTree() {
         }
         return [...currentEdges, ...newEdges];
       });
-
-      setEditMode(null);
     }
+    setEditMode(null);
+    deselectAll();
   };
 
+  function isMultiSelectKey(event: { shiftKey: any; ctrlKey: any; metaKey: any; }) {
+    return event.shiftKey || event.ctrlKey || event.metaKey;
+  }
+
   // Node click handler
-  const onNodeClick = useCallback((_: any, node: Node) => {
-    setEditMode({ type: 'edit', nodeId: node.id })
+  const onNodeClick = useCallback((event: any, node: Node) => {
+    // Toggle selection of clicked node
+    if (isMultiSelectKey(event)) {
+      // Toggle selection of clicked node
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === node.id ? { ...n, selected: node.selected } : n
+        )
+      );
+    } else {
+      // Select only clicked node
+      setNodes((nds) =>
+        nds.map((n) => ({ ...n, selected: n.id === node.id }))
+      );
+      setEditMode({ type: 'edit', nodeId: node.id })
+    }
   }, []);
 
   // Drag end: update node position in model by snapping to the grid
@@ -327,38 +336,41 @@ export default function FamilyTree() {
   };
 
   // Used to deselect nodes/edges when clicking on pane
-  const handlePaneClick = () => {
+  const deselectAll = () => {
     // Deselect all nodes and edges
     setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
     setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
   };
 
+  const onPaneClick = (event: any) => {
+    if (!isMultiSelectKey(event)) {
+      deselectAll();
+    }
+  }
+
   return (
     <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
       {/* Title bar */}
-      <AppBar position="fixed" color="primary" sx={{ zIndex: (theme) => theme.zIndex.drawer + 2 }}>
-        <Toolbar>
-          <Typography variant="h6" sx={{ px: 3, py: 0, fontWeight: 700, letterSpacing: 1 }}>Family Tree Builder</Typography>
-        </Toolbar>
-      </AppBar>
+      <Box sx={{ px: 0, py: 1, width: '100%', boxShadow: 2, bgcolor: 'primary.main', color: 'primary.contrastText', mb: 2 }}>
+        <Typography variant="h6" sx={{ px: 3, py: 0, fontWeight: 700, letterSpacing: 1 }}>Family Tree Builder</Typography>
+      </Box>
 
       <Stack direction="row" spacing={0} sx={{ height: 'calc(100vh - 64px)' }}>
         {/* Left: Node details */}
-        <PersonDetailsPane
+        {selectedNode !== undefined && isOneNodeSelected ? <PersonDetailsPane
           selectedNode={selectedNode}
           editMode={editMode}
           onSave={handleSave}
           onCancel={handleCancel}
           onDelete={handleDeleteNode}
-        />
-        <RelationshipDetailsPane
+        /> : <RelationshipDetailsPane
           selectedEdge={selectedEdge}
           onSave={handleSave}
           onCancel={handleCancel}
           onDelete={handleDeleteNode}
-        />
+        />}
         {/* Main: Toolbar + Graph */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#f3f6fa' }}>
+        <Box sx={{ width: '100vw', flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#f3f6fa' }}>
           <FamilyTreeToolbar
             onDelete={handleDeleteNode}
             onNew={handleNew}
@@ -372,7 +384,7 @@ export default function FamilyTree() {
             onAddDivorcedPartner={() => handleAddNode("divorced-partner")}
             onExportPDF={handleExportPDF}
             onExportPNG={handleExportPNG}
-            isNodeSelected={selectedNode != undefined}
+            isNodeSelected={selectedNode != undefined && isOneNodeSelected}
             canAddSibling={doesSelectedPersonHaveParents()} />
           <Box ref={reactFlowWrapper} sx={{ flex: 1, minHeight: 0, background: '#f5f5f5', borderRadius: 2, boxShadow: 1, mx: 2, mb: 2 }}>
             {!isLoaded ? <Loading message="Loading family tree..." /> :
@@ -387,7 +399,7 @@ export default function FamilyTree() {
                 // onEdgeClick={(event, edge) => {
                 //   console.log('Clicked edge:', edge);
                 // }}
-                onPaneClick={handlePaneClick}
+                onPaneClick={onPaneClick}
                 onNodeDragStop={onNodeDragStop}
                 fitView
                 snapToGrid={showGrid}
@@ -402,7 +414,6 @@ export default function FamilyTree() {
               </ReactFlow>}
           </Box>
         </Box>
-
       </Stack>
     </Box>
   );

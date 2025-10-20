@@ -1,13 +1,13 @@
 export type FamilyNodeData = {
   id: string;
   name: string;
-  dob: string;
+  dateOfBirth: string;
   countryOfBirth?: string;
   gender?: 'Male' | 'Female';
   occupation?: string;
-  dod?: string; // date of death
+  dateOfDeath?: string; // date of death
   maidenName?: string;
-  photo?: string; // URL or base64
+  image?: string; // URL or base64
   // Relationships
   parents?: string[]; // multiple parents
   children: string[];

@@ -19,7 +19,7 @@ export const initialNode: Node<FamilyNodeData> = {
   data: {
     id: initialRootId,
     name: "Me",
-    dob: "",
+    dateOfBirth: "",
     countryOfBirth: "",
     gender: undefined,
     createdAt: Date.now(),

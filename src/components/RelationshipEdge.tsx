@@ -3,8 +3,8 @@ import { BaseEdge, EdgeLabelRenderer } from "reactflow";
 
 export type RelationshipEdgeData = {
     relationship?: string;
-    dom?: string;
-    dod?: string;
+    dateOfMarriage?: string;
+    dateOfDivorce?: string;
 }
 type Props = {
   id: string;
@@ -79,8 +79,8 @@ export function RelationshipEdge({
           <div style={{ fontWeight: 700, color: "#333" }}>
             {data?.relationship ?? "Relationship"}
           </div>
-          {data?.dom && (
-            <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{data.dom}</div>
+          {data?.dateOfMarriage && (
+            <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{data.dateOfMarriage}</div>
           )}
         </div>
       </EdgeLabelRenderer>

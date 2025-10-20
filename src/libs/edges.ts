@@ -1,7 +1,7 @@
 import { Edge } from "reactflow"
 import { DivorcedRelationship, MarriedRelationship, ParentRelationship, PartnerRelationship } from "./constants"
 
-export const PartnerEdge = (source: string, target: string, dom: string) => {
+export const PartnerEdge = (source: string, target: string, dateOfMarriage: string) => {
     return ({
         id: `partner-${source}-${target}`,
         source,
@@ -12,11 +12,11 @@ export const PartnerEdge = (source: string, target: string, dom: string) => {
         animated: false,
         sourceHandle: 'right',
         targetHandle: 'left',
-        data: { relationship: dom === "" ? PartnerRelationship : MarriedRelationship, dom: dom }
+        data: { relationship: dateOfMarriage === "" ? PartnerRelationship : MarriedRelationship, dateOfMarriage: dateOfMarriage }
     })
 }
 
-export const DivorcedEdge = (source: string, target: string, dom: string, dod: string) => {
+export const DivorcedEdge = (source: string, target: string, dateOfMarriage: string, dateOfDivorce: string) => {
     return ({
         id: `divorced-${source}-${target}`,
         source,
@@ -27,7 +27,7 @@ export const DivorcedEdge = (source: string, target: string, dom: string, dod: s
         animated: false,
         sourceHandle: 'right',
         targetHandle: 'left',
-        data: { relationship: DivorcedRelationship, dom, dod }
+        data: { relationship: DivorcedRelationship, dateOfMarriage, dateOfDivorce }
     })
 }
 

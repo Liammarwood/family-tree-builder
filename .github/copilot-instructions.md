@@ -13,7 +13,7 @@ Quick architecture and important files
 - `src/components/Toolbar.tsx` — toolbar actions and the list of supported actions (add parent/child/partner/sibling, export PNG/PDF, auto-layout, etc.). When adding new UI actions, wire them here and in `FamilyTree.tsx`.
 
 Data shapes and contracts
-- FamilyNodeType keys: id, name, dob, countryOfBirth?, gender?, occupation?, dod?, maidenName?, photo?, parents?, children, partners?, createdAt?, x?, y?. See `familyTreeUtils.ts`.
+- FamilyNodeType keys: id, name, dateOfBirth, countryOfBirth?, gender?, occupation?, dateOfDeath?, maidenName?, photo?, parents?, children, partners?, createdAt?, x?, y?. See `familyTreeUtils.ts`.
 - React Flow nodes: type `family`, data shaped as `FamilyNodeData` (see `FamilyNode.tsx`). NODE_WIDTH / NODE_HEIGHT are used by ELK so keep them in sync.
 - Edge labels are used by `autoLayout.ts` to identify relationships: use labels 'Parent', 'Partner', 'Sibling' for parent/partner/sibling relationships respectively. The layout code expects parent edges to have source=parent and target=child.
 

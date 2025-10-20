@@ -5,7 +5,7 @@ function formatDate(dateStr?: string) {
   return `${dd}/${mm}/${yyyy}`;
 }
 import React from "react";
-import { Handle, Position, NodeProps } from "reactflow";
+import { Handle, Position, NodeProps, useStore, Edge } from "reactflow";
 import { Avatar, Box, Card, CardContent, Chip, Typography, Stack, Badge } from "@mui/material";
 import { Male, Female } from "@mui/icons-material";
 import CountryFlag from "react-country-flag";
@@ -13,12 +13,18 @@ import { getCode } from "country-list";
 import { Work, Cake, CalendarToday } from "@mui/icons-material";
 import { NODE_WIDTH, NODE_HEIGHT } from '@/libs/spacing';
 import { FamilyNodeData } from "@/types/FamilyNodeData";
+import { RelationshipEdgeData, RelationshipType } from "@/types/RelationshipEdgeData";
+import { DivorcedRelationship } from "@/libs/constants";
 
 export const FamilyTreeNode = ({
+  id,
   selected,
   data
 }: NodeProps<FamilyNodeData>) => {
-  const isDeceased = !!data.dod;
+  const connectedEdges: Edge<RelationshipEdgeData>[] = useStore((state) =>
+    state.edges.filter((e) => e.source === id || e.target === id)
+  );
+  const isDeceased = !!data.dateOfDeath;
   return (
     <Card
       sx={{
@@ -52,7 +58,7 @@ export const FamilyTreeNode = ({
             }
           >
             <Avatar
-              src={data.photo}
+              src={data.image}
               alt={data.name}
               sx={{
                 width: 60,
@@ -117,7 +123,7 @@ export const FamilyTreeNode = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Cake sx={{ fontSize: 16, color: 'success.main' }} />
               <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem', minWidth: 60 }}>
-                <strong>Born:</strong> {formatDate(data.dob)}
+                <strong>Born:</strong> {formatDate(data.dateOfBirth)}
               </Typography>
             </Box>
             {data.countryOfBirth && (
@@ -133,11 +139,11 @@ export const FamilyTreeNode = ({
                 </Typography>
               </Box>
             )}
-            {data.dod && (
+            {data.dateOfDeath && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CalendarToday sx={{ fontSize: 16, color: 'error.main' }} />
                 <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                  <strong>Died:</strong> {formatDate(data.dod)}
+                  <strong>Died:</strong> {formatDate(data.dateOfDeath)}
                 </Typography>
               </Box>
             )}
@@ -150,6 +156,7 @@ export const FamilyTreeNode = ({
       <Handle type="target" position={Position.Top} id="parent" style={{ left: '50%' }} />
       {/* Child (source) - bottom */}
       <Handle type="source" position={Position.Bottom} id="child" style={{ left: '50%' }} />
+      {connectedEdges.filter(edge => edge.data && edge.data.relationship === RelationshipType.DivorcedPartner).map(edge => <Handle type="source" position={Position.Bottom} id={`${id === edge.source ? edge.target : edge.source}-child`} style={{ left: '50%' }} />)}
       {/* Side handles for partner/sibling links
           - right source: used when this node is the left node in a pair (edge source uses 'right')
           - left target: used when this node is the right node in a pair (edge target uses 'left') */}
