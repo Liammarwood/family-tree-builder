@@ -22,8 +22,6 @@ const DraggableStepEdge: React.FC<EdgeProps<DraggableStepEdgeData>> = ({
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
   data,
   markerEnd,
   style,
@@ -34,9 +32,9 @@ const DraggableStepEdge: React.FC<EdgeProps<DraggableStepEdgeData>> = ({
   const dragPositionRef = useRef<ControlPoint | null>(null);
   
   // Get control points from edge data, default to one point in the middle
-  const controlPoints: ControlPoint[] = data?.controlPoints ?? [
+  const controlPoints: ControlPoint[] = useMemo(() => data?.controlPoints ?? [
     { x: (sourceX + targetX) / 2, y: (sourceY + targetY) / 2 }
-  ];
+  ], [data?.controlPoints, sourceX, sourceY, targetX, targetY])
 
   const updateControlPoint = useCallback((index: number, x: number, y: number): void => {
     setEdges((edges) =>
@@ -155,7 +153,6 @@ const DraggableStepEdge: React.FC<EdgeProps<DraggableStepEdgeData>> = ({
   // Create step path using all control points
   const edgePath: string = useMemo(() => {
     let path = `M ${sourceX} ${sourceY}`;
-    let currentX = sourceX;
     let currentY = sourceY;
     
     // Create step pattern through each control point
@@ -164,7 +161,6 @@ const DraggableStepEdge: React.FC<EdgeProps<DraggableStepEdgeData>> = ({
       
       // Go horizontal to the control point's X
       path += ` L ${point.x} ${currentY}`;
-      currentX = point.x;
       
       // Go vertical to the control point's Y
       path += ` L ${point.x} ${point.y}`;
