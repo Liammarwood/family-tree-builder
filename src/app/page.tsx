@@ -1,3 +1,4 @@
+"use client";
 import FamilyTree from "@/components/FamilyTree";
 import { ConfigurationProvider } from "@/hooks/useConfiguration";
 

@@ -22,6 +22,7 @@ import { PersonDetailsForm } from "@/types/PersonDetailsForm";
 import { RelationshipForm } from "@/types/RelationshipForm";
 import { DetailsPane } from "./DetailsPane";
 import { ConfigurationProvider } from "@/hooks/useConfiguration";
+import NavigationBar from "./NavigationBar";
 const GRID_SIZE = 20;
 
 type FamilyTreeSaveData = {
@@ -377,9 +378,8 @@ export default function FamilyTree() {
   return (
       <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
         {/* Title bar */}
-        <Box sx={{ px: 0, py: 1, width: '100%', boxShadow: 2, bgcolor: 'primary.main', color: 'primary.contrastText', mb: 2 }}>
-          <Typography variant="h6" sx={{ px: 3, py: 0, fontWeight: 700, letterSpacing: 1 }}>Family Tree Builder</Typography>
-        </Box>
+        <NavigationBar />
+       
 
         <Stack direction="row" spacing={0} sx={{ height: 'calc(100vh - 64px)' }}>
           {/* Left: Node details */}

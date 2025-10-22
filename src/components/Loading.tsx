@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 
-interface CenteredLoaderProps {
+interface LoadingProps {
   /** Optional helper text under the spinner */
   message?: string;
   /** Size of the CircularProgress in px */
@@ -12,7 +12,7 @@ interface CenteredLoaderProps {
   sx?: React.ComponentProps<typeof Box>["sx"];
 }
 
-export const Loading: React.FC<CenteredLoaderProps> = ({
+export const Loading: React.FC<LoadingProps> = ({
   message,
   size = 48,
   fullHeight = true,
