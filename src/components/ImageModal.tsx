@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
-  Avatar,
   Box,
   Button,
   Modal,
@@ -8,10 +7,10 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import Cropper from 'react-easy-crop';
+import Cropper, { Area } from 'react-easy-crop';
 
 // Utility: Crop the image from the Cropper
-async function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<string> {
+async function getCroppedImg(imageSrc: string, croppedAreaPixels: { width: number; height: number; x: number; y: number; }): Promise<string> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
@@ -47,10 +46,10 @@ function createImage(url: string): Promise<HTMLImageElement> {
 export default function ImageModal({cropSrc, open, onClose, saveImage}: {cropSrc: string | undefined; open: boolean; onClose: () => void; saveImage: (img: string) => void;}) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
-  const handleCropComplete = useCallback((_: any, croppedPixels: any) => {
-    setCroppedAreaPixels(croppedPixels);
+  const handleCropComplete = useCallback((_: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
   const handleSaveCropped = useCallback(async () => {
@@ -59,7 +58,7 @@ export default function ImageModal({cropSrc, open, onClose, saveImage}: {cropSrc
     const cropped = await getCroppedImg(cropSrc, croppedAreaPixels);
     saveImage(cropped);
     onClose();
-  }, [cropSrc, croppedAreaPixels]);
+  }, [cropSrc, croppedAreaPixels, onClose, saveImage]);
 
   return (
     <Modal

@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { Box, Typography, Button, TextField, Stack, MenuItem, FormControl, InputLabel, Select, RadioGroup, FormControlLabel, Radio, Drawer } from "@mui/material";
-import { getNames } from 'country-list';
-import { FamilyNodeData } from "@/types/FamilyNodeData";
-import { Edge } from "reactflow";
-import { EditMode } from "@/types/EditMode";
 import { RelationshipEdgeData, RelationshipType } from "@/types/RelationshipEdgeData";
 import { RelationshipForm } from "@/types/RelationshipForm";
+import { Button, Stack, TextField, Typography } from "@mui/material";
+import { useState } from "react";
+import { Edge } from "reactflow";
 
 const initialFormState: RelationshipForm = {
   dateOfMarriage: "",
@@ -24,8 +21,6 @@ export default function RelationshipDetailsPane({
   onDelete: () => void;
 }) {
   const [form, setForm] = useState<RelationshipForm>(initialFormState);
-
-  const countryList = getNames();
 
   const getTitle = () => {
     if (selectedEdge && selectedEdge.data?.relationship === RelationshipType.Partner) {

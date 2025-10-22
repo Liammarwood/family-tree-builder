@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Button, TextField, Stack, MenuItem, FormControl, InputLabel, Select, RadioGroup, FormControlLabel, Radio, Drawer, Avatar } from "@mui/material";
+import { Box, Typography, Button, TextField, Stack, MenuItem, FormControl, InputLabel, Select, RadioGroup, FormControlLabel, Radio, Avatar } from "@mui/material";
 import { getNames } from 'country-list';
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { Node } from "reactflow";
@@ -73,7 +73,7 @@ export default function FamilyDetailsPane({
     }
 
     // Debug: log only when id/type change
-    // eslint-disable-next-line no-console
+     
     console.log("Selected node or edit mode changed", selectedNode?.id, editMode?.type);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNode?.id, editMode?.type]);

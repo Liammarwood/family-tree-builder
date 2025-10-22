@@ -5,27 +5,24 @@ function formatDate(dateStr?: string) {
   return `${dd}/${mm}/${yyyy}`;
 }
 import React from "react";
-import { Handle, Position, NodeProps, useStore, Edge } from "reactflow";
-import { Avatar, Box, Card, CardContent, Chip, Typography, Stack, Badge } from "@mui/material";
+import { Handle, Position, NodeProps } from "reactflow";
+import { Avatar, Box, Card, CardContent, Chip, Typography, Badge } from "@mui/material";
 import { Male, Female } from "@mui/icons-material";
 import CountryFlag from "react-country-flag";
 import { getCode } from "country-list";
 import { Work, Cake, CalendarToday } from "@mui/icons-material";
-import { NODE_WIDTH, NODE_HEIGHT } from '@/libs/spacing';
+import { NODE_WIDTH } from '@/libs/spacing';
 import { FamilyNodeData } from "@/types/FamilyNodeData";
-import { RelationshipEdgeData, RelationshipType } from "@/types/RelationshipEdgeData";
-import { DivorcedRelationship } from "@/libs/constants";
 import { useConfiguration } from "@/hooks/useConfiguration";
 
 export const FamilyTreeNode = ({
-  id,
   selected,
   data
 }: NodeProps<FamilyNodeData>) => {
   const { showHandles } = useConfiguration();
-  const connectedEdges: Edge<RelationshipEdgeData>[] = useStore((state) =>
-    state.edges.filter((e) => e.source === id || e.target === id)
-  );
+  // const _connectedEdges: Edge<RelationshipEdgeData>[] = useStore((state) =>
+  //   state.edges.filter((e) => e.source === id || e.target === id)
+  // );
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
     width: 16,
