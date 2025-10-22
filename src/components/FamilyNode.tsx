@@ -15,16 +15,25 @@ import { NODE_WIDTH, NODE_HEIGHT } from '@/libs/spacing';
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { RelationshipEdgeData, RelationshipType } from "@/types/RelationshipEdgeData";
 import { DivorcedRelationship } from "@/libs/constants";
+import { useConfiguration } from "@/hooks/useConfiguration";
 
 export const FamilyTreeNode = ({
   id,
   selected,
   data
 }: NodeProps<FamilyNodeData>) => {
+  const { showHandles } = useConfiguration();
   const connectedEdges: Edge<RelationshipEdgeData>[] = useStore((state) =>
     state.edges.filter((e) => e.source === id || e.target === id)
   );
   const isDeceased = !!data.dateOfDeath;
+  const bigHandle = {
+    width: 16,
+    height: 16,
+    background: '#555',
+    borderRadius: '50%',
+    border: '2px solid white',
+  }
   return (
     <Card
       sx={{
@@ -54,7 +63,7 @@ export const FamilyTreeNode = ({
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             badgeContent={
               data.gender === 'Male' ? <Male sx={{ color: '#2196f3', fontSize: 22, bgcolor: '#fff', borderRadius: '50%' }} /> :
-              data.gender === 'Female' ? <Female sx={{ color: '#e91e63', fontSize: 22, bgcolor: '#fff', borderRadius: '50%' }} /> : null
+                data.gender === 'Female' ? <Female sx={{ color: '#e91e63', fontSize: 22, bgcolor: '#fff', borderRadius: '50%' }} /> : null
             }
           >
             <Avatar
@@ -117,7 +126,7 @@ export const FamilyTreeNode = ({
               }}
             />
           )}
-          
+
           {/* Details: Born, Country, Died as rows */}
           <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start', mt: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -153,16 +162,16 @@ export const FamilyTreeNode = ({
         </Box>
       </CardContent>
       {/* Parent (target) - top */}
-      <Handle type="target" position={Position.Top} id="parent" style={{ left: '50%' }} />
+      <Handle type="target" position={Position.Top} id="parent" style={{ ...bigHandle, display: showHandles ? "block" : "none", left: '50%' }} />
       {/* Child (source) - bottom */}
-      <Handle type="source" position={Position.Bottom} id="child" style={{ left: '50%' }} />
+      <Handle type="source" position={Position.Bottom} id="child" style={{ ...bigHandle, display: showHandles ? "block" : "none", left: '50%' }} />
       {/* TODO Fixup this so it works logically */}
-      {connectedEdges.filter(edge => edge.data && (edge.data.relationship === RelationshipType.DivorcedPartner || edge.data.relationship === RelationshipType.Partner)).map(edge => <Handle type="source" position={Position.Bottom} id={`${id === edge.source ? edge.target : edge.source}-child`} key={`${id === edge.source ? edge.target : edge.source}-child`} style={{ left: '25%' }} />)}
+      {/* {connectedEdges.filter(edge => edge.data && (edge.data.relationship === RelationshipType.DivorcedPartner || edge.data.relationship === RelationshipType.Partner)).map(edge => <Handle type="source" position={Position.Bottom} id={`${id === edge.source ? edge.target : edge.source}-child`} key={`${id === edge.source ? edge.target : edge.source}-child`} style={{ left: '25%' }} />)} */}
       {/* Side handles for partner/sibling links
           - right source: used when this node is the left node in a pair (edge source uses 'right')
           - left target: used when this node is the right node in a pair (edge target uses 'left') */}
-      <Handle type="source" position={Position.Right} id="right" style={{ top: "50%" }} />
-      <Handle type="target" position={Position.Left} id="left" style={{ top: "50%" }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ ...bigHandle, display: showHandles ? "block" : "none", top: "50%" }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ ...bigHandle, display: showHandles ? "block" : "none", top: "50%" }} />
     </Card>
   );
 };

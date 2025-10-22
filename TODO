@@ -5,3 +5,4 @@
 // Manual Connect Parent - Uses wrong handles
 // Add Select Multi Nodes - The selectedNode should be an array, if lenght is 1 then its the same as before, otherwise we are selecting multiple to move them all at once
 // Add second child handle when person has a divorced partner edge / partner
+// Add click two nodes are selected, if they are partners or divorced add child should be avaiable 

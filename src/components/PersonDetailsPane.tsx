@@ -111,9 +111,8 @@ export default function FamilyDetailsPane({
   };
 
   return (
-    <Box sx={{ width: 320, minWidth: 260, maxWidth: 400, p: 3, borderRadius: 0, bgcolor: '#fff', display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <>
       <Typography variant="h6" sx={{ mb: 1 }}>{getTitle()}</Typography>
-      {editMode?.type === "add" || selectedNode ? (
         <Stack spacing={2} justifyContent="center" alignItems="center">
           {editMode?.type === "add" && editMode?.relation && ["partner", "divorced-partner"].includes(editMode.relation) && <TextField
             label="Date of Marriage"
@@ -225,10 +224,7 @@ export default function FamilyDetailsPane({
             {selectedNode && <Button variant="outlined" color="error" onClick={onDelete}>Delete</Button>}
           </Stack>
         </Stack>
-      ) : (
-        <Typography variant="body2" color="text.secondary">No node selected</Typography>
-      )}
       <ImageModal cropSrc={cropSrc || undefined} open={imageModalOpen} onClose={() => setImageModalOpen(false)} saveImage={(img) => setForm({ ...form, image: img })} />
-    </Box>
+    </>
   );
 }

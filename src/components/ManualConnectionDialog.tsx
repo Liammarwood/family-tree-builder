@@ -33,7 +33,7 @@ export function ManualConnectionDialog({ isOpen, onClose, onConfirm }: ManualCon
                             label="Relationship"
                             onChange={e => setForm({ type: e.target.value, dateOfDivorce: "", dateOfMarriage: "" })}
                         >
-                            <MenuItem value="partner">Married Partner</MenuItem>
+                            <MenuItem value="partner">Partner (or Married Partner)</MenuItem>
                             <MenuItem value="divorced-partner">Divorced Partner</MenuItem>
                             <MenuItem value="child">Child</MenuItem>
                             <MenuItem value="parent">Parent</MenuItem>

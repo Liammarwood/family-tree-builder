@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Box, FormControlLabel, IconButton, Radio, Tooltip } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
@@ -11,6 +11,7 @@ import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import ImageIcon from "@mui/icons-material/Image";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { Delete, HeartBroken } from "@mui/icons-material";
+import { useConfiguration } from "@/hooks/useConfiguration";
 
 type ToolbarProps = {
   isNodeSelected: boolean;
@@ -33,6 +34,8 @@ export default function FamilyTreeToolbar({
   onNew, onToggleGrid, onZoomFit,
   onAddParent, onAddSibling, onAddChild, onAddPartner, onAddDivorcedPartner, onAddPerson, onDelete, onExportPDF, onExportPNG, canAddSibling, isNodeSelected
 }: ToolbarProps) {
+
+  const { showHandles, toggleHandles } = useConfiguration();
   return (
     <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center', background: '#fff', boxShadow: 1, p: 1 }}>
       <Tooltip title="Add Parent"><IconButton onClick={onAddParent} disabled={!isNodeSelected}><FamilyRestroomIcon /></IconButton></Tooltip>
@@ -47,6 +50,9 @@ export default function FamilyTreeToolbar({
       <Tooltip title="Zoom Fit"><IconButton onClick={onZoomFit}><ZoomOutMapIcon /></IconButton></Tooltip>
       <Tooltip title="Export PNG"><IconButton onClick={onExportPNG}><ImageIcon /></IconButton></Tooltip>
       <Tooltip title="Export PDF"><IconButton onClick={onExportPDF}><PictureAsPdfIcon /></IconButton></Tooltip>
+      <FormControlLabel value="female" control={<Radio checked={showHandles}
+        onClick={toggleHandles}
+        name="radio-buttons" />} label="Female" />
     </Box>
   );
 }

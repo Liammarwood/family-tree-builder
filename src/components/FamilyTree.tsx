@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import ReactFlow, { Background, Controls, Node, Edge, ReactFlowInstance, BackgroundVariant, useNodesState, useEdgesState } from "reactflow";
+import ReactFlow, { Background, Controls, Node, Edge, ReactFlowInstance, BackgroundVariant, useNodesState, useEdgesState, ConnectionLineType } from "reactflow";
 import "reactflow/dist/style.css";
-import { Typography, Box, Stack, styled, AppBar, Toolbar } from "@mui/material";
+import { Typography, Box, Stack, styled, AppBar, Toolbar, useTheme, useMediaQuery } from "@mui/material";
 import FamilyDetailsPane from "./PersonDetailsPane";
 import { edgeTypes, generateId, initialNode, initialRootId, nodeTypes } from "@/libs/familyTreeUtils";
 import jsPDF from "jspdf";
@@ -19,6 +19,9 @@ import PersonDetailsPane from "@/components/PersonDetailsPane";
 import RelationshipDetailsPane from "@/components/RelationshipDetailsPane";
 import FamilyTreeToolbar from "./FamilyTreeToolbar";
 import { PersonDetailsForm } from "@/types/PersonDetailsForm";
+import { RelationshipForm } from "@/types/RelationshipForm";
+import { DetailsPane } from "./DetailsPane";
+import { ConfigurationProvider } from "@/hooks/useConfiguration";
 const GRID_SIZE = 20;
 
 type FamilyTreeSaveData = {
@@ -40,6 +43,7 @@ export default function FamilyTree() {
   const selectedNode = useMemo(() => nodes.find((e) => e.selected), [nodes]);
   const selectedNodes = useMemo(() => nodes.filter((e) => e.selected), [nodes]);
   const isOneNodeSelected = selectedNode !== undefined && selectedNodes.length === 1;
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     if (isLoaded) {
@@ -192,6 +196,28 @@ export default function FamilyTree() {
   // Used to check if "Add Sibling" should be enabled
   const doesSelectedPersonHaveParents = () => {
     return selectedNode !== undefined && edges.filter((e) => (e.target === selectedNode.id) && e.data?.relationship === ParentRelationship).length > 0;
+  }
+
+  const handleRelationshipSave = (form: RelationshipForm) => {
+    if (!selectedEdge) return; // TODO Display error using snackbar/toast
+    setEdges((currentEdges) => {
+      return currentEdges.map(edge => {
+        if (edge.id === selectedEdge.id) {
+          return {
+            ...edge,
+            data: {
+              ...edge.data,
+              dateOfMarriage: form.dateOfMarriage,
+              dateOfDivorce: form.dateOfDivorce
+            }
+          }
+        } else {
+          return edge;
+        }
+      });
+    });
+    setEditMode(null);
+    deselectAll();
   }
 
   const handleSave = (form: PersonDetailsForm) => {
@@ -349,72 +375,76 @@ export default function FamilyTree() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
-      {/* Title bar */}
-      <Box sx={{ px: 0, py: 1, width: '100%', boxShadow: 2, bgcolor: 'primary.main', color: 'primary.contrastText', mb: 2 }}>
-        <Typography variant="h6" sx={{ px: 3, py: 0, fontWeight: 700, letterSpacing: 1 }}>Family Tree Builder</Typography>
-      </Box>
-
-      <Stack direction="row" spacing={0} sx={{ height: 'calc(100vh - 64px)' }}>
-        {/* Left: Node details */}
-        {selectedNode !== undefined && isOneNodeSelected ? <PersonDetailsPane
-          selectedNode={selectedNode}
-          editMode={editMode}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          onDelete={handleDeleteNode}
-        /> : <RelationshipDetailsPane
-          selectedEdge={selectedEdge}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          onDelete={handleDeleteNode}
-        />}
-        {/* Main: Toolbar + Graph */}
-        <Box sx={{ width: '100vw', flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#f3f6fa' }}>
-          <FamilyTreeToolbar
-            onDelete={handleDeleteNode}
-            onNew={handleNew}
-            onToggleGrid={handleToggleGrid}
-            onZoomFit={handleZoomFit}
-            onAddPerson={() => handleAddNode()}
-            onAddParent={() => handleAddNode('parent')}
-            onAddSibling={() => handleAddNode('sibling')}
-            onAddChild={() => handleAddNode('child')}
-            onAddPartner={() => handleAddNode('partner')}
-            onAddDivorcedPartner={() => handleAddNode("divorced-partner")}
-            onExportPDF={handleExportPDF}
-            onExportPNG={handleExportPNG}
-            isNodeSelected={selectedNode != undefined && isOneNodeSelected}
-            canAddSibling={doesSelectedPersonHaveParents()} />
-          <Box ref={reactFlowWrapper} sx={{ flex: 1, minHeight: 0, background: '#f5f5f5', borderRadius: 2, boxShadow: 1, mx: 2, mb: 2 }}>
-            {!isLoaded ? <Loading message="Loading family tree..." /> :
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                edgeTypes={edgeTypes}
-                nodeTypes={nodeTypes}
-                onNodeClick={onNodeClick}
-                onEdgesChange={onEdgesChange}
-                onNodesChange={onNodesChange}
-                // onEdgeClick={(event, edge) => {
-                //   console.log('Clicked edge:', edge);
-                // }}
-                onPaneClick={onPaneClick}
-                onNodeDragStop={onNodeDragStop}
-                fitView
-                snapToGrid={showGrid}
-                snapGrid={[GRID_SIZE, GRID_SIZE]}
-                onInit={setRfInstance}
-                onConnect={onConnect}
-              >
-                {/* Manual connect dialog */}
-                <ManualConnectionDialog onClose={() => setConnectDialog(null)} isOpen={!!connectDialog} onConfirm={handleConnectConfirm} />
-                <Controls />
-                <Background gap={GRID_SIZE} color="#e0e0e0" variant={showGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots} />
-              </ReactFlow>}
-          </Box>
+      <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
+        {/* Title bar */}
+        <Box sx={{ px: 0, py: 1, width: '100%', boxShadow: 2, bgcolor: 'primary.main', color: 'primary.contrastText', mb: 2 }}>
+          <Typography variant="h6" sx={{ px: 3, py: 0, fontWeight: 700, letterSpacing: 1 }}>Family Tree Builder</Typography>
         </Box>
-      </Stack>
-    </Box>
+
+        <Stack direction="row" spacing={0} sx={{ height: 'calc(100vh - 64px)' }}>
+          {/* Left: Node details */}
+          {!isMobile && <DetailsPane>
+            {selectedNode && isOneNodeSelected && <PersonDetailsPane
+              selectedNode={selectedNode}
+              editMode={editMode}
+              onSave={handleSave}
+              onCancel={handleCancel}
+              onDelete={handleDeleteNode}
+            />}
+            {selectedEdge && (!selectedNode || !isOneNodeSelected) && <RelationshipDetailsPane
+              selectedEdge={selectedEdge}
+              onSave={handleRelationshipSave}
+              onCancel={handleCancel}
+              onDelete={handleDeleteNode}
+            />}
+          </DetailsPane>}
+          {/* Main: Toolbar + Graph */}
+          <Box sx={{ width: '100vw', flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#f3f6fa' }}>
+            <FamilyTreeToolbar
+              onDelete={handleDeleteNode}
+              onNew={handleNew}
+              onToggleGrid={handleToggleGrid}
+              onZoomFit={handleZoomFit}
+              onAddPerson={() => handleAddNode()}
+              onAddParent={() => handleAddNode('parent')}
+              onAddSibling={() => handleAddNode('sibling')}
+              onAddChild={() => handleAddNode('child')}
+              onAddPartner={() => handleAddNode('partner')}
+              onAddDivorcedPartner={() => handleAddNode("divorced-partner")}
+              onExportPDF={handleExportPDF}
+              onExportPNG={handleExportPNG}
+              isNodeSelected={selectedNode != undefined && isOneNodeSelected}
+              canAddSibling={doesSelectedPersonHaveParents()} />
+            <Box ref={reactFlowWrapper} sx={{ flex: 1, minHeight: 0, background: '#f5f5f5', borderRadius: 2, boxShadow: 1, mx: 2, mb: 2 }}>
+              {!isLoaded ? <Loading message="Loading family tree..." /> :
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  edgeTypes={edgeTypes}
+                  nodeTypes={nodeTypes}
+                  onNodeClick={onNodeClick}
+                  onEdgesChange={onEdgesChange}
+                  onNodesChange={onNodesChange}
+                  // onEdgeClick={(event, edge) => {
+                  //   console.log('Clicked edge:', edge);
+                  // }}
+                  onPaneClick={onPaneClick}
+                  onNodeDragStop={onNodeDragStop}
+                  fitView
+                  snapToGrid={showGrid}
+                  snapGrid={[GRID_SIZE, GRID_SIZE]}
+                  onInit={setRfInstance}
+                  onConnect={onConnect}
+                  connectionLineType={ConnectionLineType.Step}
+                >
+                  {/* Manual connect dialog */}
+                  <ManualConnectionDialog onClose={() => setConnectDialog(null)} isOpen={!!connectDialog} onConfirm={handleConnectConfirm} />
+                  <Controls />
+                  <Background gap={GRID_SIZE} color="#e0e0e0" variant={showGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots} />
+                </ReactFlow>}
+            </Box>
+          </Box>
+        </Stack>
+      </Box>
   );
 }
