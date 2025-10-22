@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useRef, useMemo } from "react";
 import ReactFlow, { Background, Controls, Node, Edge, ReactFlowInstance, BackgroundVariant, useNodesState, useEdgesState, ConnectionLineType } from "reactflow";
 import "reactflow/dist/style.css";
 import { Box, Stack, useMediaQuery } from "@mui/material";
@@ -21,6 +21,7 @@ import { PersonDetailsForm } from "@/types/PersonDetailsForm";
 import { RelationshipForm } from "@/types/RelationshipForm";
 import { DetailsPane } from "./DetailsPane";
 import NavigationBar from "./NavigationBar";
+import { useFlowSync } from "@/hooks/useSyncFlow";
 const GRID_SIZE = 20;
 
 type FamilyTreeSaveData = {
@@ -44,18 +45,7 @@ export default function FamilyTree() {
   const isOneNodeSelected = selectedNode !== undefined && selectedNodes.length === 1;
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  useEffect(() => {
-    if (isLoaded) {
-      setNodes(value.nodes);
-      setEdges(value.edges);
-    }
-  }, [isLoaded, value, setNodes, setEdges]);
-
-  useEffect(() => {
-    if (isLoaded) {
-      setValue({ nodes, edges });
-    }
-  }, [nodes, edges, isLoaded, setValue]);
+  useFlowSync(isLoaded, value, setValue, nodes, setNodes, edges, setEdges);
 
   // Handle manual connection between nodes
   const onConnect = useCallback((params: { source: string | null; target: string | null }) => {
