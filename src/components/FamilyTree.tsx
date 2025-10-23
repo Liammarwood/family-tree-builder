@@ -21,7 +21,7 @@ import { PersonDetailsForm } from "@/types/PersonDetailsForm";
 import { RelationshipForm } from "@/types/RelationshipForm";
 import { DetailsPane } from "./DetailsPane";
 import NavigationBar from "./NavigationBar";
-import { useFlowSync } from "@/hooks/useSyncFlow";
+import { useFlowSync } from "@/hooks/useFlowSync";
 const GRID_SIZE = 20;
 
 type FamilyTreeSaveData = {
