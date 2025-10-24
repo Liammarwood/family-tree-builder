@@ -22,6 +22,7 @@ import NavigationBar from "./NavigationBar";
 import { FamilyTreeSection } from "./FamilyTreeSelection";
 import { useFamilyTreeContext } from "@/hooks/FamilyTreeContextProvider";
 import { UploadModal } from "./UploadModal";
+import { WebRTCJsonModal } from "./WebRTCJSONSender";
 
 export default function FamilyTree() {
   const { selectedTreeId, currentTree, saveCurrentTree, isTreeLoaded } = useFamilyTreeContext();
@@ -34,6 +35,7 @@ export default function FamilyTree() {
   const [connectDialog, setConnectDialog] = useState<{ open: boolean; source: string; target: string } | null>(null);
   const [isSelectModalOpen, setSelectModalOpen] = useState<boolean>(selectedTreeId === null);
   const [isUploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
+  const [isShareModalOpen, setShareModalOpen] = useState<boolean>(false);
   const selectedEdge = useMemo(() => edges.find((e) => e.selected), [edges]);
   const selectedNode = useMemo(() => nodes.find((e) => e.selected), [nodes]);
   const selectedNodes = useMemo(() => nodes.filter((e) => e.selected), [nodes]);
@@ -449,6 +451,7 @@ export default function FamilyTree() {
         onAddDivorcedPartner={() => handleAddNode("divorced-partner")}
         onExportPDF={handleExportPDF}
         onExportPNG={handleExportPNG}
+        onShare={() => setShareModalOpen(true)}
         isNodeSelected={selectedNode != undefined && isOneNodeSelected}
         canAddSibling={doesSelectedPersonHaveParents()} />
 
@@ -504,6 +507,9 @@ export default function FamilyTree() {
 
         {/* Select Family Tree Modal */}
         <FamilyTreeSection open={isSelectModalOpen} onClose={() => setSelectModalOpen(false)} />
+
+          {/* WebRTC Modal for Sharing Trees */}
+          <WebRTCJsonModal open={isShareModalOpen} onClose={() => setShareModalOpen(false)} json={currentTree} />
       </Stack>
     </Box>
   );

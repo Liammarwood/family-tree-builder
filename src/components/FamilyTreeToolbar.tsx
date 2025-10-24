@@ -29,10 +29,11 @@ type FamilyTreeToolbarProps = {
   onExportPDF: () => void;
   onUpload: () => void;
   onDownload: () => void;
+  onShare: () => void;
 };
 
 export default function FamilyTreeToolbar({
-  onNew, onToggleGrid, onZoomFit, onUpload, onDownload,
+  onNew, onToggleGrid, onZoomFit, onUpload, onDownload, onShare,
   onAddParent, onAddSibling, onAddChild, onAddPartner, onAddDivorcedPartner, onAddPerson, onDelete, onExportPDF, onExportPNG, canAddSibling, isNodeSelected
 }: FamilyTreeToolbarProps) {
 
@@ -52,7 +53,7 @@ export default function FamilyTreeToolbar({
       <Tooltip title="Export PDF"><IconButton onClick={onExportPDF}><PictureAsPdfIcon /></IconButton></Tooltip>
       <Tooltip title="Download Tree"><IconButton onClick={onDownload}><Download /></IconButton></Tooltip>
       <Tooltip title="Upload Tree"><IconButton onClick={onUpload}><Upload /></IconButton></Tooltip>
-      <Tooltip title="Share"><IconButton><Share /></IconButton></Tooltip>
+      <Tooltip title="Share"><IconButton onClick={onShare}><Share /></IconButton></Tooltip>
 
     </Box>
   );

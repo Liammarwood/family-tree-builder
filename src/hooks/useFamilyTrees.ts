@@ -38,24 +38,33 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
     // 🔹 Initialize IndexedDB
     useEffect(() => {
-        const openRequest = indexedDB.open(dbName, 1);
+        let dbInstance: IDBDatabase | null = null;
 
-        openRequest.onupgradeneeded = () => {
-            const database = openRequest.result;
-            if (!database.objectStoreNames.contains(storeName)) {
-                database.createObjectStore(storeName, { keyPath: "id" });
-            }
+        const openDB = () => {
+            const openRequest = indexedDB.open(dbName, 1);
+
+            openRequest.onupgradeneeded = () => {
+                const db = openRequest.result;
+                if (!db.objectStoreNames.contains(storeName)) {
+                    db.createObjectStore(storeName, { keyPath: "id" });
+                }
+            };
+
+            openRequest.onsuccess = () => {
+                dbInstance = openRequest.result;
+                setDb(dbInstance);
+            };
+
+            openRequest.onerror = (e) => console.error("IndexedDB error:", e);
         };
 
-        openRequest.onsuccess = () => setDb(openRequest.result);
-        openRequest.onerror = (e) => console.error("IndexedDB error:", e);
+        openDB();
 
         return () => {
-            if (openRequest.result) {
-                openRequest.result.close();
-            }
+            if (dbInstance) dbInstance.close();
         };
     }, [dbName, storeName]);
+
 
     useEffect(() => {
         if (selectedTreeId && !trees.some(t => t.id === selectedTreeId)) {
@@ -152,7 +161,7 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
             const newTree: FamilyTreeObject = NEW_TREE(name);
             const tx = db.transaction(storeName, "readwrite");
-            tx.objectStore(storeName).add(newTree, newTree.id);
+            tx.objectStore(storeName).add(newTree);
 
             tx.oncomplete = () => {
                 setTrees((prev) => [...prev, { id: newTree.id, name: newTree.name }]);
