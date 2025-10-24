@@ -1,36 +1,44 @@
 import { useEffect, useState, useCallback, SetStateAction } from "react";
 import { openDB } from "idb";
-
-const DB_NAME = "family-tree-builder";
-const STORE_NAME = "family-tree-store";
+import { DB_NAME, NEW_TREE, STORE_NAME } from "@/libs/constants";
+import { FamilyTreeObject } from "@/types/FamilyTreeObject";
 
 /**
  * useIndexedDBState
- * Stores and syncs a piece of state in IndexedDB (client-side)
- * 
- * @param key Unique key for this record (e.g., "currentUserProgress")
- * @param defaultValue Default value if no data exists
+ * Manages one family tree's data in IndexedDB under key (treeId)
  */
-export function useIndexedDBState<T>(key: string, defaultValue: T) {
-  const [value, setValue] = useState<T>(defaultValue);
+export function useIndexedDBState<T>(treeId: string | null) {
+  const [value, setValue] = useState<FamilyTreeObject | undefined>();
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Initialize DB and load initial value
+  // Helper: open DB and ensure store exists
+  const openOrUpgradeDB = async () =>
+    openDB(DB_NAME, 1, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME);
+        }
+      },
+    });
+
+  // Load a tree’s data
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      const db = await openDB(DB_NAME, 1, {
-        upgrade(db) {
-          if (!db.objectStoreNames.contains(STORE_NAME)) {
-            db.createObjectStore(STORE_NAME);
-          }
-        },
-      });
+      const db = await openOrUpgradeDB();
 
-      const saved = await db.get(STORE_NAME, key);
+      if (!treeId) {
+        if (!cancelled) {
+          setValue(undefined);
+          setIsLoaded(true);
+        }
+        return;
+      }
+
+      const saved = await db.get(STORE_NAME, treeId);
       if (!cancelled) {
-        setValue(saved ?? defaultValue);
+        setValue(saved ?? NEW_TREE());
         setIsLoaded(true);
       }
     })();
@@ -38,25 +46,29 @@ export function useIndexedDBState<T>(key: string, defaultValue: T) {
     return () => {
       cancelled = true;
     };
-  }, [key, defaultValue]);
+  }, [treeId]);
 
-  // Save value whenever it changes. Accept either a value or a functional updater (like React's setState)
-  const saveValue = useCallback((newValue: SetStateAction<T>) => {
-    // Use functional setState to compute the next state from the previous one
-    setValue((prev) => {
-      const next = typeof newValue === "function"
-        ? (newValue as (prevState: T) => T)(prev)
-        : newValue;
+  // Save data for this tree
+  const saveValue = useCallback(
+    (newValue: SetStateAction<FamilyTreeObject>) => {
+      if (!treeId) return;
 
-      // Persist asynchronously; don't block the state update/render
-      (async () => {
-        const db = await openDB(DB_NAME, 1);
-        await db.put(STORE_NAME, next, key);
-      })();
+      setValue((prev) => {
+        const next =
+          typeof newValue === "function"
+            ? (newValue as (prev?: FamilyTreeObject) => FamilyTreeObject)(prev)
+            : newValue;
 
-      return next;
-    });
-  }, [key]);
+        (async () => {
+          const db = await openOrUpgradeDB();
+          await db.put(STORE_NAME, next, treeId);
+        })();
+
+        return next;
+      });
+    },
+    [treeId]
+  );
 
   return { value, setValue: saveValue, isLoaded };
 }

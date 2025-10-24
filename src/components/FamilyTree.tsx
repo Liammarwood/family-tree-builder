@@ -1,17 +1,15 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import ReactFlow, { Background, Controls, Node, Edge, ReactFlowInstance, BackgroundVariant, useNodesState, useEdgesState, ConnectionLineType } from "reactflow";
 import "reactflow/dist/style.css";
 import { Box, Stack, useMediaQuery } from "@mui/material";
-import { edgeTypes, generateId, initialNode, nodeTypes } from "@/libs/familyTreeUtils";
 import jsPDF from "jspdf";
 import * as htmlToImage from "html-to-image";
-import { useIndexedDBState } from "@/hooks/useIndexedDBState";
 import { ManualConnectionDialog, ManualConnectionForm } from "./ManualConnectionDialog";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { ChildEdge, DivorcedEdge, ParentEdge, PartnerEdge, SiblingEdge } from "@/libs/edges";
-import { ParentRelationship } from "@/libs/constants";
+import { DB_NAME, EDGE_TYPES, GENERATE_ID, GRID_SIZE, NODE_TYPES, ParentRelationship } from "@/libs/constants";
 import { EditMode } from "@/types/EditMode";
 import { Loading } from "@/components/Loading";
 import PersonDetailsPane from "@/components/PersonDetailsPane";
@@ -21,16 +19,12 @@ import { PersonDetailsForm } from "@/types/PersonDetailsForm";
 import { RelationshipForm } from "@/types/RelationshipForm";
 import { DetailsPane } from "./DetailsPane";
 import NavigationBar from "./NavigationBar";
-import { useFlowSync } from "@/hooks/useFlowSync";
-const GRID_SIZE = 20;
-
-type FamilyTreeSaveData = {
-  nodes: Node<FamilyNodeData>[];
-  edges: Edge[];
-}
+import { FamilyTreeSection } from "./FamilyTreeSelection";
+import { useFamilyTreeContext } from "@/hooks/FamilyTreeContextProvider";
+import { UploadModal } from "./UploadModal";
 
 export default function FamilyTree() {
-  const { value, setValue, isLoaded } = useIndexedDBState<FamilyTreeSaveData>("family-tree", { nodes: [initialNode], edges: [] });
+  const { selectedTreeId, currentTree, saveCurrentTree, isTreeLoaded } = useFamilyTreeContext();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [editMode, setEditMode] = useState<EditMode | null>(null);
@@ -38,14 +32,40 @@ export default function FamilyTree() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
   const [connectDialog, setConnectDialog] = useState<{ open: boolean; source: string; target: string } | null>(null);
-
+  const [isSelectModalOpen, setSelectModalOpen] = useState<boolean>(selectedTreeId === null);
+  const [isUploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
   const selectedEdge = useMemo(() => edges.find((e) => e.selected), [edges]);
   const selectedNode = useMemo(() => nodes.find((e) => e.selected), [nodes]);
   const selectedNodes = useMemo(() => nodes.filter((e) => e.selected), [nodes]);
   const isOneNodeSelected = selectedNode !== undefined && selectedNodes.length === 1;
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  useFlowSync(isLoaded, value, setValue, nodes, setNodes, edges, setEdges);
+  const initialized = useRef(false);
+
+  // 1️⃣ Reset nodes/edges when tree selection changes
+  useEffect(() => {
+    if (!currentTree) return;
+
+    setNodes(currentTree.nodes);
+    setEdges(currentTree.edges);
+    initialized.current = false; // mark as "not synced yet"
+  }, [selectedTreeId, currentTree]);
+
+  // 2️⃣ Sync effect
+  useEffect(() => {
+    if (!isTreeLoaded || !currentTree || !selectedTreeId) return;
+
+    // First time: sync value → state
+    if (!initialized.current) {
+      initialized.current = true;
+      return;
+    }
+
+    // After initial load: sync state → value only if changed
+    if (currentTree.nodes !== nodes || currentTree.edges !== edges) {
+      saveCurrentTree({ ...currentTree, nodes, edges });
+    }
+  }, [isTreeLoaded, currentTree, nodes, edges, saveCurrentTree, selectedTreeId]);
 
   // Handle manual connection between nodes
   const onConnect = useCallback((params: { source: string | null; target: string | null }) => {
@@ -236,7 +256,7 @@ export default function FamilyTree() {
         )
       );
     } else if (editMode.type === "add") {
-      const newId = generateId();
+      const newId = GENERATE_ID();
 
       const newNode: Node = {
         id: newId,
@@ -340,14 +360,6 @@ export default function FamilyTree() {
     if (rfInstance) rfInstance.fitView();
   };
 
-  // New tree
-  const handleNew = () => {
-    console.log('new');
-    setValue({ nodes: [initialNode], edges: [] });
-    setNodes([initialNode]);
-    setEdges([]);
-  };
-
   // Used to deselect nodes/edges when clicking on pane
   const deselectAll = () => {
     // Deselect all nodes and edges
@@ -361,16 +373,89 @@ export default function FamilyTree() {
     }
   }
 
+  const handleDownload = async () => {
+    // setLoading(true);
+    try {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+
+      const exportData: Record<string, { schema: any; data: any[] }> = {};
+      const storeNames = Array.from(db.objectStoreNames);
+
+      for (const storeName of storeNames) {
+        const transaction = db.transaction(storeName, "readonly");
+        const store = transaction.objectStore(storeName);
+
+        const allRecords: any[] = await new Promise((resolve, reject) => {
+          const items: any[] = [];
+          const cursorRequest = store.openCursor();
+          cursorRequest.onsuccess = (e) => {
+            const cursor = (e.target as IDBRequest).result;
+            if (cursor) {
+              items.push(cursor.value);
+              cursor.continue();
+            } else {
+              resolve(items);
+            }
+          };
+          cursorRequest.onerror = () => reject(cursorRequest.error);
+        });
+
+        exportData[storeName] = {
+          schema: {
+            keyPath: store.keyPath,
+            autoIncrement: store.autoIncrement,
+          },
+          data: allRecords,
+        };
+      }
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${DB_NAME}-backup.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed:", err);
+    } finally {
+      // setLoading(false);
+    }
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
       {/* Title bar */}
-      <NavigationBar />
+      <NavigationBar name={currentTree?.name} />
 
+      <FamilyTreeToolbar
+        onDownload={handleDownload}
+        onUpload={() => setUploadModalOpen(true)}
+        onDelete={handleDeleteNode}
+        onNew={() => setSelectModalOpen(true)}
+        onToggleGrid={handleToggleGrid}
+        onZoomFit={handleZoomFit}
+        onAddPerson={() => handleAddNode()}
+        onAddParent={() => handleAddNode('parent')}
+        onAddSibling={() => handleAddNode('sibling')}
+        onAddChild={() => handleAddNode('child')}
+        onAddPartner={() => handleAddNode('partner')}
+        onAddDivorcedPartner={() => handleAddNode("divorced-partner")}
+        onExportPDF={handleExportPDF}
+        onExportPNG={handleExportPNG}
+        isNodeSelected={selectedNode != undefined && isOneNodeSelected}
+        canAddSibling={doesSelectedPersonHaveParents()} />
 
-      <Stack direction="row" spacing={0} sx={{ height: 'calc(100vh - 64px)' }}>
+      <Stack direction="row" spacing={0} sx={{ height: '82vh' }}>
         {/* Left: Node details */}
         {!isMobile && <DetailsPane>
-          {selectedNode && isOneNodeSelected && <PersonDetailsPane
+          {((selectedNode && isOneNodeSelected) || (editMode?.type === "add" && editMode.relation === undefined)) && <PersonDetailsPane
             selectedNode={selectedNode}
             editMode={editMode}
             onSave={handleSave}
@@ -384,52 +469,41 @@ export default function FamilyTree() {
             onDelete={handleDeleteNode}
           />}
         </DetailsPane>}
-        {/* Main: Toolbar + Graph */}
-        <Box sx={{ width: '100vw', flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#f3f6fa' }}>
-          <FamilyTreeToolbar
-            onDelete={handleDeleteNode}
-            onNew={handleNew}
-            onToggleGrid={handleToggleGrid}
-            onZoomFit={handleZoomFit}
-            onAddPerson={() => handleAddNode()}
-            onAddParent={() => handleAddNode('parent')}
-            onAddSibling={() => handleAddNode('sibling')}
-            onAddChild={() => handleAddNode('child')}
-            onAddPartner={() => handleAddNode('partner')}
-            onAddDivorcedPartner={() => handleAddNode("divorced-partner")}
-            onExportPDF={handleExportPDF}
-            onExportPNG={handleExportPNG}
-            isNodeSelected={selectedNode != undefined && isOneNodeSelected}
-            canAddSibling={doesSelectedPersonHaveParents()} />
-          <Box ref={reactFlowWrapper} sx={{ flex: 1, minHeight: 0, background: '#f5f5f5', borderRadius: 2, boxShadow: 1, mx: 2, mb: 2 }}>
-            {!isLoaded ? <Loading message="Loading family tree..." /> :
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                edgeTypes={edgeTypes}
-                nodeTypes={nodeTypes}
-                onNodeClick={onNodeClick}
-                onEdgesChange={onEdgesChange}
-                onNodesChange={onNodesChange}
-                // onEdgeClick={(event, edge) => {
-                //   console.log('Clicked edge:', edge);
-                // }}
-                onPaneClick={onPaneClick}
-                onNodeDragStop={onNodeDragStop}
-                fitView
-                snapToGrid={showGrid}
-                snapGrid={[GRID_SIZE, GRID_SIZE]}
-                onInit={setRfInstance}
-                onConnect={onConnect}
-                connectionLineType={ConnectionLineType.Step}
-              >
-                {/* Manual connect dialog */}
-                <ManualConnectionDialog onClose={() => setConnectDialog(null)} isOpen={!!connectDialog} onConfirm={handleConnectConfirm} />
-                <Controls />
-                <Background gap={GRID_SIZE} color="#e0e0e0" variant={showGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots} />
-              </ReactFlow>}
-          </Box>
+        {/* Main: Graph */}
+        <Box ref={reactFlowWrapper} sx={{ flex: 1, minHeight: 0, background: '#f5f5f5', borderRadius: 2, boxShadow: 1, mx: 2 }}>
+          {!isTreeLoaded ? <Loading message="Loading family tree..." /> :
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              edgeTypes={EDGE_TYPES}
+              nodeTypes={NODE_TYPES}
+              onNodeClick={onNodeClick}
+              onEdgesChange={onEdgesChange}
+              onNodesChange={onNodesChange}
+              // onEdgeClick={(event, edge) => {
+              //   console.log('Clicked edge:', edge);
+              // }}
+              onPaneClick={onPaneClick}
+              onNodeDragStop={onNodeDragStop}
+              fitView
+              snapToGrid={showGrid}
+              snapGrid={[GRID_SIZE, GRID_SIZE]}
+              onInit={setRfInstance}
+              onConnect={onConnect}
+              connectionLineType={ConnectionLineType.Step}
+            >
+              {/* Manual connect dialog */}
+              <ManualConnectionDialog onClose={() => setConnectDialog(null)} isOpen={!!connectDialog} onConfirm={handleConnectConfirm} />
+              <Controls />
+              <Background gap={GRID_SIZE} color="#e0e0e0" variant={showGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots} />
+            </ReactFlow>}
         </Box>
+
+        {/* Upload Modal */}
+        <UploadModal dbName={DB_NAME} open={isUploadModalOpen} onClose={() => setUploadModalOpen(false)} />
+
+        {/* Select Family Tree Modal */}
+        <FamilyTreeSection open={isSelectModalOpen} onClose={() => setSelectModalOpen(false)} />
       </Stack>
     </Box>
   );

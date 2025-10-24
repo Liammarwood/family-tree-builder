@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, ReactNode, FC } from 'react
 interface ConfigurationState {
   showHandles: boolean;
   toggleHandles: () => void;
+  objectStoreName: string;
+  setObjectStoreName: (name: string) => void;
 }
 
 // Create context
@@ -19,6 +21,7 @@ export const useConfiguration = (): ConfigurationState => {
 // Provider
 export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [showHandles, setShowHandles] = useState<boolean>(true);
+  const [objectStoreName, setObjectStoreName] = useState<string>("");
 
   const toggleHandles = () => {
     console.log("Toggling handles from", showHandles, "to", !showHandles);
@@ -26,7 +29,7 @@ export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children })
   }
 
   return (
-    <ConfigurationContext.Provider value={{ showHandles, toggleHandles }}>
+    <ConfigurationContext.Provider value={{ showHandles, toggleHandles, objectStoreName, setObjectStoreName }}>
       {children} {/* <-- must return children here */}
     </ConfigurationContext.Provider>
   );
