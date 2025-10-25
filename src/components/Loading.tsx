@@ -7,7 +7,7 @@ interface LoadingProps {
   /** Size of the CircularProgress in px */
   size?: number;
   /** If true the box will take full height (100%) */
-  fullHeight?: boolean;
+  height?: string;
   /** Optional additional Box sx props */
   sx?: React.ComponentProps<typeof Box>["sx"];
 }
@@ -15,7 +15,7 @@ interface LoadingProps {
 export const Loading: React.FC<LoadingProps> = ({
   message,
   size = 48,
-  fullHeight = true,
+  height,
   sx,
 }) => {
   return (
@@ -27,7 +27,7 @@ export const Loading: React.FC<LoadingProps> = ({
         alignItems: "center",
         justifyContent: "center",
         p: 2,
-        height: fullHeight ? "100%" : "auto",
+        height: height ?? "auto",
         width: "100%",
         boxSizing: "border-box",
         ...sx,

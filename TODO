@@ -6,3 +6,9 @@
 // Add Select Multi Nodes - The selectedNode should be an array, if lenght is 1 then its the same as before, otherwise we are selecting multiple to move them all at once
 // Add second child handle when person has a divorced partner edge / partner
 // Add click two nodes are selected, if they are partners or divorced add child should be avaiable 
+// Add Import /  Export for IndexDB and select which object store to user within the db for the current tree, 
+// Make it a pwa with mobile support
+// Add Receive Tree to override the one in the local store if it exists.
+// Modifyy Export Import for Current tree
+// Fix Mobile View
+// Modify Share to then allow selection of whats added / removed in the changes.

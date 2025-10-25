@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { IconButton, Menu, MenuItem, Divider, ListItemIcon, Typography } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
+import { AccountCircle } from "@mui/icons-material"
 import TuneIcon from '@mui/icons-material/Tune';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useConfiguration } from '@/hooks/useConfiguration';
+import { auth } from "@/firebaseConfig";
+import { signOut } from "firebase/auth";
+
 
 const ConfigMenu: React.FC = () => {
     const { showHandles, toggleHandles } = useConfiguration();
@@ -37,6 +41,18 @@ const ConfigMenu: React.FC = () => {
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
+
+                <Typography variant="subtitle2" sx={{ px: 2, pt: 1, color: 'text.secondary' }}>
+                    User
+                </Typography>
+
+                <MenuItem>
+                    <ListItemIcon>
+                        <AccountCircle />
+                    </ListItemIcon>
+                    Signed in as {auth.currentUser?.displayName}
+                </MenuItem>
+
                 <Typography variant="subtitle2" sx={{ px: 2, pt: 1, color: 'text.secondary' }}>
                     Configuration
                 </Typography>
@@ -50,11 +66,11 @@ const ConfigMenu: React.FC = () => {
 
                 <Divider />
 
-                <MenuItem onClick={() => console.log('Logout clicked')}>
+                <MenuItem onClick={() => signOut(auth)}>
                     <ListItemIcon>
                         <LogoutIcon fontSize="small" />
                     </ListItemIcon>
-                    Logout (Currently not implemented)
+                    Logout
                 </MenuItem>
             </Menu>
         </>
