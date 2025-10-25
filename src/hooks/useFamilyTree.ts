@@ -11,7 +11,7 @@ import { useState, useEffect, useCallback, SetStateAction } from "react";
 export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
     // Tree list state
     const [trees, setTrees] = useState<FamilyTreeSummary[]>([]);
-    const [selectedTreeId, _setSelectedTreeId] = useState<string | null>(null);
+    const [selectedTreeId, _setSelectedTreeId] = useState<string | null>(trees[0]?.id);
 
     const setSelectedTreeId = useCallback((id: string | null) => {
         setIsTreeLoaded(false);
@@ -143,7 +143,7 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                 // Save to IndexedDB
                 const tx = db.transaction(storeName, "readwrite");
                 const store = tx.objectStore(storeName);
-                store.put(treeToSave, selectedTreeId);
+                store.put(treeToSave);
                 console.log("Saved: ", selectedTreeId)
 
                 tx.onerror = () => console.error("Failed to save tree");
@@ -171,7 +171,7 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
             tx.onerror = () => console.error("Failed to create tree");
         },
-        [db, storeName]
+        [db, storeName, setSelectedTreeId]
     );
 
     // 🔹 Delete a tree
@@ -192,7 +192,7 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
             tx.onerror = () => console.error("Failed to delete tree");
         },
-        [db, storeName, selectedTreeId]
+        [db, storeName, selectedTreeId, setSelectedTreeId]
     );
 
     // 🔹 Rename a tree

@@ -13,6 +13,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/firebaseConfig";
+import { useError } from "@/hooks/useError";
 
 let lastCleanup = 0; // throttle cleanup to once every 5 min
 
@@ -39,6 +40,8 @@ async function cleanupOldCalls() {
 }
 
 export function useFirestoreSignaling() {
+  const { showError } = useError(); 
+
   const createOffer = async (pc: RTCPeerConnection) => {
     // 🔹 Run cleanup before creating a new call
     await cleanupOldCalls();
@@ -111,7 +114,10 @@ export function useFirestoreSignaling() {
     };
 
     const callData = (await getDoc(callDoc)).data();
-    if (!callData?.offer) throw new Error("Invalid call ID or offer not found");
+    if (!callData?.offer) {
+      showError("Invalid call ID or offer not found");
+      return;
+    }
 
     const offerDescription = callData.offer;
     await pc.setRemoteDescription(new RTCSessionDescription(offerDescription));

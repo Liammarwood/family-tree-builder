@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Box, IconButton, Tooltip, useMediaQuery } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
@@ -10,7 +10,7 @@ import GridOnIcon from "@mui/icons-material/GridOn";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import ImageIcon from "@mui/icons-material/Image";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import { Delete, Download, HeartBroken, Share, Upload } from "@mui/icons-material";
+import { Delete, Download, Edit, HeartBroken, Share, Upload } from "@mui/icons-material";
 
 type FamilyTreeToolbarProps = {
   isNodeSelected: boolean;
@@ -30,12 +30,15 @@ type FamilyTreeToolbarProps = {
   onUpload: () => void;
   onDownload: () => void;
   onShare: () => void;
+  onEdit: () => void;
 };
 
 export default function FamilyTreeToolbar({
-  onNew, onToggleGrid, onZoomFit, onUpload, onDownload, onShare,
+  onNew, onToggleGrid, onZoomFit, onUpload, onDownload, onShare, onEdit,
   onAddParent, onAddSibling, onAddChild, onAddPartner, onAddDivorcedPartner, onAddPerson, onDelete, onExportPDF, onExportPNG, canAddSibling, isNodeSelected
 }: FamilyTreeToolbarProps) {
+
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
     <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', justifyContent: 'center', alignContent: 'center', background: '#fff', boxShadow: 1, p: 1 }}>
@@ -53,8 +56,8 @@ export default function FamilyTreeToolbar({
       <Tooltip title="Export PDF"><IconButton onClick={onExportPDF}><PictureAsPdfIcon /></IconButton></Tooltip>
       <Tooltip title="Download Tree"><IconButton onClick={onDownload}><Download /></IconButton></Tooltip>
       <Tooltip title="Upload Tree"><IconButton onClick={onUpload}><Upload /></IconButton></Tooltip>
-      <Tooltip title="Share"><IconButton onClick={onShare}><Share /></IconButton></Tooltip>
-
+      <Tooltip title="Share or Receive"><IconButton onClick={onShare}><Share /></IconButton></Tooltip>
+      {isMobile && <Tooltip title="Edit Selected"><IconButton onClick={onEdit}><Edit /></IconButton></Tooltip>}
     </Box>
   );
 }

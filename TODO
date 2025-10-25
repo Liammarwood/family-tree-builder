@@ -8,5 +8,7 @@
 // Add click two nodes are selected, if they are partners or divorced add child should be avaiable 
 // Add Import /  Export for IndexDB and select which object store to user within the db for the current tree, 
 // Make it a pwa with mobile support
-// Add WebRRTC for sharing family tree's. This will override the one in the local store if it exists.
-// Add Export Import for singular tree
+// Add Receive Tree to override the one in the local store if it exists.
+// Modifyy Export Import for Current tree
+// Fix Mobile View
+// Modify Share to then allow selection of whats added / removed in the changes.

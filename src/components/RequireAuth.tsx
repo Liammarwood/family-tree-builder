@@ -1,5 +1,7 @@
 import { useEffect, useState, ReactNode } from "react";
 import { auth, signInWithGoogle } from "@/firebaseConfig";
+import { Loading } from "./Loading";
+import NotSignedIn from "./NotSignedIn";
 
 export const RequireAuth = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
@@ -18,8 +20,8 @@ export const RequireAuth = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (!signedIn) return null;
+  if (loading) return <Loading message="Awaiting Login..." height="100vh" />;
+  if (!signedIn) return <NotSignedIn onSignIn={signInWithGoogle} />;
 
   return <>{children}</>;
 };

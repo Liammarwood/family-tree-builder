@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import {
   Box,
-  Button,
   CircularProgress,
   Typography,
   Paper,
@@ -26,6 +25,7 @@ export const UploadModal: React.FC<Props> = ({ open, onClose, dbName, dbVersion 
     setLoading(true);
     try {
       const text = await file.text();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const importData: Record<string, { schema: any; data: any[] }> = JSON.parse(text);
       const newVersion = (dbVersion || 1) + 1;
 

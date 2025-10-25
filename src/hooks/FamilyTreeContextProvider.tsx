@@ -1,5 +1,5 @@
 import React from "react";
-import { useFamilyTree } from "@/hooks/useFamilyTrees";
+import { useFamilyTree } from "@/hooks/useFamilyTree";
 
 // FamilyTreeContext.tsx
 const FamilyTreeContext = React.createContext<ReturnType<typeof useFamilyTree> | null>(null);

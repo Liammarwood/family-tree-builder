@@ -23,6 +23,7 @@ import { FamilyTreeSection } from "./FamilyTreeSelection";
 import { useFamilyTreeContext } from "@/hooks/FamilyTreeContextProvider";
 import { UploadModal } from "./UploadModal";
 import { WebRTCJsonModal } from "./WebRTCJSONSender";
+import { useSearchParams } from "next/navigation";
 
 export default function FamilyTree() {
   const { selectedTreeId, currentTree, saveCurrentTree, isTreeLoaded } = useFamilyTreeContext();
@@ -41,6 +42,7 @@ export default function FamilyTree() {
   const selectedNodes = useMemo(() => nodes.filter((e) => e.selected), [nodes]);
   const isOneNodeSelected = selectedNode !== undefined && selectedNodes.length === 1;
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const searchParams = useSearchParams();
 
   const initialized = useRef(false);
 
@@ -51,7 +53,7 @@ export default function FamilyTree() {
     setNodes(currentTree.nodes);
     setEdges(currentTree.edges);
     initialized.current = false; // mark as "not synced yet"
-  }, [selectedTreeId, currentTree]);
+  }, [selectedTreeId, currentTree, setEdges, setNodes]);
 
   // 2️⃣ Sync effect
   useEffect(() => {
@@ -69,6 +71,14 @@ export default function FamilyTree() {
     }
   }, [isTreeLoaded, currentTree, nodes, edges, saveCurrentTree, selectedTreeId]);
 
+  // Auto open modal if call is in params
+  useEffect(() => {
+    const callParam = searchParams.get("call")
+    if (callParam) {
+      setShareModalOpen(true);
+    }
+  }, [searchParams])
+  
   // Handle manual connection between nodes
   const onConnect = useCallback((params: { source: string | null; target: string | null }) => {
     console.log('COnnect');
@@ -297,8 +307,11 @@ export default function FamilyTree() {
           case "child":
             newEdges.push(ChildEdge(selectedNode.id, newId));
             break;
+          case "divorced-partner":
+            newEdges.push(DivorcedEdge(selectedNode.id, newId, form.dateOfMarriage, form.dateOfDivorce));
+            break;
           case "partner":
-            newEdges.push(PartnerEdge(selectedNode.id, newId, ""));
+            newEdges.push(PartnerEdge(selectedNode.id, newId, form.dateOfMarriage));
             break;
           case "sibling":
             newEdges.push(...SiblingEdge(newId, currentEdges.filter((e) => e.target === selectedNode.id && e.data?.relationship === ParentRelationship)));
@@ -332,9 +345,11 @@ export default function FamilyTree() {
       setNodes((nds) =>
         nds.map((n) => ({ ...n, selected: n.id === node.id }))
       );
-      setEditMode({ type: 'edit', nodeId: node.id })
-    }
-  }, [setNodes]);
+      if(!isMobile) {
+        setEditMode({ type: 'edit', nodeId: node.id })
+      }
+      }
+  }, [setNodes, isMobile]);
 
   // Drag end: update node position in model by snapping to the grid
   const onNodeDragStop = (_: React.MouseEvent<Element, MouseEvent>, node: Node) => {
@@ -384,6 +399,7 @@ export default function FamilyTree() {
         request.onsuccess = () => resolve(request.result);
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const exportData: Record<string, { schema: any; data: any[] }> = {};
       const storeNames = Array.from(db.objectStoreNames);
 
@@ -391,7 +407,10 @@ export default function FamilyTree() {
         const transaction = db.transaction(storeName, "readonly");
         const store = transaction.objectStore(storeName);
 
+        // TODO Fixup any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const allRecords: any[] = await new Promise((resolve, reject) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const items: any[] = [];
           const cursorRequest = store.openCursor();
           cursorRequest.onsuccess = (e) => {
@@ -437,6 +456,7 @@ export default function FamilyTree() {
       <NavigationBar name={currentTree?.name} />
 
       <FamilyTreeToolbar
+        onEdit={() => setEditMode({ type: 'edit', nodeId: selectedNode?.id })}
         onDownload={handleDownload}
         onUpload={() => setUploadModalOpen(true)}
         onDelete={handleDeleteNode}
@@ -457,7 +477,7 @@ export default function FamilyTree() {
 
       <Stack direction="row" spacing={0} sx={{ height: '82vh' }}>
         {/* Left: Node details */}
-        {!isMobile && <DetailsPane>
+        {(!isMobile || (isMobile && editMode !== null)) && <DetailsPane>
           {((selectedNode && isOneNodeSelected) || (editMode?.type === "add" && editMode.relation === undefined)) && <PersonDetailsPane
             selectedNode={selectedNode}
             editMode={editMode}
