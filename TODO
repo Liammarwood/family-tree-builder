@@ -12,3 +12,6 @@
 // Modifyy Export Import for Current tree
 // Fix Mobile View
 // Modify Share to then allow selection of whats added / removed in the changes.
+// Ensure when clicking between People and Relationships only one can be selected at a time.
+// Add Sementic Versioning with Conventual Commits
+// Add Unit testing

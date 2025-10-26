@@ -7,5 +7,6 @@ export enum RelationshipType {
     Sibling = "Sibling",
     Child = "Child",
     Partner = "Partner",
-    DivorcedPartner = "DivorcedPartner"
+    Divorced = "Divorced",
+    Married = "Married"
 }

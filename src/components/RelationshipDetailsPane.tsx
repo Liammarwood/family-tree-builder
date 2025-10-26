@@ -25,7 +25,7 @@ export default function RelationshipDetailsPane({
   const getTitle = () => {
     if (selectedEdge && selectedEdge.data?.relationship === RelationshipType.Partner) {
       return "Edit Partner Relationship";
-    } else if (selectedEdge && selectedEdge.data?.relationship === RelationshipType.DivorcedPartner) {
+    } else if (selectedEdge && selectedEdge.data?.relationship === RelationshipType.Divorced) {
       return "Edit Divorced Partner Relationship";
     } else if (selectedEdge && selectedEdge.data?.relationship === RelationshipType.Parent) {
       return "Edit Parent Relationship";
@@ -40,7 +40,7 @@ export default function RelationshipDetailsPane({
     <>
       <Typography variant="h6" sx={{ mb: 1 }}>{getTitle()}</Typography>
       <Stack spacing={2}>
-        {(selectedEdge.data?.relationship === RelationshipType.DivorcedPartner || selectedEdge.data?.relationship === RelationshipType.Partner) && <TextField
+        {(selectedEdge.data?.relationship === RelationshipType.Divorced || selectedEdge.data?.relationship === RelationshipType.Partner) && <TextField
           label="Date of Marriage"
           type="date"
           variant="outlined"
@@ -49,7 +49,7 @@ export default function RelationshipDetailsPane({
           slotProps={{ inputLabel: { shrink: true } }}
           fullWidth
         />}
-        {selectedEdge.data?.relationship === RelationshipType.DivorcedPartner && <TextField
+        {selectedEdge.data?.relationship === RelationshipType.Divorced && <TextField
           label={"Date of Divorce"}
           type="date"
           variant="outlined"

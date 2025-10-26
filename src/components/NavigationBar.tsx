@@ -1,12 +1,30 @@
-import { AppBar, Toolbar, Typography } from "@mui/material";
+import { AppBar, Box, Toolbar, Typography, useMediaQuery } from "@mui/material";
 import ConfigurationMenu from "@/components/ConfigurationMenu";
+import FamilyTreeToolbar from "./FamilyTreeToolbar";
+import { EditMode } from "@/types/EditMode";
 
-export default function NavigationBar({name}: {name?: string}) {
+type Props = {
+    setEditMode: (edit: EditMode) => void;
+    editMode: EditMode | null;
+};
+
+export default function NavigationBar({ setEditMode }: Props) {
+    const isMobile = useMediaQuery("(max-width: 768px)");
     return (
-        <AppBar position="static" color="primary">
-            <Toolbar>
-                <Typography variant="h6" sx={{ px: 3, py: 0, fontWeight: 700, letterSpacing: 1 }}>Family Tree Builder ({name})</Typography>
-                <ConfigurationMenu />
+        <AppBar position="static" color="default" elevation={1}>
+            <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+                {/* Left side: burger + title */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                     <ConfigurationMenu />
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Family Tree Builder
+                    </Typography>
+                </Box>
+
+                {/* Right side: toolbar actions */}
+                {!isMobile && <Box sx={{ display: "flex", gap: 1 }}>
+                    <FamilyTreeToolbar setEditMode={setEditMode} />
+                </Box>}
             </Toolbar>
         </AppBar>
     )

@@ -1,10 +1,10 @@
-import { Box, Typography } from "@mui/material"
+import { Box, SxProps, Theme, Typography } from "@mui/material"
 import React from "react";
 
-export const DetailsPane = ({ children }: { children?: React.ReactNode[] }) => {
+export const DetailsPane = ({ children, sx }: { sx: SxProps<Theme>, children?: React.ReactNode[] }) => {
     const validChildren = React.Children.toArray(children).filter(Boolean);
     return (
-        <Box justifyContent="center" alignItems="center" textAlign="center" sx={{ height: '82vh', overflowY: "auto", width: 320, minWidth: 260, maxWidth: 400, p: 3, borderRadius: 0, bgcolor: '#fff', gap: 2 }}>
+        <Box justifyContent="center" alignItems="center" textAlign="center" sx={{ height: '90vh', overflowY: "auto", width: 320, p: 1, borderRadius: 0, bgcolor: '#fff', gap: 2, ...sx }}>
             {validChildren !== undefined && validChildren.length === 1 ? validChildren :
 
                 <Box

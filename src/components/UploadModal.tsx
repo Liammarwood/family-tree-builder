@@ -8,64 +8,22 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { handleImport } from "@/libs/backup";
 
 type Props = {
-  dbName: string;
-  dbVersion?: number;
   open: boolean;
   onClose: () => void;
 };
 
-export const UploadModal: React.FC<Props> = ({ open, onClose, dbName, dbVersion }) => {
+export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // --- Import function ---
-  const handleImport = async (file: File) => {
-    setLoading(true);
-    try {
-      const text = await file.text();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const importData: Record<string, { schema: any; data: any[] }> = JSON.parse(text);
-      const newVersion = (dbVersion || 1) + 1;
-
-      const db = await new Promise<IDBDatabase>((resolve, reject) => {
-        const request = indexedDB.open(dbName, newVersion);
-        request.onerror = () => reject(request.error);
-        request.onupgradeneeded = (e) => {
-          const db = (e.target as IDBOpenDBRequest).result;
-          for (const storeName of Object.keys(importData)) {
-            const { schema } = importData[storeName];
-            if (!db.objectStoreNames.contains(storeName)) {
-              db.createObjectStore(storeName, {
-                keyPath: schema.keyPath,
-                autoIncrement: schema.autoIncrement,
-              });
-            }
-          }
-        };
-        request.onsuccess = () => resolve(request.result);
-      });
-
-      for (const storeName of Object.keys(importData)) {
-        const transaction = db.transaction(storeName, "readwrite");
-        const store = transaction.objectStore(storeName);
-        for (const item of importData[storeName].data) {
-          store.put(item);
-        }
-      }
-    } catch (err) {
-      console.error("Import failed:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // --- Drag & Drop ---
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files.length > 0) {
-      handleImport(e.dataTransfer.files[0]);
+      handleImport(e.dataTransfer.files[0], setLoading);
     }
   };
 
@@ -145,7 +103,7 @@ export const UploadModal: React.FC<Props> = ({ open, onClose, dbName, dbVersion 
                 style={{ display: "none" }}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleImport(file);
+                  if (file) handleImport(file, setLoading);
                 }}
               />
             </Box>
