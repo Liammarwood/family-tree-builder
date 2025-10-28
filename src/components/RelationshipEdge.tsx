@@ -1,7 +1,7 @@
-import { MarriedRelationship, PartnerRelationship } from "@/libs/constants";
+import { RelationshipType } from "@/types/RelationshipEdgeData";
 import { Favorite, HeartBroken } from "@mui/icons-material";
 import React from "react";
-import { BaseEdge, EdgeLabelRenderer } from "reactflow";
+import { BaseEdge, EdgeLabelRenderer, useReactFlow } from "reactflow";
 
 export type RelationshipEdgeData = {
   relationship?: string;
@@ -15,7 +15,6 @@ type Props = {
   targetX: number;
   targetY: number;
   markerEnd?: string;
-  onClick?: (event: React.MouseEvent, edgeInfo: { id: string; sourceX: number; sourceY: number; targetX: number; targetY: number; label?: string }) => void;
   data?: RelationshipEdgeData;
 };
 
@@ -45,29 +44,34 @@ export function RelationshipEdge({
   targetX,
   targetY,
   markerEnd,
-  onClick,
   data,
 }: Props) {
   const { path, labelX, labelY } = getStepPathAndLabel(sourceX, sourceY, targetX, targetY);
+  const { setEdges } = useReactFlow();
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Replace with your edit logic / open popover / set state
-    onClick?.(e, { id, sourceX, sourceY, targetX, targetY });
+  const handleLabelClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    // This simulates the ReactFlow onEdgeClick behavior:
+    setEdges((eds) =>
+      eds.map((e) =>
+        e.id === id ? { ...e, selected: !e.selected } : { ...e, selected: false }
+      )
+    );
   };
 
   return (
     <>
       {/* Draw the step path as the edge */}
       <BaseEdge id={id} path={path} markerEnd={markerEnd}
-        style={data?.dateOfDivorce ? {
+        style={{
           stroke: '#b1b1b7',
           strokeWidth: 2,
-          strokeDasharray: '6 4',
-        } : {}} />
+          strokeDasharray: data?.dateOfDivorce ? '6 4' : undefined,
+        }} />
       <EdgeLabelRenderer>
         <div
-          onClick={handleClick}
+          onClick={handleLabelClick}
           className="nodrag nopan"
           style={{
             position: "absolute",
@@ -95,8 +99,8 @@ export function RelationshipEdge({
             marginBottom: 4
           }}>
             {data?.relationship ?
-              data.relationship === PartnerRelationship && data.dateOfMarriage ? MarriedRelationship : data.relationship
-              : "Relationship"}
+              data.relationship === RelationshipType.Partner && data.dateOfMarriage ? RelationshipType.Married : data.relationship
+              : null}
           </div>
           {data?.dateOfMarriage && (
             <div style={{

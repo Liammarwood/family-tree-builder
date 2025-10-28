@@ -7,7 +7,7 @@ function formatDate(dateStr?: string) {
 import React from "react";
 import { Handle, Position, NodeProps } from "reactflow";
 import { Avatar, Box, Card, CardContent, Chip, Typography, Badge } from "@mui/material";
-import { Male, Female } from "@mui/icons-material";
+import { Male, Female, Public } from "@mui/icons-material";
 import CountryFlag from "react-country-flag";
 import { getCode } from "country-list";
 import { Work, Cake, CalendarToday } from "@mui/icons-material";
@@ -19,10 +19,8 @@ export const FamilyTreeNode = ({
   selected,
   data
 }: NodeProps<FamilyNodeData>) => {
-  const { showHandles } = useConfiguration();
-  // const _connectedEdges: Edge<RelationshipEdgeData>[] = useStore((state) =>
-  //   state.edges.filter((e) => e.source === id || e.target === id)
-  // );
+  const { showHandles, avatarVariant } = useConfiguration();
+
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
     width: 16,
@@ -66,9 +64,10 @@ export const FamilyTreeNode = ({
             <Avatar
               src={data.image}
               alt={data.name}
+              variant={avatarVariant}
               sx={{
-                width: 60,
-                height: 60,
+                width: 100,
+                height: 100,
                 border: '3px solid',
                 borderColor: isDeceased ? 'grey.400' : 'primary.main',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
@@ -125,7 +124,7 @@ export const FamilyTreeNode = ({
           )}
 
           {/* Details: Born, Country, Died as rows */}
-          <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start', mt: 1 }}>
+          <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Cake sx={{ fontSize: 16, color: 'success.main' }} />
               <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem', minWidth: 60 }}>
@@ -133,16 +132,17 @@ export const FamilyTreeNode = ({
               </Typography>
             </Box>
             {data.countryOfBirth && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 0.5 }}>
-                <CountryFlag
-                  countryCode={getCode(data.countryOfBirth) || ''}
-                  svg
-                  style={{ width: 18, height: 18, borderRadius: 3, boxShadow: '0 1px 2px #bbb' }}
-                  title={data.countryOfBirth}
-                />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Public sx={{ fontSize: 16, color: 'primary.main' }} />
                 <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                  {data.countryOfBirth}
+                  <strong>Country of Birth:</strong> <CountryFlag
+                    countryCode={getCode(data.countryOfBirth) || ''}
+                    svg
+                    style={{ width: 18, boxShadow: '0 1px 2px #bbb' }}
+                    title={data.countryOfBirth}
+                  />
                 </Typography>
+
               </Box>
             )}
             {data.dateOfDeath && (
@@ -154,21 +154,12 @@ export const FamilyTreeNode = ({
               </Box>
             )}
           </Box>
-          {/* Handles for all relationship types */}
-
         </Box>
       </CardContent>
-      {/* Parent (target) - top */}
-      <Handle type="target" position={Position.Top} id="parent" style={{ ...bigHandle, display: showHandles ? "block" : "none", left: '50%' }} />
-      {/* Child (source) - bottom */}
-      <Handle type="source" position={Position.Bottom} id="child" style={{ ...bigHandle, display: showHandles ? "block" : "none", left: '50%' }} />
-      {/* TODO Fixup this so it works logically */}
-      {/* {connectedEdges.filter(edge => edge.data && (edge.data.relationship === RelationshipType.DivorcedPartner || edge.data.relationship === RelationshipType.Partner)).map(edge => <Handle type="source" position={Position.Bottom} id={`${id === edge.source ? edge.target : edge.source}-child`} key={`${id === edge.source ? edge.target : edge.source}-child`} style={{ left: '25%' }} />)} */}
-      {/* Side handles for partner/sibling links
-          - right source: used when this node is the left node in a pair (edge source uses 'right')
-          - left target: used when this node is the right node in a pair (edge target uses 'left') */}
-      <Handle type="source" position={Position.Right} id="right" style={{ ...bigHandle, display: showHandles ? "block" : "none", top: "50%" }} />
-      <Handle type="target" position={Position.Left} id="left" style={{ ...bigHandle, display: showHandles ? "block" : "none", top: "50%" }} />
+      <Handle type="target" position={Position.Top} id="parent" style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", left: '50%' }} />
+      <Handle type="source" position={Position.Bottom} id="child" style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", left: '50%' }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", top: "50%" }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", top: "50%" }} />
     </Card>
   );
 };

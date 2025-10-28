@@ -1,6 +1,6 @@
 "use client";
 
-import { useFamilyTreeContext } from "@/hooks/FamilyTreeContextProvider";
+import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 import { Close } from "@mui/icons-material";
 import {
   Modal,

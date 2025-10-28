@@ -4,10 +4,7 @@ import { RelationshipEdge } from "@/components/RelationshipEdge";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { Node } from "reactflow";
 
-export const ParentRelationship = "Parent";
-export const MarriedRelationship = "Married";
-export const PartnerRelationship = "Partner";
-export const DivorcedRelationship = "Divorced";
+export const DB_VERSION = 1;
 export const DB_NAME = "family-tree-builder";
 export const STORE_NAME = "family-tree-store";
 export const LOCAL_STORAGE_SELECTED_TREE_KEY = "selected-tree-id";

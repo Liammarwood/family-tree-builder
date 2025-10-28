@@ -1,5 +1,5 @@
 import { Edge } from "reactflow"
-import { DivorcedRelationship, ParentRelationship, PartnerRelationship } from "./constants"
+import { RelationshipType } from "@/types/RelationshipEdgeData"
 
 export const PartnerEdge = (source: string, target: string, dateOfMarriage: string) => {
     return ({
@@ -12,7 +12,7 @@ export const PartnerEdge = (source: string, target: string, dateOfMarriage: stri
         animated: false,
         sourceHandle: 'right',
         targetHandle: 'left',
-        data: { relationship: PartnerRelationship, dateOfMarriage: dateOfMarriage }
+        data: { relationship: RelationshipType.Partner, dateOfMarriage: dateOfMarriage }
     })
 }
 
@@ -27,7 +27,7 @@ export const DivorcedEdge = (source: string, target: string, dateOfMarriage: str
         animated: false,
         sourceHandle: 'right',
         targetHandle: 'left',
-        data: { relationship: DivorcedRelationship, dateOfMarriage, dateOfDivorce }
+        data: { relationship: RelationshipType.Divorced, dateOfMarriage, dateOfDivorce }
     })
 }
 
@@ -42,7 +42,11 @@ export const ParentEdge = (child: string, parent: string) => {
         animated: false,
         sourceHandle: 'child',
         targetHandle: 'parent',
-        data: { relationship: ParentRelationship }
+        style: {
+          stroke: '#b1b1b7',
+          strokeWidth: 2,
+        },
+        data: { relationship: RelationshipType.Parent }
     })
 }
 
@@ -56,7 +60,11 @@ export const ChildEdge = (child: string, parent: string) => {
         animated: false,
         sourceHandle: 'child',
         targetHandle: 'parent',
-        data: { relationship: ParentRelationship }
+        style: {
+          stroke: '#b1b1b7',
+          strokeWidth: 2,
+        },
+        data: { relationship: RelationshipType.Parent }
     })
 }
 

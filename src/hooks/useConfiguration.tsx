@@ -1,11 +1,15 @@
 "use client"
 import React, { createContext, useContext, useState, ReactNode, FC } from 'react';
+import { AvatarTypes } from "@/types/ConfigurationTypes"
 
 interface ConfigurationState {
   showHandles: boolean;
+  setShowHandles: (show: boolean) => void;
   toggleHandles: () => void;
   objectStoreName: string;
   setObjectStoreName: (name: string) => void;
+  avatarVariant: AvatarTypes;
+  setAvatarVariant: (type: AvatarTypes) => void
 }
 
 // Create context
@@ -21,6 +25,7 @@ export const useConfiguration = (): ConfigurationState => {
 // Provider
 export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [showHandles, setShowHandles] = useState<boolean>(true);
+  const [avatarVariant, setAvatarVariant] = useState<AvatarTypes>(AvatarTypes.Circular)
   const [objectStoreName, setObjectStoreName] = useState<string>("");
 
   const toggleHandles = () => {
@@ -29,7 +34,7 @@ export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children })
   }
 
   return (
-    <ConfigurationContext.Provider value={{ showHandles, toggleHandles, objectStoreName, setObjectStoreName }}>
+    <ConfigurationContext.Provider value={{ showHandles, toggleHandles, setShowHandles, objectStoreName, setObjectStoreName, setAvatarVariant, avatarVariant }}>
       {children} {/* <-- must return children here */}
     </ConfigurationContext.Provider>
   );

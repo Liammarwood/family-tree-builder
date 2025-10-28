@@ -7,11 +7,14 @@ import {
     FamilyTreeSummary
 } from "@/types/FamilyTreeObject";
 import { useState, useEffect, useCallback, SetStateAction } from "react";
+import { useError } from "./useError";
+import React from "react";
 
-export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
+function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
     // Tree list state
     const [trees, setTrees] = useState<FamilyTreeSummary[]>([]);
-    const [selectedTreeId, _setSelectedTreeId] = useState<string | null>(trees[0]?.id);
+    const [selectedTreeId, _setSelectedTreeId] = useState<string | null>(null);
+    const { showError } = useError();
 
     const setSelectedTreeId = useCallback((id: string | null) => {
         setIsTreeLoaded(false);
@@ -26,15 +29,18 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
         if (typeof window !== "undefined") {
             const stored = localStorage.getItem(LOCAL_STORAGE_SELECTED_TREE_KEY);
             if (stored) _setSelectedTreeId(stored);
+        } else {
+            _setSelectedTreeId(trees[0]?.id);
         }
-    }, []);
+    }, [trees]);
 
     // Current tree data state
     const [currentTree, setCurrentTree] = useState<FamilyTreeObject | undefined>();
     const [isTreeLoaded, setIsTreeLoaded] = useState(false);
 
-    // DB instance
+    // DB instance and ready state
     const [db, setDb] = useState<IDBDatabase | null>(null);
+    const [isDbReady, setIsDbReady] = useState(false);
 
     // 🔹 Initialize IndexedDB
     useEffect(() => {
@@ -53,15 +59,22 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
             openRequest.onsuccess = () => {
                 dbInstance = openRequest.result;
                 setDb(dbInstance);
+                setIsDbReady(true);
             };
 
-            openRequest.onerror = (e) => console.error("IndexedDB error:", e);
+            openRequest.onerror = (e) => {
+                console.error("IndexedDB error:", e);
+                setIsDbReady(false);
+            };
         };
 
         openDB();
 
         return () => {
-            if (dbInstance) dbInstance.close();
+            if (dbInstance) {
+                dbInstance.close();
+                setIsDbReady(false);
+            }
         };
     }, [dbName, storeName]);
 
@@ -74,7 +87,7 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
     // 🔹 Load tree summaries
     const loadTrees = useCallback(() => {
-        if (!db) return;
+        if (!db || !isDbReady) return;
         const tx = db.transaction(storeName, "readonly");
         const store = tx.objectStore(storeName);
         const request = store.getAll();
@@ -86,7 +99,7 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
         };
 
         request.onerror = () => console.error("Failed to load trees");
-    }, [db, storeName]);
+    }, [db, isDbReady, storeName]);
 
     useEffect(() => {
         loadTrees();
@@ -95,7 +108,7 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
     // 🔹 Load current tree data when selectedTreeId changes
     useEffect(() => {
         console.log("Called")
-        if (!db || !selectedTreeId) {
+        if (!db || !isDbReady || !selectedTreeId) {
             setCurrentTree(undefined);
             setIsTreeLoaded(true);
             console.log("failed")
@@ -120,44 +133,83 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
             setCurrentTree(NEW_TREE());
             setIsTreeLoaded(true);
         };
-    }, [db, selectedTreeId, storeName]);
+    }, [db, isDbReady, selectedTreeId, storeName]);
 
-    // 🔹 Save current tree data
-    const saveCurrentTree = useCallback(
+    // Save current tree data
+    const saveTree = useCallback(
         (newValue: SetStateAction<FamilyTreeObject>) => {
-            if (!db || !selectedTreeId) return;
+            if (!db || !isDbReady) {
+                showError("Database not initialized yet. Please wait a moment and try again.");
+                return;
+            }
 
-            setCurrentTree((prev) => {
-                const next =
-                    typeof newValue === "function"
-                        ? (newValue as (prev?: FamilyTreeObject) => FamilyTreeObject)(prev)
-                        : newValue;
+            if (selectedTreeId) {
+                setCurrentTree((prev) => {
+                    const next =
+                        typeof newValue === "function"
+                            ? (newValue as (prev?: FamilyTreeObject) => FamilyTreeObject)(prev)
+                            : newValue;
 
-                // Ensure the tree has the correct ID and updated timestamp
-                const treeToSave = {
-                    ...next,
-                    id: selectedTreeId,
-                    updatedAt: Date.now(),
-                };
+                    // Ensure the tree has the correct ID and updated timestamp
+                    const treeToSave = {
+                        ...next,
+                        id: selectedTreeId,
+                        updatedAt: Date.now(),
+                    };
 
-                // Save to IndexedDB
-                const tx = db.transaction(storeName, "readwrite");
-                const store = tx.objectStore(storeName);
-                store.put(treeToSave);
-                console.log("Saved: ", selectedTreeId)
+                    // Save to IndexedDB
+                    const tx = db.transaction(storeName, "readwrite");
+                    const store = tx.objectStore(storeName);
+                    store.put(treeToSave);
+                    console.log("Saved: ", selectedTreeId)
 
-                tx.onerror = () => console.error("Failed to save tree");
+                    tx.onerror = () => console.error("Failed to save tree");
 
-                return treeToSave;
-            });
+                    return treeToSave;
+                });
+            } else {
+                // Handle function case properly
+                setCurrentTree((prev) => {
+                    const next =
+                        typeof newValue === "function"
+                            ? (newValue as (prev?: FamilyTreeObject) => FamilyTreeObject)(prev)
+                            : newValue;
+
+                    // Ensure the tree has the correct ID and updated timestamp
+                    const treeToSave = {
+                        ...next,
+                        updatedAt: Date.now(),
+                    };
+
+                    // Save to IndexedDB
+                    const tx = db.transaction(storeName, "readwrite");
+                    const store = tx.objectStore(storeName);
+                    store.put(treeToSave);
+                    console.log("Saved: ", treeToSave.id)
+
+                    tx.oncomplete = () => {
+                        // Update trees list after successful save
+                        loadTrees();
+                    };
+
+                    tx.onerror = () => console.error("Failed to save tree");
+
+                    setSelectedTreeId(treeToSave.id ?? null);
+
+                    return treeToSave;
+                });
+            }
         },
-        [db, selectedTreeId, storeName]
+        [db, isDbReady, selectedTreeId, storeName, setSelectedTreeId, loadTrees, showError]
     );
 
-    // 🔹 Create a new tree
+    // Create a new tree
     const createTree = useCallback(
         (name: string) => {
-            if (!db) return;
+            if (!db || !isDbReady) {
+                showError("Database not initialized yet. Please wait a moment and try again.");
+                return;
+            }
 
             const newTree: FamilyTreeObject = NEW_TREE(name);
             const tx = db.transaction(storeName, "readwrite");
@@ -171,13 +223,16 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
             tx.onerror = () => console.error("Failed to create tree");
         },
-        [db, storeName, setSelectedTreeId]
+        [db, isDbReady, storeName, setSelectedTreeId, showError]
     );
 
-    // 🔹 Delete a tree
+    // Delete a tree
     const deleteTree = useCallback(
         (id: string) => {
-            if (!db) return;
+            if (!db || !isDbReady) {
+                showError("Database not initialized yet. Please wait a moment and try again.");
+                return;
+            }
 
             const tx = db.transaction(storeName, "readwrite");
             tx.objectStore(storeName).delete(id);
@@ -192,13 +247,16 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
             tx.onerror = () => console.error("Failed to delete tree");
         },
-        [db, storeName, selectedTreeId, setSelectedTreeId]
+        [db, isDbReady, storeName, selectedTreeId, setSelectedTreeId, showError]
     );
 
-    // 🔹 Rename a tree
+    // Rename a tree
     const renameTree = useCallback(
         (id: string, newName: string) => {
-            if (!db) return;
+            if (!db || !isDbReady) {
+                showError("Database not initialized yet. Please wait a moment and try again.");
+                return;
+            }
 
             const tx = db.transaction(storeName, "readwrite");
             const store = tx.objectStore(storeName);
@@ -223,7 +281,7 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
             getReq.onerror = () => console.error("Failed to rename tree");
         },
-        [db, storeName, selectedTreeId]
+        [db, isDbReady, storeName, selectedTreeId, showError]
     );
 
     return {
@@ -238,7 +296,21 @@ export function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
         // Current tree data
         currentTree,
-        saveCurrentTree,
+        saveTree,
         isTreeLoaded,
+        isDbReady,
     };
 }
+
+const FamilyTreeContext = React.createContext<ReturnType<typeof useFamilyTree> | null>(null);
+
+export const FamilyTreeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const value = useFamilyTree();
+  return <FamilyTreeContext.Provider value={value}>{children}</FamilyTreeContext.Provider>;
+};
+
+export const useFamilyTreeContext = () => {
+  const ctx = React.useContext(FamilyTreeContext);
+  if (!ctx) throw new Error("useFamilyTreeContext must be used within FamilyTreeProvider");
+  return ctx;
+};

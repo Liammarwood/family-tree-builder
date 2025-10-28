@@ -11,23 +11,27 @@ import {
     Alert,
     Stack,
     Chip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
 } from "@mui/material";
 import { useFirestoreSignaling } from "@/hooks/useFirestoreSignaling";
 import { RequireAuth } from "@/components/RequireAuth";
 import { QRCodeSVG } from "qrcode.react";
 import { FamilyTreeObject } from "@/types/FamilyTreeObject";
-import { CheckCircle, HourglassEmpty } from "@mui/icons-material";
+import { CheckCircle, HourglassEmpty, Warning } from "@mui/icons-material";
+import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 
-type WebRTCJsonModalProps = {
+type ShareModalProps = {
     open: boolean;
     onClose: () => void;
-    json: FamilyTreeObject | undefined;
 };
 
-export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
+export const ShareModal: React.FC<ShareModalProps> = ({
     open,
-    onClose,
-    json,
+    onClose
 }) => {
     const [callId, setCallId] = useState<string | null>(null);
     const [callInput, _setCallInput] = useState<string>("");
@@ -36,6 +40,9 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
     const [channel, setChannel] = useState<RTCDataChannel | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [isReceiver, setIsReceiver] = useState<boolean>(false);
+    const [pendingTree, setPendingTree] = useState<FamilyTreeObject | null>(null);
+    const [showOverrideDialog, setShowOverrideDialog] = useState<boolean>(false);
+    const { isDbReady, trees, saveTree, currentTree } = useFamilyTreeContext();
 
     const setCallInput = (input: string) => {
         setIsReceiver(true);
@@ -54,11 +61,14 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
     const resetState = () => {
         cleanupConnection();
         setCallId(null);
-        setCallInput("");
+        _setCallInput("");
         setConnected(false);
         setLoading(false);
         setChannel(null);
+        setIsReceiver(false);
         setSuccessMessage(null);
+        setPendingTree(null);
+        setShowOverrideDialog(false);
     };
 
     const cleanupConnection = () => {
@@ -73,7 +83,6 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
         }
     };
 
-    
     const handleJoinCall = async (id?: string) => {
         setLoading(true);
         const joinId = id || callInput;
@@ -98,11 +107,10 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
         const callParam = urlParams.get("call");
         if (callParam && open) {
             setCallInput(callParam);
-            handleJoinCall(callParam);
         }
         // Cleanup on modal close/unmount
         return () => cleanupConnection();
-    }, [open, cleanupConnection]);
+    }, [open]);
 
     const initPeerConnection = () => {
         const peer = new RTCPeerConnection();
@@ -127,6 +135,36 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
         }
     };
 
+    const handleReceivedTree = (receivedTree: FamilyTreeObject) => {
+        // Check if tree with same ID already exists
+        const existingTree = trees.find(t => t.id === receivedTree.id);
+        
+        if (existingTree) {
+            // Show confirmation dialog
+            setPendingTree(receivedTree);
+            setShowOverrideDialog(true);
+        } else {
+            // No conflict, save directly
+            saveTree(receivedTree);
+            setSuccessMessage(`Received the ${receivedTree.name} family tree`);
+        }
+    };
+
+    const handleConfirmOverride = () => {
+        if (pendingTree) {
+            saveTree(pendingTree);
+            setSuccessMessage(`Overridden with the ${pendingTree.name} family tree`);
+            setShowOverrideDialog(false);
+            setPendingTree(null);
+        }
+    };
+
+    const handleCancelOverride = () => {
+        setShowOverrideDialog(false);
+        setPendingTree(null);
+        setSuccessMessage("Import cancelled - existing tree preserved");
+    };
+
     const setupDataChannel = (dc: RTCDataChannel) => {
         setChannel(dc);
 
@@ -137,8 +175,8 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
                 console.warn("Only the initiator can send JSON data.");
                 return;
             } else {
-                dc.send(JSON.stringify(json));
-                setSuccessMessage(`${json?.name} Family Tree Sent`);
+                dc.send(JSON.stringify(currentTree));
+                setSuccessMessage(`${currentTree?.name} Family Tree Sent`);
             }
         };
 
@@ -146,11 +184,15 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
             try {
                 const receivedJson: FamilyTreeObject = JSON.parse(e.data);
                 console.log("📥 Received JSON:", receivedJson);
-                setSuccessMessage(`Received the ${receivedJson.name} family tree`)
+                handleReceivedTree(receivedJson);
             } catch (err) {
                 console.warn("Received non-JSON message:", e.data, err);
             }
         };
+
+        dc.onerror = (e) => {
+            console.log("Error", e)
+        }
     };
 
     const handleCopyLink = () => {
@@ -179,7 +221,7 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
                         gap: 2,
                     }}
                 >
-                    <Typography variant="h6">Share Family Trees</Typography>
+                    <Typography variant="h6">Share Family Tree</Typography>
 
                     {loading && <CircularProgress />}
 
@@ -197,7 +239,7 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
                                 <Button
                                     variant="contained"
                                     onClick={() => handleJoinCall()}
-                                    disabled={!callInput}
+                                    disabled={!callInput || !isDbReady}
                                 >
                                     Receive
                                 </Button>
@@ -216,7 +258,6 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
                             </Box>
 
                             <Button onClick={handleCopyLink}>Copy Shareable Link</Button>
-
 
                             {connected ? (
                                 <Chip
@@ -239,15 +280,57 @@ export const WebRTCJsonModal: React.FC<WebRTCJsonModalProps> = ({
                     )}
 
                     <Stack direction="row" spacing={2}>
-                        {!callId && !loading ? <Button variant="contained" onClick={handleCreateOffer}>
-                            Share {json?.name} Family Tree
-                        </Button> : <Button variant="contained" onClick={resetState}>Restart</Button>
-                    }
-                    <Button onClick={handleClose}>Cancel</Button>
+                        {!callId && !loading ? (
+                            <Button variant="contained" onClick={handleCreateOffer}>
+                                Share {currentTree?.name} Family Tree
+                            </Button>
+                        ) : (
+                            <Button variant="contained" onClick={resetState}>
+                                Restart
+                            </Button>
+                        )}
+                        <Button onClick={handleClose}>Cancel</Button>
                     </Stack>
-
                 </Box>
             </Modal>
+
+            {/* Override Confirmation Dialog */}
+            <Dialog
+                open={showOverrideDialog}
+                onClose={handleCancelOverride}
+                aria-labelledby="override-dialog-title"
+            >
+                <DialogTitle id="override-dialog-title">
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <Warning color="warning" />
+                        Tree Already Exists
+                    </Box>
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        A family tree with the same ID already exists in your collection.
+                        {pendingTree && (
+                            <>
+                                <br /><br />
+                                <strong>Existing tree:</strong> {trees.find(t => t.id === pendingTree.id)?.name}
+                                <br />
+                                <strong>Incoming tree:</strong> {pendingTree.name}
+                                <br /><br />
+                            </>
+                        )}
+                        Do you want to override your current progress with the received tree?
+                        This action cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCancelOverride} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmOverride} color="error" variant="contained">
+                        Override
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </RequireAuth>
     );
 };
