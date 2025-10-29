@@ -221,6 +221,274 @@ describe('autoLayoutFamilyTree', () => {
     expect(parent!.position.y).toBeLessThan(child!.position.y);
   });
 
+  it('aligns siblings at the same Y coordinate', async () => {
+    const nodes: Node<FamilyNodeData>[] = [
+      {
+        id: 'parent1',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'parent1',
+          name: 'Parent 1',
+          dateOfBirth: '1960-01-01',
+          createdAt: Date.now(),
+          children: ['child1', 'child2', 'child3'],
+          parents: [],
+          partners: ['parent2'],
+        },
+      },
+      {
+        id: 'parent2',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'parent2',
+          name: 'Parent 2',
+          dateOfBirth: '1962-01-01',
+          createdAt: Date.now(),
+          children: ['child1', 'child2', 'child3'],
+          parents: [],
+          partners: ['parent1'],
+        },
+      },
+      {
+        id: 'child1',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'child1',
+          name: 'Child 1',
+          dateOfBirth: '1990-01-01',
+          createdAt: Date.now(),
+          children: [],
+          parents: ['parent1', 'parent2'],
+          partners: [],
+        },
+      },
+      {
+        id: 'child2',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'child2',
+          name: 'Child 2',
+          dateOfBirth: '1992-01-01',
+          createdAt: Date.now(),
+          children: [],
+          parents: ['parent1', 'parent2'],
+          partners: [],
+        },
+      },
+      {
+        id: 'child3',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'child3',
+          name: 'Child 3',
+          dateOfBirth: '1995-01-01',
+          createdAt: Date.now(),
+          children: [],
+          parents: ['parent1', 'parent2'],
+          partners: [],
+        },
+      },
+    ];
+
+    const edges: Edge[] = [
+      {
+        id: 'partner-parent1-parent2',
+        source: 'parent1',
+        target: 'parent2',
+        data: { relationship: RelationshipType.Partner, dateOfMarriage: '1989-06-15' },
+      },
+      {
+        id: 'parent-parent1-child1',
+        source: 'parent1',
+        target: 'child1',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-parent2-child1',
+        source: 'parent2',
+        target: 'child1',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-parent1-child2',
+        source: 'parent1',
+        target: 'child2',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-parent2-child2',
+        source: 'parent2',
+        target: 'child2',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-parent1-child3',
+        source: 'parent1',
+        target: 'child3',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-parent2-child3',
+        source: 'parent2',
+        target: 'child3',
+        data: { relationship: RelationshipType.Parent },
+      },
+    ];
+
+    const result = await autoLayoutFamilyTree(nodes, edges);
+    expect(result).toHaveLength(5);
+
+    const child1 = result.find(n => n.id === 'child1');
+    const child2 = result.find(n => n.id === 'child2');
+    const child3 = result.find(n => n.id === 'child3');
+
+    expect(child1).toBeDefined();
+    expect(child2).toBeDefined();
+    expect(child3).toBeDefined();
+    
+    // All siblings should be at the same Y coordinate
+    expect(child1!.position.y).toBe(child2!.position.y);
+    expect(child2!.position.y).toBe(child3!.position.y);
+  });
+
+  it('handles multi-level hierarchy with parents of parents', async () => {
+    const nodes: Node<FamilyNodeData>[] = [
+      {
+        id: 'great-grandparent',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'great-grandparent',
+          name: 'Great Grandparent',
+          dateOfBirth: '1920-01-01',
+          createdAt: Date.now(),
+          children: ['grandparent1', 'grandparent2'],
+          parents: [],
+          partners: [],
+        },
+      },
+      {
+        id: 'grandparent1',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'grandparent1',
+          name: 'Grandparent 1',
+          dateOfBirth: '1950-01-01',
+          createdAt: Date.now(),
+          children: ['parent'],
+          parents: ['great-grandparent'],
+          partners: [],
+        },
+      },
+      {
+        id: 'grandparent2',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'grandparent2',
+          name: 'Grandparent 2',
+          dateOfBirth: '1952-01-01',
+          createdAt: Date.now(),
+          children: ['parent'],
+          parents: ['great-grandparent'],
+          partners: [],
+        },
+      },
+      {
+        id: 'parent',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'parent',
+          name: 'Parent',
+          dateOfBirth: '1980-01-01',
+          createdAt: Date.now(),
+          children: ['child'],
+          parents: ['grandparent1', 'grandparent2'],
+          partners: [],
+        },
+      },
+      {
+        id: 'child',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'child',
+          name: 'Child',
+          dateOfBirth: '2010-01-01',
+          createdAt: Date.now(),
+          children: [],
+          parents: ['parent'],
+          partners: [],
+        },
+      },
+    ];
+
+    const edges: Edge[] = [
+      {
+        id: 'parent-great-grandparent-grandparent1',
+        source: 'great-grandparent',
+        target: 'grandparent1',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-great-grandparent-grandparent2',
+        source: 'great-grandparent',
+        target: 'grandparent2',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-grandparent1-parent',
+        source: 'grandparent1',
+        target: 'parent',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-grandparent2-parent',
+        source: 'grandparent2',
+        target: 'parent',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-parent-child',
+        source: 'parent',
+        target: 'child',
+        data: { relationship: RelationshipType.Parent },
+      },
+    ];
+
+    const result = await autoLayoutFamilyTree(nodes, edges);
+    expect(result).toHaveLength(5);
+
+    const greatGrandparent = result.find(n => n.id === 'great-grandparent');
+    const grandparent1 = result.find(n => n.id === 'grandparent1');
+    const grandparent2 = result.find(n => n.id === 'grandparent2');
+    const parent = result.find(n => n.id === 'parent');
+    const child = result.find(n => n.id === 'child');
+
+    expect(greatGrandparent).toBeDefined();
+    expect(grandparent1).toBeDefined();
+    expect(grandparent2).toBeDefined();
+    expect(parent).toBeDefined();
+    expect(child).toBeDefined();
+    
+    // Verify proper hierarchical ordering
+    expect(greatGrandparent!.position.y).toBeLessThan(grandparent1!.position.y);
+    expect(greatGrandparent!.position.y).toBeLessThan(grandparent2!.position.y);
+    expect(grandparent1!.position.y).toBeLessThan(parent!.position.y);
+    expect(grandparent2!.position.y).toBeLessThan(parent!.position.y);
+    expect(parent!.position.y).toBeLessThan(child!.position.y);
+    
+    // Grandparents should be siblings (same Y coordinate)
+    expect(grandparent1!.position.y).toBe(grandparent2!.position.y);
+  });
+
   it('returns original nodes if layout fails', async () => {
     const nodes: Node<FamilyNodeData>[] = [
       {

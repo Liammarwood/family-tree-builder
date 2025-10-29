@@ -81,8 +81,9 @@ export async function autoLayoutFamilyTree(
       return node;
     });
 
-    // Post-process to adjust partner positions
-    const adjustedNodes = adjustPartnerPositions(layoutedNodes, edges);
+    // Post-process to adjust partner and sibling positions
+    let adjustedNodes = adjustPartnerPositions(layoutedNodes, edges);
+    adjustedNodes = alignSiblings(adjustedNodes, nodes);
 
     return adjustedNodes;
   } catch (error) {
@@ -133,5 +134,50 @@ function adjustPartnerPositions(
     processed.add(edge.target);
   });
 
+  return adjustedNodes;
+}
+
+/**
+ * Align siblings (nodes with the same parents) to the same Y coordinate.
+ * Siblings should be at the same generation level horizontally.
+ */
+function alignSiblings(
+  nodes: Node<FamilyNodeData>[],
+  originalNodes: Node<FamilyNodeData>[]
+): Node<FamilyNodeData>[] {
+  const adjustedNodes = [...nodes];
+  
+  // Group nodes by their parents to identify siblings
+  const siblingGroups = new Map<string, string[]>();
+  
+  originalNodes.forEach(node => {
+    if (node.data.parents && node.data.parents.length > 0) {
+      // Create a key from sorted parent IDs to group siblings
+      const parentKey = [...node.data.parents].sort().join(',');
+      
+      if (!siblingGroups.has(parentKey)) {
+        siblingGroups.set(parentKey, []);
+      }
+      siblingGroups.get(parentKey)!.push(node.id);
+    }
+  });
+  
+  // For each sibling group, align to the average Y position
+  siblingGroups.forEach((siblingIds) => {
+    if (siblingIds.length > 1) {
+      const siblings = adjustedNodes.filter(n => siblingIds.includes(n.id));
+      
+      if (siblings.length > 1) {
+        // Calculate average Y position
+        const avgY = siblings.reduce((sum, node) => sum + node.position.y, 0) / siblings.length;
+        
+        // Align all siblings to the same Y
+        siblings.forEach(sibling => {
+          sibling.position.y = avgY;
+        });
+      }
+    }
+  });
+  
   return adjustedNodes;
 }
