@@ -1,5 +1,5 @@
 import { handleExport, handleImport } from '@/libs/backup';
-import { DB_NAME, STORE_NAME } from '@/libs/constants';
+import { STORE_NAME } from '@/libs/constants';
 
 describe('backup helpers', () => {
   beforeEach(() => {

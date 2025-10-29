@@ -5,7 +5,7 @@ const pkg = ((): { version?: string } => {
   try {
     // relative import of package.json from src/libs -> ../../package.json
     // tsconfig should allow resolveJsonModule; fallback to empty object if import fails
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require('../../package.json');
   } catch (e) {
     return {};

@@ -1,4 +1,4 @@
-import { triggerDownload, exportToPDF, exportToPNG } from '@/libs/export';
+import { triggerDownload, exportToPDF } from '@/libs/export';
 
 jest.mock('html-to-image', () => ({ toPng: jest.fn(() => Promise.resolve('data:image/png;base64,AAA')) }));
 

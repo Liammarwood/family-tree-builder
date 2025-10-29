@@ -134,9 +134,12 @@ const ConfigMenu: React.FC = () => {
                 <MenuItem onClick={async () => {
                     try {
                         await handleExport(currentTree?.id);
-                    } catch (err: any) {
+                    } catch (err: unknown) {
                         // Handle known warning cases from the backup utility
-                        if (err?.message === "NO_RECORD_FOUND") {
+                        const isErrorWithMessage = (x: unknown): x is { message?: string } =>
+                          typeof x === 'object' && x !== null && 'message' in x && typeof (x as Record<string, unknown>).message === 'string';
+
+                        if (isErrorWithMessage(err) && err.message === "NO_RECORD_FOUND") {
                             showError("No record found to export.", "warning");
                         } else {
                             showError("Failed to export data. Please try again.");

@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import {
   Box,
-  CircularProgress,
   Typography,
   Paper,
   Modal,
@@ -35,8 +34,11 @@ export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
     if (e.dataTransfer.files.length > 0) {
       try {
         await handleImport(e.dataTransfer.files[0], setLoading, handleReload);
-      } catch (err: any) {
-        if (err?.message === "NO_DATA_IN_IMPORT") {
+      } catch (err: unknown) {
+        const isErrorWithMessage = (x: unknown): x is { message?: string } =>
+          typeof x === 'object' && x !== null && 'message' in x && typeof (x as Record<string, unknown>).message === 'string';
+
+        if (isErrorWithMessage(err) && err.message === "NO_DATA_IN_IMPORT") {
           showError("Import file contained no usable data.", "warning");
         } else {
           showError("Failed to import data. Please check the file and try again.");
@@ -124,8 +126,11 @@ export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
                   if (file) {
                     try {
                       await handleImport(file, setLoading, handleReload);
-                    } catch (err: any) {
-                      if (err?.message === "NO_DATA_IN_IMPORT") {
+                    } catch (err: unknown) {
+                      const isErrorWithMessage = (x: unknown): x is { message?: string } =>
+                        typeof x === 'object' && x !== null && 'message' in x && typeof (x as Record<string, unknown>).message === 'string';
+
+                      if (isErrorWithMessage(err) && err.message === "NO_DATA_IN_IMPORT") {
                         showError("Import file contained no usable data.", "warning");
                       } else {
                         showError("Failed to import data. Please check the file and try again.");

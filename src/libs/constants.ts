@@ -1,6 +1,5 @@
 import { AltFamilyTreeNode } from "@/components/AltFamilyTreeNode";
 import DraggableEdge from "@/components/DraggableEdge";
-import { FamilyTreeNode } from "@/components/FamilyNode";
 import { RelationshipEdge } from "@/components/RelationshipEdge";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { Node } from "reactflow";

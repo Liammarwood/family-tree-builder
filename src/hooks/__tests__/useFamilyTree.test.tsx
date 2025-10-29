@@ -1,7 +1,6 @@
 import React from 'react';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { FamilyTreeProvider, useFamilyTreeContext } from '@/hooks/useFamilyTree';
-import { render } from '@testing-library/react';
 import { ErrorProvider } from '@/hooks/useError';
 
 // Provide a minimal mock for indexedDB.open used in the hook so it doesn't throw in tests

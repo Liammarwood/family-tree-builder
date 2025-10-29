@@ -6,16 +6,18 @@
 const isDev = process.env.NODE_ENV !== "production";
 
 export const logger = {
-  debug: (...args: any[]) => {
+  // Use unknown[] instead of any[] to avoid @typescript-eslint/no-explicit-any
+  // while still allowing arbitrary values to be logged.
+  debug: (...args: unknown[]) => {
     if (isDev) console.debug(...args);
   },
-  info: (...args: any[]) => {
+  info: (...args: unknown[]) => {
     if (isDev) console.info(...args);
   },
-  warn: (...args: any[]) => {
+  warn: (...args: unknown[]) => {
     if (isDev) console.warn(...args);
   },
-  error: (...args: any[]) => {
+  error: (...args: unknown[]) => {
     // Always log errors to console to help production diagnostics
     console.error(...args);
   },

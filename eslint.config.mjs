@@ -20,6 +20,7 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "**/__tests__/**"
     ],
   },
 
@@ -39,6 +40,19 @@ const eslintConfig = [
           argsIgnorePattern: "^_",
         },
       ],
+    },
+  },
+  // Allow certain relaxations for test files. Tests often use helpers and mocks
+  // that are convenient to type with `any`. Keep source files strict.
+  {
+    files: [
+      "**/__tests__/**",
+      "**/*.test.*",
+      "**/*.spec.*",
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
     },
   },
 ];
