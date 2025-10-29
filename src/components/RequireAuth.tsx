@@ -9,15 +9,14 @@ import { User } from "firebase/auth"; // ✅ Import the User type
 const isDevelopment = process.env.NODE_ENV !== "production";
 
 export const RequireAuth = ({ children }: { children: ReactNode }) => {
-  const [loading, setLoading] = useState(true);
-  const [signedIn, setSignedIn] = useState(false);
+  // In development mode, start with signed-in state to avoid showing auth UI
+  const [loading, setLoading] = useState(!isDevelopment);
+  const [signedIn, setSignedIn] = useState(isDevelopment);
   const { showError } = useError();
 
   useEffect(() => {
     // In development mode, skip auth requirement
     if (isDevelopment) {
-      setLoading(false);
-      setSignedIn(true);
       return;
     }
 
