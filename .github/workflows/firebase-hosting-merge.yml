@@ -6,14 +6,20 @@ on:
   push:
     branches:
       - main
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
 jobs:
   build_and_deploy:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -22,6 +28,11 @@ jobs:
 
       - name: Install deps
         run: npm ci
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
 
       - name: Read version and set env for build
         id: buildinfo
