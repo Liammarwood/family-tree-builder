@@ -25,6 +25,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { FamilyTreeObject } from "@/types/FamilyTreeObject";
 import { CheckCircle, HourglassEmpty, Warning } from "@mui/icons-material";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
+import { TreeMergeDialog } from "@/components/TreeMergeDialog";
 
 type ShareModalProps = {
     open: boolean;
@@ -43,7 +44,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [isReceiver, setIsReceiver] = useState<boolean>(false);
     const [pendingTree, setPendingTree] = useState<FamilyTreeObject | null>(null);
+    const [existingTreeForMerge, setExistingTreeForMerge] = useState<FamilyTreeObject | null>(null);
     const [showOverrideDialog, setShowOverrideDialog] = useState<boolean>(false);
+    const [showMergeDialog, setShowMergeDialog] = useState<boolean>(false);
     const { isDbReady, trees, saveTree, currentTree } = useFamilyTreeContext();
 
     const setCallInput = (input: string) => {
@@ -71,7 +74,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         setIsReceiver(false);
         setSuccessMessage(null);
         setPendingTree(null);
+        setExistingTreeForMerge(null);
         setShowOverrideDialog(false);
+        setShowMergeDialog(false);
     };
 
     const cleanupConnection = () => {
@@ -140,12 +145,20 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
     const handleReceivedTree = (receivedTree: FamilyTreeObject) => {
         // Check if tree with same ID already exists
-        const existingTree = trees.find(t => t.id === receivedTree.id);
+        const existingTreeSummary = trees.find(t => t.id === receivedTree.id);
         
-        if (existingTree) {
-            // Show confirmation dialog
-            setPendingTree(receivedTree);
-            setShowOverrideDialog(true);
+        if (existingTreeSummary) {
+            // Show merge dialog if this is the current tree (full data available)
+            if (currentTree && currentTree.id === receivedTree.id) {
+                // Show merge dialog with detailed comparison
+                setPendingTree(receivedTree);
+                setExistingTreeForMerge(currentTree);
+                setShowMergeDialog(true);
+            } else {
+                // Fallback to simple override dialog for non-current trees
+                setPendingTree(receivedTree);
+                setShowOverrideDialog(true);
+            }
         } else {
             // No conflict, save directly
             saveTree(receivedTree);
@@ -166,6 +179,21 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         setShowOverrideDialog(false);
         setPendingTree(null);
         setSuccessMessage("Import cancelled - existing tree preserved");
+    };
+
+    const handleMergeCancel = () => {
+        setShowMergeDialog(false);
+        setPendingTree(null);
+        setExistingTreeForMerge(null);
+        setSuccessMessage("Import cancelled - existing tree preserved");
+    };
+
+    const handleMergeApply = (mergedTree: FamilyTreeObject) => {
+        saveTree(mergedTree);
+        setSuccessMessage(`Merged changes into ${mergedTree.name} family tree`);
+        setShowMergeDialog(false);
+        setPendingTree(null);
+        setExistingTreeForMerge(null);
     };
 
     const setupDataChannel = (dc: RTCDataChannel) => {
@@ -332,6 +360,17 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Tree Merge Dialog for detailed change comparison */}
+            {showMergeDialog && pendingTree && existingTreeForMerge && (
+                <TreeMergeDialog
+                    open={showMergeDialog}
+                    onClose={handleMergeCancel}
+                    existingTree={existingTreeForMerge}
+                    incomingTree={pendingTree}
+                    onApplyChanges={handleMergeApply}
+                />
+            )}
         </RequireAuth>
     );
 };
