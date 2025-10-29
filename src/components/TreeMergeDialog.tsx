@@ -54,20 +54,20 @@ type EdgeChange = {
     selected: boolean;
 };
 
+// Helper to compare string arrays
+const areArraysEqual = (arr1?: string[], arr2?: string[]): boolean => {
+    if (!arr1 && !arr2) return true;
+    if (!arr1 || !arr2) return false;
+    if (arr1.length !== arr2.length) return false;
+    const sorted1 = [...arr1].sort();
+    const sorted2 = [...arr2].sort();
+    return sorted1.every((val, idx) => val === sorted2[idx]);
+};
+
 // Helper function to compare node data more reliably
 const areNodesEqual = (node1: Node, node2: Node): boolean => {
     const data1 = node1.data as FamilyNodeData;
     const data2 = node2.data as FamilyNodeData;
-    
-    // Helper to compare string arrays
-    const areArraysEqual = (arr1?: string[], arr2?: string[]): boolean => {
-        if (!arr1 && !arr2) return true;
-        if (!arr1 || !arr2) return false;
-        if (arr1.length !== arr2.length) return false;
-        const sorted1 = [...arr1].sort();
-        const sorted2 = [...arr2].sort();
-        return sorted1.every((val, idx) => val === sorted2[idx]);
-    };
     
     return (
         data1.name === data2.name &&
