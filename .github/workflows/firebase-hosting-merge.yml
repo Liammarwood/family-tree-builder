@@ -10,9 +10,38 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: npm ci && npm run build
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Read version and set env for build
+        id: buildinfo
+        run: |
+          echo "APP_VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_APP_VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_COMMIT_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_REPOSITORY=${GITHUB_REPOSITORY}" >> $GITHUB_ENV
+
+      - name: Build
+        env:
+          NEXT_PUBLIC_APP_VERSION: ${{ env.NEXT_PUBLIC_APP_VERSION }}
+          NEXT_PUBLIC_COMMIT_SHA: ${{ env.NEXT_PUBLIC_COMMIT_SHA }}
+          NEXT_PUBLIC_BUILD_TIME: ${{ env.NEXT_PUBLIC_BUILD_TIME }}
+          NEXT_PUBLIC_REPOSITORY: ${{ env.NEXT_PUBLIC_REPOSITORY }}
+        run: npm run build
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OFFLINE_FAMILY_TREE_BUILDER }}
