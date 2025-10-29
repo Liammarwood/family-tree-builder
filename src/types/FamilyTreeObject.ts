@@ -11,7 +11,11 @@ export type FamilyTreeMeta = FamilyTreeSummary & {
   updatedAt: number;
 };
 
+import { ThemeConfig } from './ConfigurationTypes';
+
 export type FamilyTreeObject = FamilyTreeMeta & {
-    nodes: Node[];
-    edges: Edge[];
+  nodes: Node[];
+  edges: Edge[];
+  // Optional per-tree theme/configuration
+  config?: ThemeConfig;
 }

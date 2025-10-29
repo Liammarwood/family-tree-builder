@@ -17,9 +17,11 @@ import { useConfiguration } from "@/hooks/useConfiguration";
 
 export const FamilyTreeNode = ({
   selected,
-  data
-}: NodeProps<FamilyNodeData>) => {
-  const { showHandles, avatarVariant } = useConfiguration();
+  data,
+  // preview prop when rendering standalone preview outside React Flow
+  preview,
+}: NodeProps<FamilyNodeData> & { preview?: boolean }) => {
+  const { showHandles, avatarVariant, nodeColor, fontFamily, nodeStyle, textColor } = useConfiguration();
 
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
@@ -35,10 +37,11 @@ export const FamilyTreeNode = ({
         width: NODE_WIDTH,
         borderRadius: 3,
         border: '2.5px solid',
-        borderColor: selected ? '#ff9800' : (isDeceased ? 'grey.300' : 'primary.light'),
+        fontFamily: fontFamily,
+        borderColor: selected ? '#ff9800' : (isDeceased ? 'grey.300' : nodeColor || 'primary.light'),
         background: isDeceased
           ? 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)'
-          : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+          : (nodeStyle === 'card' ? `linear-gradient(135deg, ${nodeColor} 0%, #f8f9fa 100%)` : nodeStyle === 'compact' ? nodeColor : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'),
         boxShadow: selected
           ? '0 0 0 6px #ffe0b2, 0 2px 12px #ff980033'
           : 1,
@@ -69,7 +72,7 @@ export const FamilyTreeNode = ({
                 width: 100,
                 height: 100,
                 border: '3px solid',
-                borderColor: isDeceased ? 'grey.400' : 'primary.main',
+                borderColor: isDeceased ? 'grey.400' : nodeColor || 'primary.main',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
                 filter: isDeceased ? 'grayscale(40%)' : 'none',
               }}
@@ -82,9 +85,9 @@ export const FamilyTreeNode = ({
               variant="h6"
               sx={{
                 fontWeight: 600,
-                color: isDeceased ? 'text.secondary' : 'primary.dark',
+                color: isDeceased ? 'text.secondary' : (textColor || 'text.primary'),
                 fontSize: '1rem',
-                lineHeight: 1.2
+                lineHeight: 1.2,
               }}
             >
               {data.name}
@@ -93,7 +96,7 @@ export const FamilyTreeNode = ({
               <Typography
                 variant="body2"
                 sx={{
-                  color: 'text.secondary',
+                  color: isDeceased ? 'text.secondary' : (textColor || 'text.secondary'),
                   fontStyle: 'italic',
                   fontSize: '0.8rem',
                   mt: 0.3
@@ -156,10 +159,10 @@ export const FamilyTreeNode = ({
           </Box>
         </Box>
       </CardContent>
-      <Handle type="target" position={Position.Top} id="parent" style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", left: '50%' }} />
-      <Handle type="source" position={Position.Bottom} id="child" style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", left: '50%' }} />
-      <Handle type="source" position={Position.Right} id="right" style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", top: "50%" }} />
-      <Handle type="target" position={Position.Left} id="left" style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", top: "50%" }} />
+      <Handle type="target" position={Position.Top} id="parent" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }} />
+      <Handle type="source" position={Position.Bottom} id="child" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", top: "50%" }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", top: "50%" }} />
     </Card>
   );
 };

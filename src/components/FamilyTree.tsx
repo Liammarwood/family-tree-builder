@@ -8,6 +8,8 @@ import { ManualConnectionDialog, ManualConnectionForm } from "./ManualConnection
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { ChildEdge, DivorcedEdge, ParentEdge, PartnerEdge, SiblingEdge } from "@/libs/edges";
 import { EDGE_TYPES, GENERATE_ID, GRID_SIZE, NODE_TYPES } from "@/libs/constants";
+import ThemeFromConfig from './ThemeFromConfig';
+import { useConfiguration } from '@/hooks/useConfiguration';
 import { EditMode } from "@/types/EditMode";
 import { Loading } from "@/components/Loading";
 import PersonDetailsPane from "@/components/PersonDetailsPane";
@@ -25,6 +27,7 @@ type FamilyTreeProps = {
 }
 export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTreeProps) {
   const { selectedTreeId, currentTree, isTreeLoaded, saveTree } = useFamilyTreeContext();
+  const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, setAvatarVariant, edgeColor } = useConfiguration();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -45,6 +48,15 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
     if (currentTree) {
       setNodes(currentTree.nodes);
       setEdges(currentTree.edges);
+      // Apply per-tree configuration if present
+      if (currentTree.config) {
+        setNodeColor(currentTree.config.nodeColor || '#ffffff');
+        setEdgeColor(currentTree.config.edgeColor || '#b1b1b7');
+        setFontFamily(currentTree.config.fontFamily || 'Inter, Roboto, "Helvetica Neue", Arial');
+        setNodeStyle(currentTree.config.nodeStyle || 'card');
+        setTextColor(currentTree.config.textColor || '#5d4e37');
+        // avatarVariant isn't stored yet on config; leave existing
+      }
     } else {
       setNodes([]);
       setEdges([]);
@@ -72,6 +84,17 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
       saveTree({ ...currentTree, nodes, edges });
     }
   }, [isTreeLoaded, currentTree, nodes, edges, saveTree, selectedTreeId]);
+
+  // Apply configured edge color to connection line and ensure edges use it by default
+  const styledEdges = React.useMemo(() => {
+    const stroke = edgeColor || '#b1b1b7';
+    return edges.map((e) => {
+      // If an edge already has a style.stroke use it, otherwise apply configured color
+      const existing = e.style || {};
+      if ((existing as any).stroke) return e;
+      return { ...e, style: { ...existing, stroke } };
+    });
+  }, [edges, edgeColor]);
 
   // Handle manual connection between nodes
   const onConnect = useCallback((params: { source: string | null; target: string | null }) => {
@@ -356,9 +379,10 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
           {!isTreeLoaded ? (
             <Loading message="Loading family tree..." />
           ) : (
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
+            <ThemeFromConfig>
+              <ReactFlow
+                nodes={nodes}
+                edges={styledEdges}
               edgeTypes={memoEdgeTypes}
               nodeTypes={memoNodeTypes}
               onNodeClick={onNodeClick}
@@ -366,6 +390,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
               onNodesChange={onNodesChange}
               onPaneClick={onPaneClick}
               onNodeDragStop={onNodeDragStop}
+                connectionLineStyle={{ stroke: edgeColor || '#b1b1b7', strokeWidth: 2 }}
               fitView
               snapToGrid={true}
               snapGrid={[GRID_SIZE, GRID_SIZE]}
@@ -388,7 +413,8 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
                   showGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots
                 }
               />
-            </ReactFlow>
+              </ReactFlow>
+            </ThemeFromConfig>
           )}
         </Box>
       )}

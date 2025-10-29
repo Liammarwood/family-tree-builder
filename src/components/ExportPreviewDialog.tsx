@@ -16,6 +16,7 @@ import ReactFlow, { Controls, ReactFlowInstance, useReactFlow } from "reactflow"
 import { calculateEarliestDateOfBirth } from "@/libs/nodes";
 import { EDGE_TYPES, NODE_TYPES, GRID_SIZE } from "@/libs/constants";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
+import ThemeFromConfig from './ThemeFromConfig';
 
 type ExportPreviewDialogProps = {
     open: boolean;
@@ -98,6 +99,7 @@ const ExportPreviewDialog: React.FC<ExportPreviewDialogProps> = ({
                         <p>{currentTree?.name} Family Tree</p>
                         <p><b>{calculateEarliestDateOfBirth(getNodes()).getFullYear()} - {new Date().getFullYear()}</b></p>
                     </div>
+                    <ThemeFromConfig>
                     <ReactFlow
                         nodes={getNodes()}
                         edges={getEdges()}
@@ -113,6 +115,7 @@ const ExportPreviewDialog: React.FC<ExportPreviewDialogProps> = ({
                     >
                         <Controls />
                     </ReactFlow>
+                    </ThemeFromConfig>
                 </Box>
             </DialogContent>
             <DialogActions>
