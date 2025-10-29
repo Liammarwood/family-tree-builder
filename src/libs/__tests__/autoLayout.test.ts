@@ -489,6 +489,108 @@ describe('autoLayoutFamilyTree', () => {
     expect(grandparent1!.position.y).toBe(grandparent2!.position.y);
   });
 
+  it('prioritizes partner positioning over sibling alignment', async () => {
+    // Test case: Two siblings where one has a partner
+    // The sibling without a partner should align to the Y position of the sibling with partner
+    const nodes: Node<FamilyNodeData>[] = [
+      {
+        id: 'parent',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'parent',
+          name: 'Parent',
+          dateOfBirth: '1960-01-01',
+          createdAt: Date.now(),
+          children: ['child1', 'child2'],
+          parents: [],
+          partners: [],
+        },
+      },
+      {
+        id: 'child1',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'child1',
+          name: 'Child 1',
+          dateOfBirth: '1990-01-01',
+          createdAt: Date.now(),
+          children: [],
+          parents: ['parent'],
+          partners: ['child1-partner'],
+        },
+      },
+      {
+        id: 'child1-partner',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'child1-partner',
+          name: 'Child 1 Partner',
+          dateOfBirth: '1991-01-01',
+          createdAt: Date.now(),
+          children: [],
+          parents: [],
+          partners: ['child1'],
+        },
+      },
+      {
+        id: 'child2',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'child2',
+          name: 'Child 2',
+          dateOfBirth: '1992-01-01',
+          createdAt: Date.now(),
+          children: [],
+          parents: ['parent'],
+          partners: [],
+        },
+      },
+    ];
+
+    const edges: Edge[] = [
+      {
+        id: 'parent-parent-child1',
+        source: 'parent',
+        target: 'child1',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-parent-child2',
+        source: 'parent',
+        target: 'child2',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'partner-child1-partner',
+        source: 'child1',
+        target: 'child1-partner',
+        data: { relationship: RelationshipType.Partner, dateOfMarriage: '2015-06-20' },
+      },
+    ];
+
+    const result = await autoLayoutFamilyTree(nodes, edges);
+    expect(result).toHaveLength(4);
+
+    const child1 = result.find(n => n.id === 'child1');
+    const child1Partner = result.find(n => n.id === 'child1-partner');
+    const child2 = result.find(n => n.id === 'child2');
+
+    expect(child1).toBeDefined();
+    expect(child1Partner).toBeDefined();
+    expect(child2).toBeDefined();
+    
+    // Child1 and their partner should be at the same Y (partner relationship)
+    expect(child1!.position.y).toBe(child1Partner!.position.y);
+    
+    // Child2 (sibling without partner) should align to Child1's Y position
+    // This ensures siblings are aligned while respecting partner positioning
+    expect(child2!.position.y).toBe(child1!.position.y);
+  });
+
   it('returns original nodes if layout fails', async () => {
     const nodes: Node<FamilyNodeData>[] = [
       {

@@ -82,8 +82,9 @@ export async function autoLayoutFamilyTree(
     });
 
     // Post-process to adjust partner and sibling positions
+    // IMPORTANT: Partner positioning has highest priority
     let adjustedNodes = adjustPartnerPositions(layoutedNodes, edges);
-    adjustedNodes = alignSiblings(adjustedNodes, nodes);
+    adjustedNodes = alignSiblings(adjustedNodes, nodes, edges);
 
     return adjustedNodes;
   } catch (error) {
@@ -140,12 +141,29 @@ function adjustPartnerPositions(
 /**
  * Align siblings (nodes with the same parents) to the same Y coordinate.
  * Siblings should be at the same generation level horizontally.
+ * 
+ * IMPORTANT: Partners have highest priority and must stay directly adjacent.
+ * When aligning siblings, nodes with partners should not be moved - instead,
+ * siblings without partners should align to the Y position of siblings who have partners.
  */
 function alignSiblings(
   nodes: Node<FamilyNodeData>[],
-  originalNodes: Node<FamilyNodeData>[]
+  originalNodes: Node<FamilyNodeData>[],
+  edges: Edge[]
 ): Node<FamilyNodeData>[] {
   const adjustedNodes = [...nodes];
+  
+  // Identify all nodes that have partners
+  const nodesWithPartners = new Set<string>();
+  const partnerEdges = edges.filter(
+    edge => edge.data?.relationship === RelationshipType.Partner || 
+            edge.data?.relationship === RelationshipType.Divorced
+  );
+  
+  partnerEdges.forEach(edge => {
+    nodesWithPartners.add(edge.source);
+    nodesWithPartners.add(edge.target);
+  });
   
   // Group nodes by their parents to identify siblings
   const siblingGroups = new Map<string, string[]>();
@@ -162,18 +180,31 @@ function alignSiblings(
     }
   });
   
-  // For each sibling group, align to the average Y position
+  // For each sibling group, align siblings
+  // Priority: Nodes with partners define the Y position, siblings without partners align to them
   siblingGroups.forEach((siblingIds) => {
     if (siblingIds.length > 1) {
       const siblings = adjustedNodes.filter(n => siblingIds.includes(n.id));
       
       if (siblings.length > 1) {
-        // Calculate average Y position
-        const avgY = siblings.reduce((sum, node) => sum + node.position.y, 0) / siblings.length;
+        // Separate siblings into those with partners and those without
+        const siblingsWithPartners = siblings.filter(s => nodesWithPartners.has(s.id));
+        const siblingsWithoutPartners = siblings.filter(s => !nodesWithPartners.has(s.id));
         
-        // Align all siblings to the same Y
-        siblings.forEach(sibling => {
-          sibling.position.y = avgY;
+        let targetY: number;
+        
+        if (siblingsWithPartners.length > 0) {
+          // If some siblings have partners, use their average Y position
+          // (their positions were already set by adjustPartnerPositions)
+          targetY = siblingsWithPartners.reduce((sum, node) => sum + node.position.y, 0) / siblingsWithPartners.length;
+        } else {
+          // If no siblings have partners, use average of all siblings
+          targetY = siblings.reduce((sum, node) => sum + node.position.y, 0) / siblings.length;
+        }
+        
+        // Only move siblings without partners
+        siblingsWithoutPartners.forEach(sibling => {
+          sibling.position.y = targetY;
         });
       }
     }
