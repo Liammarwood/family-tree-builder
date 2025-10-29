@@ -24,7 +24,7 @@ This document describes the PWA (Progressive Web App) setup for the Family Tree 
 - Generated two icon sizes:
   - 192x192 pixels (required for most devices)
   - 512x512 pixels (required for splash screens and high-res displays)
-- Icons feature a simple family tree design with blue background
+- Icons feature a simple family tree design with theme color background (#1976d2)
 - Located in `public/icons/`
 
 ### 4. Mobile Meta Tags
@@ -173,7 +173,7 @@ family-tree-builder/
 
 ## Browser Support
 
-- ✅ Chrome/Edge (Desktop & Android): Full PWA support
-- ✅ Safari (iOS 11.3+): PWA support with limitations
+- ✅ Chrome/Edge (Desktop & Android): Full PWA support with all features
+- ✅ Safari (iOS 11.3+): PWA support with limitations (no install prompt banner, must use Share menu to add to home screen, limited service worker scope)
 - ✅ Firefox (Desktop & Android): Service worker support
-- ⚠️ Safari Private Mode: IndexedDB disabled (expected)
+- ⚠️ Safari Private Mode: IndexedDB disabled (expected behavior, not a bug)
