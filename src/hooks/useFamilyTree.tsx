@@ -16,6 +16,14 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
     const [trees, setTrees] = useState<FamilyTreeSummary[]>([]);
     const [selectedTreeId, _setSelectedTreeId] = useState<string | null>(null);
     const { showError } = useError();
+    // Keep a ref to `showError` so we don't cause the DB init effect to
+    // re-run when the function identity changes. Re-opening/closing the
+    // database can lead to "The database connection is closing" errors if
+    // a transaction is attempted during a teardown.
+    const showErrorRef = React.useRef(showError);
+    React.useEffect(() => {
+        showErrorRef.current = showError;
+    }, [showError]);
 
     const setSelectedTreeId = useCallback((id: string | null) => {
         setIsTreeLoaded(false);
@@ -50,7 +58,7 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
         const openDB = () => {
             // Check if IndexedDB is available (Safari private mode can disable it)
             if (!window.indexedDB) {
-                showError("Your browser doesn't support offline storage. Please use a different browser or disable private browsing mode.");
+                showErrorRef.current?.("Your browser doesn't support offline storage. Please use a different browser or disable private browsing mode.");
                 setIsDbReady(false);
                 return;
             }
@@ -73,12 +81,12 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
             openRequest.onerror = (e) => {
                 // Inform the user in plain language; don't leak internal error details
-                showError("Failed to open the browser database. Some features may be unavailable. If you're in private browsing mode, try normal browsing mode.");
+                showErrorRef.current?.("Failed to open the browser database. Some features may be unavailable. If you're in private browsing mode, try normal browsing mode.");
                 setIsDbReady(false);
             };
 
             openRequest.onblocked = () => {
-                showError("Database is blocked. Please close other tabs with this app open and try again.");
+                showErrorRef.current?.("Database is blocked. Please close other tabs with this app open and try again.");
                 setIsDbReady(false);
             };
         };
@@ -91,7 +99,7 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                 setIsDbReady(false);
             }
         };
-    }, [dbName, storeName, showError]);
+    }, [dbName, storeName]);
 
 
     useEffect(() => {
@@ -172,14 +180,55 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                         updatedAt: Date.now(),
                     };
 
-                    // Save to IndexedDB
-                    const tx = db.transaction(storeName, "readwrite");
-                    const store = tx.objectStore(storeName);
-                    store.put(treeToSave);
-                    logger.debug("Queued save for tree", selectedTreeId);
-                    tx.onerror = () => {
-                        showError("Failed to save the current tree. Please try again.");
+                    // Save to IndexedDB. The DB connection can sometimes be
+                    // closing (e.g. during page unload or when IndexedDB is
+                    // being reset in another tab) which throws an
+                    // InvalidStateError when creating a transaction. Wrap the
+                    // transaction in a try/catch and retry a few times before
+                    // giving up. This avoids crashing the app on transient
+                    // DB state races.
+                    const doSave = (tree: FamilyTreeObject) => {
+                        let attempts = 0;
+                        const maxAttempts = 5;
+
+                        const trySave = () => {
+                            attempts += 1;
+                            if (!db || !isDbReady) {
+                                if (attempts < maxAttempts) {
+                                    // Wait for DB to become ready and try again
+                                    setTimeout(trySave, 250 * attempts);
+                                    return;
+                                }
+
+                                showError("Database not available. Failed to save the current tree.");
+                                return;
+                            }
+
+                            try {
+                                const tx = db.transaction(storeName, "readwrite");
+                                const store = tx.objectStore(storeName);
+                                store.put(tree);
+                                logger.debug("Queued save for tree", selectedTreeId);
+                                tx.onerror = () => {
+                                    showError("Failed to save the current tree. Please try again.");
+                                };
+                            } catch (e) {
+                                // Transaction creation can throw if the DB is
+                                // closing. Retry a few times, then surface an
+                                // error to the user.
+                                if (attempts < maxAttempts) {
+                                    setTimeout(trySave, 250 * attempts);
+                                } else {
+                                    logger.warn("Failed to create IDB transaction after retries", e);
+                                    showError("Failed to save the current tree. Please try again.");
+                                }
+                            }
+                        };
+
+                        trySave();
                     };
+
+                    doSave(treeToSave);
 
                     return treeToSave;
                 });
@@ -197,18 +246,49 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                         updatedAt: Date.now(),
                     };
 
-                    // Save to IndexedDB
-                    const tx = db.transaction(storeName, "readwrite");
-                    const store = tx.objectStore(storeName);
-                    store.put(treeToSave);
-                    tx.oncomplete = () => {
-                        // Update trees list after successful save
-                        logger.info("Saved tree", treeToSave.id);
-                        loadTrees();
+                    // Save to IndexedDB with retry logic similar to the
+                    // selected-tree branch above.
+                    const doSaveAndFinish = (tree: FamilyTreeObject) => {
+                        let attempts = 0;
+                        const maxAttempts = 5;
+
+                        const trySave = () => {
+                            attempts += 1;
+                            if (!db || !isDbReady) {
+                                if (attempts < maxAttempts) {
+                                    setTimeout(trySave, 250 * attempts);
+                                    return;
+                                }
+                                showError("Database not available. Failed to save the current tree.");
+                                return;
+                            }
+
+                            try {
+                                const tx = db.transaction(storeName, "readwrite");
+                                const store = tx.objectStore(storeName);
+                                store.put(tree);
+                                tx.oncomplete = () => {
+                                    // Update trees list after successful save
+                                    logger.info("Saved tree", tree.id);
+                                    loadTrees();
+                                };
+                                tx.onerror = () => {
+                                    showError("Failed to save the current tree. Please try again.");
+                                };
+                            } catch (e) {
+                                if (attempts < maxAttempts) {
+                                    setTimeout(trySave, 250 * attempts);
+                                } else {
+                                    logger.warn("Failed to create IDB transaction after retries", e);
+                                    showError("Failed to save the current tree. Please try again.");
+                                }
+                            }
+                        };
+
+                        trySave();
                     };
-                    tx.onerror = () => {
-                        showError("Failed to save the current tree. Please try again.");
-                    };
+
+                    doSaveAndFinish(treeToSave);
 
                     setSelectedTreeId(treeToSave.id ?? null);
 
