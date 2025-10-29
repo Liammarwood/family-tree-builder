@@ -59,6 +59,16 @@ const areNodesEqual = (node1: Node, node2: Node): boolean => {
     const data1 = node1.data as FamilyNodeData;
     const data2 = node2.data as FamilyNodeData;
     
+    // Helper to compare string arrays
+    const areArraysEqual = (arr1?: string[], arr2?: string[]): boolean => {
+        if (!arr1 && !arr2) return true;
+        if (!arr1 || !arr2) return false;
+        if (arr1.length !== arr2.length) return false;
+        const sorted1 = [...arr1].sort();
+        const sorted2 = [...arr2].sort();
+        return sorted1.every((val, idx) => val === sorted2[idx]);
+    };
+    
     return (
         data1.name === data2.name &&
         data1.dateOfBirth === data2.dateOfBirth &&
@@ -68,9 +78,9 @@ const areNodesEqual = (node1: Node, node2: Node): boolean => {
         data1.occupation === data2.occupation &&
         data1.maidenName === data2.maidenName &&
         data1.image === data2.image &&
-        JSON.stringify(data1.parents?.sort()) === JSON.stringify(data2.parents?.sort()) &&
-        JSON.stringify(data1.children.sort()) === JSON.stringify(data2.children.sort()) &&
-        JSON.stringify(data1.partners?.sort()) === JSON.stringify(data2.partners?.sort())
+        areArraysEqual(data1.parents, data2.parents) &&
+        areArraysEqual(data1.children, data2.children) &&
+        areArraysEqual(data1.partners, data2.partners)
     );
 };
 
