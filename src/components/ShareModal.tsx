@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { useFirestoreSignaling } from "@/hooks/useFirestoreSignaling";
 import { logger } from '@/libs/logger';
-import { RequireAuth } from "@/components/RequireAuth";
+import { RequireAuthForFeature } from "@/components/RequireAuthForFeature";
 import { useError } from "@/hooks/useError";
 import { QRCodeSVG } from "qrcode.react";
 import { FamilyTreeObject } from "@/types/FamilyTreeObject";
@@ -219,7 +219,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             }
         };
 
-        dc.onerror = (e) => {
+        dc.onerror = (_e) => {
             showError("A data channel error occurred. The transfer may have failed.");
         }
     };
@@ -232,7 +232,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     };
 
     return (
-        <RequireAuth>
+        <RequireAuthForFeature>
             <Modal open={open} onClose={handleClose}>
                 <Box
                     sx={{
@@ -371,6 +371,6 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     onApplyChanges={handleMergeApply}
                 />
             )}
-        </RequireAuth>
+        </RequireAuthForFeature>
     );
 };

@@ -4,32 +4,31 @@ import { auth, signInWithGoogle } from "@/firebaseConfig";
 import { useError } from "@/hooks/useError";
 import { Loading } from "./Loading";
 import NotSignedIn from "./NotSignedIn";
-import { User } from "firebase/auth"; // ✅ Import the User type
+import { User } from "firebase/auth";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-export const RequireAuth = ({ children }: { children: ReactNode }) => {
+/**
+ * RequireAuthForFeature - Forces authentication for specific features
+ * In development: Shows auth UI when feature is accessed
+ * In production: This is handled by RequireAuth at app level
+ */
+export const RequireAuthForFeature = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
   const { showError } = useError();
 
   useEffect(() => {
-    // In development mode, skip auth requirement
-    if (isDevelopment) {
-      setLoading(false);
-      setSignedIn(true);
-      return;
-    }
-
-    // In production mode, require authentication
+    // Check if user is already signed in or trigger sign-in
     const unsubscribe = auth.onAuthStateChanged(async (user: User | null) => {
-      if (!user) {
+      if (!user && isDevelopment) {
+        // In development, prompt for sign-in when feature is accessed
         try {
-          await signInWithGoogle(); // redirect to Google sign-in popup
+          await signInWithGoogle();
         } catch (_err) {
-          showError("Sign-in failed. Please try again.");
+          showError("Sign-in is required to use this feature. Please try again.");
         }
-      } else {
+      } else if (user) {
         setSignedIn(true);
       }
       setLoading(false);
@@ -38,7 +37,7 @@ export const RequireAuth = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [showError]);
 
-  if (loading) return <Loading message="Awaiting Login..." height="100vh" />;
+  if (loading) return <Loading message="Awaiting Login..." height="100%" />;
   if (!signedIn) return <NotSignedIn onSignIn={signInWithGoogle} />;
 
   return <>{children}</>;
