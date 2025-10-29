@@ -15,9 +15,15 @@ export default function NavigationBar({ setEditMode }: Props) {
             <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
                 {/* Left side: burger + title */}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                     <ConfigurationMenu />
+                    <ConfigurationMenu />
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Family Tree Builder
+                        <img
+                            src="favicon.ico"
+                            alt="icon"
+                            width={24}
+                            height={24}
+                            style={{ display: "inline-block" }}
+                        /> Family Tree Builder
                     </Typography>
                 </Box>
 

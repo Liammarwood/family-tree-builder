@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { RenameTreeDialog } from "./RenameTreeDialog";
+import { RenameTreeDialog } from "@/components/RenameTreeDialog";
 import { ErrorProvider } from "@/hooks/useError";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 

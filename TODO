@@ -5,6 +5,7 @@
 * Make it a pwa with mobile support
 * Modify Share to then allow selection of whats added / removed in the changes.
 * Add Unit testing
+* Allow users to change styling of the Nodes + Edges, such as colouring, Font, Node Style (Give a couple of options) There should be a new configuraiton Dialog to allow this (Along with Hide Handles, Avatar Shape etc)
 
 # Bugs
 * Fix Mobile View
