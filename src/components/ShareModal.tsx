@@ -232,12 +232,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     };
 
     // Only require auth when modal is actually open
-    if (!open) {
-        return null;
-    }
-
-    return (
-        <RequireAuthForFeature>
+    const modalContent = (
+        <>
             <Modal open={open} onClose={handleClose}>
                 <Box
                     sx={{
@@ -376,6 +372,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     onApplyChanges={handleMergeApply}
                 />
             )}
-        </RequireAuthForFeature>
+        </>
     );
+
+    // Only wrap in auth requirement when modal is open
+    return open ? <RequireAuthForFeature>{modalContent}</RequireAuthForFeature> : modalContent;
 };
