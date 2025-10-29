@@ -231,6 +231,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         }
     };
 
+    // Only require auth when modal is actually open
+    if (!open) {
+        return null;
+    }
+
     return (
         <RequireAuthForFeature>
             <Modal open={open} onClose={handleClose}>
