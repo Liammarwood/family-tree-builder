@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import {
   Box,
   Typography,
@@ -13,6 +13,8 @@ import {
   FormControlLabel,
   Radio,
   Avatar,
+  Divider,
+  FormLabel,
 } from "@mui/material";
 import { getNames } from "country-list";
 import { EditMode } from "@/types/EditMode";
@@ -48,7 +50,6 @@ export default function FamilyDetailsPane({
   const [imageModalOpen, setImageModalOpen] = useState(false);
 
   useEffect(() => {
-    console.log(editMode)
     if (editMode?.type === "add") {
       setForm(initialFormState);
     } else if (editMode?.nodeData) {
@@ -62,10 +63,9 @@ export default function FamilyDetailsPane({
         dateOfDeath: editMode.nodeData.dateOfDeath || "",
         dateOfMarriage: "",
         dateOfDivorce: "",
-        image: editMode.nodeData.image || undefined
+        image: editMode.nodeData.image || undefined,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode?.nodeId, editMode?.type]);
 
   const countryList = getNames();
@@ -93,21 +93,24 @@ export default function FamilyDetailsPane({
     reader.readAsDataURL(file);
   };
 
+  const showRelationshipSection =
+    editMode?.relation === "partner" || editMode?.relation === "divorced-partner";
+
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
-        height: "100%", // Fill available height
-        overflow: "hidden", // Contain the scroll area
+        height: "100%",
+        overflow: "hidden",
       }}
     >
-      {/* Fixed Header */}
+      {/* Header */}
       <Box
         sx={{
           p: 1,
           borderBottom: "1px solid #ddd",
-          background: "#fff",
+          background: (theme) => theme.palette.background.paper,
           position: "sticky",
           top: 0,
           zIndex: 2,
@@ -116,7 +119,7 @@ export default function FamilyDetailsPane({
         <Typography variant="h6">{getTitle()}</Typography>
       </Box>
 
-      {/* Scrollable Form Content */}
+      {/* Scrollable Content */}
       <Box
         sx={{
           flex: 1,
@@ -124,103 +127,140 @@ export default function FamilyDetailsPane({
           p: 2,
         }}
       >
-        <Stack spacing={2} alignItems="center">
-          {/* Avatar */}
-          <Avatar src={form.image || undefined} alt="User Avatar" sx={{ width: 120, height: 120 }}>
-            {!form.image && "Photo"}
-          </Avatar>
+        <Stack spacing={3}>
 
-          {/* Upload */}
+
+          {/* Relationship Details (conditional) */}
+          {showRelationshipSection && (
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Relationship Details
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+
+              <Stack spacing={2}>
+                <TextField
+                  label="Date of Marriage"
+                  type="date"
+                  value={form.dateOfMarriage}
+                  onChange={(e) => setForm({ ...form, dateOfMarriage: e.target.value })}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  fullWidth
+                />
+
+                {editMode?.relation === "divorced-partner" && (
+                  <TextField
+                    label="Date of Divorce"
+                    type="date"
+                    value={form.dateOfDivorce}
+                    onChange={(e) => setForm({ ...form, dateOfDivorce: e.target.value })}
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    fullWidth
+                  />
+                )}
+              </Stack>
+            </Box>
+          )}
+          {/* Person Details */}
           <Box>
-            <input accept="image/*" id="avatar-upload" type="file" hidden onChange={handleFileChange} />
-            <label htmlFor="avatar-upload">
-              <Button variant="contained" component="span">
-                {form.image ? "Change Avatar" : "Upload Avatar"}
-              </Button>
-            </label>
+            {showRelationshipSection && <Fragment>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Person Details
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+            </Fragment>}
+
+            <Stack spacing={2} alignItems="center">
+              <Avatar src={form.image || undefined} alt="User Avatar" sx={{ width: 120, height: 120 }}>
+                {!form.image && "Photo"}
+              </Avatar>
+
+              <Box>
+                <input accept="image/*" id="avatar-upload" type="file" hidden onChange={handleFileChange} />
+                <label htmlFor="avatar-upload">
+                  <Button variant="contained" component="span">
+                    {form.image ? "Change Avatar" : "Upload Avatar"}
+                  </Button>
+                </label>
+              </Box>
+
+              <TextField
+                label="Name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="Date of Birth"
+                type="date"
+                value={form.dateOfBirth}
+                onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
+                fullWidth
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+              <TextField
+                label="Date of Death"
+                type="date"
+                value={form.dateOfDeath}
+                onChange={(e) => setForm({ ...form, dateOfDeath: e.target.value })}
+                fullWidth
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+              <TextField
+                label="Maiden Name"
+                value={form.maidenName}
+                onChange={(e) => setForm({ ...form, maidenName: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="Occupation"
+                value={form.occupation}
+                onChange={(e) => setForm({ ...form, occupation: e.target.value })}
+                fullWidth
+              />
+
+              <FormControl fullWidth>
+                <InputLabel id="country-label">Country of Birth</InputLabel>
+                <Select
+                  labelId="country-label"
+                  value={form.countryOfBirth || ""}
+                  label="Country of Birth"
+                  onChange={(e) => setForm({ ...form, countryOfBirth: e.target.value })}
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  {countryList.sort().map((country) => (
+                    <MenuItem key={country} value={country}>
+                      {country}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* ✅ Gender Label Added */}
+              <FormControl component="fieldset" fullWidth>
+                <FormLabel component="legend" sx={{ textAlign: "left"}}>Gender</FormLabel>
+                <RadioGroup
+                  row
+                  value={form.gender || ""}
+                  onChange={(e) => setForm({ ...form, gender: e.target.value as "Male" | "Female" })}
+                >
+                  <FormControlLabel value="Male" control={<Radio />} label="Male" />
+                  <FormControlLabel value="Female" control={<Radio />} label="Female" />
+                </RadioGroup>
+              </FormControl>
+            </Stack>
           </Box>
-
-          {/* Fields */}
-          <TextField
-            label="Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            fullWidth
-            variant="outlined"
-            autoFocus
-          />
-          <TextField
-            label="Date of Birth"
-            type="date"
-            variant="outlined"
-            value={form.dateOfBirth}
-            onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
-            slotProps={{ inputLabel: { shrink: true } }}
-            fullWidth
-          />
-          <TextField
-            label="Date of Death"
-            type="date"
-            variant="outlined"
-            value={form.dateOfDeath}
-            onChange={(e) => setForm({ ...form, dateOfDeath: e.target.value })}
-            slotProps={{ inputLabel: { shrink: true } }}
-            fullWidth
-          />
-          <TextField
-            variant="outlined"
-            label="Maiden Name"
-            value={form.maidenName}
-            onChange={(e) => setForm({ ...form, maidenName: e.target.value })}
-            fullWidth
-          />
-          <TextField
-            variant="outlined"
-            label="Occupation"
-            value={form.occupation}
-            onChange={(e) => setForm({ ...form, occupation: e.target.value })}
-            fullWidth
-          />
-
-          <FormControl fullWidth>
-            <InputLabel id="country-label">Country of Birth</InputLabel>
-            <Select
-              variant="outlined"
-              labelId="country-label"
-              value={form.countryOfBirth || ""}
-              label="Country of Birth"
-              onChange={(e) => setForm({ ...form, countryOfBirth: e.target.value })}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {countryList.sort().map((country) => (
-                <MenuItem key={country} value={country}>
-                  {country}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl component="fieldset">
-            <RadioGroup
-              row
-              value={form.gender || ""}
-              onChange={(e) => setForm({ ...form, gender: e.target.value as "Male" | "Female" })}
-            >
-              <FormControlLabel value="Male" control={<Radio />} label="Male" />
-              <FormControlLabel value="Female" control={<Radio />} label="Female" />
-            </RadioGroup>
-          </FormControl>
         </Stack>
       </Box>
 
-      {/* Fixed Footer */}
+      {/* Footer */}
       <Box
         sx={{
           p: 1,
           borderTop: "1px solid #ddd",
-          background: "#fff",
+          background: (theme) => theme.palette.background.paper,
           position: "sticky",
           bottom: 0,
           zIndex: 2,

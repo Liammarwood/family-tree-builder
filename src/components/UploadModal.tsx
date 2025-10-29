@@ -9,6 +9,8 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { handleImport } from "@/libs/backup";
+import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
+import { Loading } from "./Loading";
 
 type Props = {
   open: boolean;
@@ -18,12 +20,18 @@ type Props = {
 export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { reloadTrees } = useFamilyTreeContext();
+
+  const handleReload = () => {
+    reloadTrees();
+    onClose();
+  }
 
   // --- Drag & Drop ---
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files.length > 0) {
-      handleImport(e.dataTransfer.files[0], setLoading);
+      handleImport(e.dataTransfer.files[0], setLoading, handleReload);
     }
   };
 
@@ -71,7 +79,7 @@ export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
 
         {loading ? (
           <Box display="flex" flexDirection="column" alignItems="center" mt={2}>
-            <CircularProgress />
+            <Loading />
             <Typography mt={2}>Processing...</Typography>
           </Box>
         ) : (
@@ -103,7 +111,7 @@ export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
                 style={{ display: "none" }}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleImport(file, setLoading);
+                  if (file) handleImport(file, setLoading, handleReload);
                 }}
               />
             </Box>

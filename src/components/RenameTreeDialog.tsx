@@ -8,6 +8,7 @@ import {
   TextField,
 } from "@mui/material";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
+import { useError } from "@/hooks/useError";
 
 type RenameTreeDialogProps = {
   open: boolean;
@@ -18,6 +19,7 @@ export const RenameTreeDialog: React.FC<RenameTreeDialogProps> = ({
   open,
   onClose,
 }) => {
+  // const { showError } = useError();
   const { currentTree, renameTree } = useFamilyTreeContext();
   const [newName, setNewName] = useState("");
 
@@ -36,6 +38,8 @@ export const RenameTreeDialog: React.FC<RenameTreeDialogProps> = ({
 
     try {
       await renameTree(currentTree?.id, newName.trim());
+    } catch {
+      // showError("Renaming the current tree has failed!");
     } finally {
       onClose();
     }

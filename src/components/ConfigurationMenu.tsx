@@ -11,7 +11,7 @@ import { signOut } from "firebase/auth";
 import AvatarVariantDropdown from './AvatarVariantDropdown';
 import { useFamilyTreeContext } from '@/hooks/useFamilyTree';
 import { RenameTreeDialog } from './RenameTreeDialog';
-import { handleBackup } from '@/libs/backup';
+import { handleExport } from '@/libs/backup';
 import { ExportType } from '@/types/ExportTypes';
 import ExportPreviewDialog from './ExportPreviewDialog';
 import { FamilyTreeSection } from './FamilyTreeSelection';
@@ -129,7 +129,7 @@ const ConfigMenu: React.FC = () => {
                     Export as PDF
                 </MenuItem>
 
-                <MenuItem onClick={() => handleBackup(currentTree?.id)}>
+                <MenuItem onClick={() => handleExport(currentTree?.id)}>
                     <ListItemIcon>
                         <Download fontSize="small" />
                     </ListItemIcon>

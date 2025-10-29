@@ -303,8 +303,8 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
     <Stack
       direction="row"
       spacing={0}
-      mt={1}
-      mb={1}
+      my={1}
+      mx={1}
       sx={{ height: '90vh', position: 'relative' }}
     >
       {/* Left: Details Pane */}
@@ -345,7 +345,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
           sx={{
             flex: 1,
             minHeight: 0,
-            background: '#f5f5f5',
+            background: (theme) => theme.palette.background.paper,
             borderRadius: 2,
             boxShadow: 1,
             mx: isMobile ? 0 : 2,
