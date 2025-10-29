@@ -57,11 +57,26 @@ If you prefer watch mode:
 npm run test:watch
 ```
 
-## Release process (Conventional Commits)
+## Release Process (Conventional Commits)
 
-This repository uses `release-please` (GitHub Action) to automate releases based on Conventional Commits. The workflow is defined in `.github/workflows/release.yml` and will open a release PR or create a release/tag when changes are merged to `main`.
+This repository uses [semantic-release](https://semantic-release.gitbook.io/) to automate releases based on [Conventional Commits](https://www.conventionalcommits.org/). The workflow is defined in `.github/workflows/release.yml` and automatically creates releases when commits are merged to `main`.
 
-- To trigger the release workflow manually go to the Actions tab and run the "Conventional Release" workflow or push to `main`.
-- The UI displays the current package version in the navigation bar (derived from `package.json` or the `NEXT_PUBLIC_APP_VERSION` env var set at build time).
+### How It Works
 
-If you need to override the visible version (for example in CI), set the `NEXT_PUBLIC_APP_VERSION` environment variable at build time before running `next build`.
+- Commits following the conventional format (`feat:`, `fix:`, etc.) are analyzed
+- Version numbers are automatically bumped based on commit types
+- A changelog is automatically generated and committed
+- A GitHub release is created with release notes
+- No manual version management needed!
+
+### Contributing
+
+Please follow the [Conventional Commits](https://www.conventionalcommits.org/) format for all commit messages. See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines and examples.
+
+### Manual Trigger
+
+To trigger the release workflow manually, go to the Actions tab and run the "Conventional Release" workflow.
+
+### Version Display
+
+The UI displays the current package version in the navigation bar (derived from `package.json` or the `NEXT_PUBLIC_APP_VERSION` env var set at build time). If you need to override the visible version (for example in CI), set the `NEXT_PUBLIC_APP_VERSION` environment variable at build time before running `next build`.
