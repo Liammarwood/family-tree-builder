@@ -43,8 +43,8 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
   const isNodeSelected = useMemo(() => selectedNode != undefined && isOneNodeSelected, [selectedNode, isOneNodeSelected])
   const isEdgeSelected = useMemo(() => selectedEdge != undefined && isOneEdgeSelected, [selectedEdge, isOneEdgeSelected])
   const canAddSibling = useMemo(() => selectedNode !== undefined && edges.filter((e) => (e.target === selectedNode.id) && e.data?.relationship === RelationshipType.Parent).length > 0, [edges, selectedNode]);
-  // Toggle grid
-  const handleToggleGrid = () => console.log("Toggle Grid") //setShowGrid((g) => !g);
+  // Toggle grid (no-op placeholder)
+  const handleToggleGrid = () => { /* no-op */ };
 
   // Zoom fit
   const handleZoomFit = () => {

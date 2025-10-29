@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { handleImport } from "@/libs/backup";
+import { useError } from "@/hooks/useError";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 import { Loading } from "./Loading";
 
@@ -21,6 +22,7 @@ export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { reloadTrees } = useFamilyTreeContext();
+  const { showError } = useError();
 
   const handleReload = () => {
     reloadTrees();
@@ -28,10 +30,18 @@ export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
   }
 
   // --- Drag & Drop ---
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files.length > 0) {
-      handleImport(e.dataTransfer.files[0], setLoading, handleReload);
+      try {
+        await handleImport(e.dataTransfer.files[0], setLoading, handleReload);
+      } catch (err: any) {
+        if (err?.message === "NO_DATA_IN_IMPORT") {
+          showError("Import file contained no usable data.", "warning");
+        } else {
+          showError("Failed to import data. Please check the file and try again.");
+        }
+      }
     }
   };
 
@@ -109,9 +119,19 @@ export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
                 type="file"
                 accept="application/json"
                 style={{ display: "none" }}
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleImport(file, setLoading, handleReload);
+                  if (file) {
+                    try {
+                      await handleImport(file, setLoading, handleReload);
+                    } catch (err: any) {
+                      if (err?.message === "NO_DATA_IN_IMPORT") {
+                        showError("Import file contained no usable data.", "warning");
+                      } else {
+                        showError("Failed to import data. Please check the file and try again.");
+                      }
+                    }
+                  }
                 }}
               />
             </Box>

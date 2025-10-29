@@ -36,6 +36,10 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   const isMobile = useMediaQuery('(max-width: 768px)');
   const initialized = useRef(false);
 
+  // Memoize node/edge types to avoid recreating objects each render (React Flow warns otherwise)
+  const memoNodeTypes = useMemo(() => NODE_TYPES, []);
+  const memoEdgeTypes = useMemo(() => EDGE_TYPES, []);
+
   // 1️⃣ Reset nodes/edges when tree selection changes
   useEffect(() => {
     if (currentTree) {
@@ -150,13 +154,10 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   }
 
   const handleSave = (form: PersonDetailsForm) => {
-    console.log('save');
     if (!editMode) return;
-    console.log(editMode);
-    console.log(selectedNode);
 
     if (editMode.type === "edit" && selectedNode) {
-      console.log('save edit')
+  // saving edited node
       setNodes((nds) =>
         nds.map((n) =>
           n.id === selectedNode.id
@@ -199,7 +200,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
         },
       };
 
-      console.log(newNode)
+  // new node created
 
       // Add node
       setNodes([...nodes, newNode]);
@@ -322,7 +323,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
                 editMode={editMode}
                 onSave={handleSave}
                 onCancel={handleCancel}
-                onDelete={() => console.log("Delete")}
+                onDelete={() => {}}
               />
             )}
 
@@ -332,7 +333,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
                 selectedEdge={selectedEdge}
                 onSave={handleRelationshipSave}
                 onCancel={handleCancel}
-                onDelete={() => console.log("Delete")}
+                onDelete={() => {}}
               />
             )}
         </DetailsPane>
@@ -358,8 +359,8 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
             <ReactFlow
               nodes={nodes}
               edges={edges}
-              edgeTypes={EDGE_TYPES}
-              nodeTypes={NODE_TYPES}
+              edgeTypes={memoEdgeTypes}
+              nodeTypes={memoNodeTypes}
               onNodeClick={onNodeClick}
               onEdgesChange={onEdgesChange}
               onNodesChange={onNodesChange}

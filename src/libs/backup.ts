@@ -17,7 +17,6 @@ type ExportDataMap<T> = Record<string, ExportStoreData<T>>;
  * 🔹 Export a single record from IndexedDB and download as JSON
  */
 export const handleExport = async (currentTreeId: string | undefined): Promise<void> => {
-  console.log("Export")
   if(!currentTreeId) return;
   try {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -36,8 +35,8 @@ export const handleExport = async (currentTreeId: string | undefined): Promise<v
     });
 
     if (!record) {
-      console.warn(`No record found for key: ${currentTreeId}`);
-      return;
+      // Indicate up to caller that no record was found so UI can show a friendly warning
+      throw new Error("NO_RECORD_FOUND");
     }
 
     const exportData: ExportDataMap<FamilyTreeObject> = {
@@ -61,9 +60,9 @@ export const handleExport = async (currentTreeId: string | undefined): Promise<v
     a.click();
     URL.revokeObjectURL(url);
 
-    console.log(`Exported record ${currentTreeId} successfully.`);
+    // exported successfully
   } catch (err) {
-    console.error("Export failed:", err);
+    throw err;
   }
 };
 
@@ -89,8 +88,8 @@ export const handleImport = async (
     for (const storeName of Object.keys(importData)) {
       const { data } = importData[storeName];
       if (!data || data.length === 0) {
-        console.warn("No data found in import file.");
-        continue;
+        // Propagate a specific error so callers can display a warning instead of a failure
+        throw new Error("NO_DATA_IN_IMPORT");
       }
 
       const record = data[0];
@@ -101,17 +100,16 @@ export const handleImport = async (
         store.put(record);
 
         transaction.oncomplete = () => {
-          console.log(`Record ${record.id || "unknown"} imported successfully.`);
+          // record imported
           resolve();
         };
         transaction.onerror = () => reject(transaction.error);
       });
     }
 
-    console.log("Import completed successfully!");
     reload();
   } catch (err) {
-    console.error("Import failed:", err);
+    throw err;
   } finally {
     setLoading(false);
   }

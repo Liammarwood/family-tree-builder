@@ -29,7 +29,6 @@ export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children })
   const [objectStoreName, setObjectStoreName] = useState<string>("");
 
   const toggleHandles = () => {
-    console.log("Toggling handles from", showHandles, "to", !showHandles);
     setShowHandles(!showHandles);
   }
 

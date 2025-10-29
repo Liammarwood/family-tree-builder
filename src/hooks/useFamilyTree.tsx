@@ -8,6 +8,7 @@ import {
 } from "@/types/FamilyTreeObject";
 import { useState, useEffect, useCallback, SetStateAction } from "react";
 import { useError } from "./useError";
+import { logger } from '@/libs/logger';
 import React from "react";
 
 function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
@@ -60,10 +61,12 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                 dbInstance = openRequest.result;
                 setDb(dbInstance);
                 setIsDbReady(true);
+                logger.info("IndexedDB opened");
             };
 
             openRequest.onerror = (e) => {
-                console.error("IndexedDB error:", e);
+                // Inform the user in plain language; don't leak internal error details
+                showError("Failed to open the browser database. Some features may be unavailable.");
                 setIsDbReady(false);
             };
         };
@@ -98,7 +101,9 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
             setTrees(summaries);
         };
 
-        request.onerror = () => console.error("Failed to load trees");
+        request.onerror = () => {
+            showError("Unable to load saved trees from the local database.");
+        };
     }, [db, isDbReady, storeName]);
 
     useEffect(() => {
@@ -107,11 +112,9 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
     // 🔹 Load current tree data when selectedTreeId changes
     useEffect(() => {
-        console.log("Called")
         if (!db || !isDbReady || !selectedTreeId) {
             setCurrentTree(undefined);
             setIsTreeLoaded(true);
-            console.log("failed")
             return;
         }
 
@@ -122,14 +125,14 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
         request.onsuccess = () => {
             const result = request.result as FamilyTreeObject | undefined;
-            console.log(result)
             setCurrentTree(result);
             setIsTreeLoaded(true);
 
         };
 
         request.onerror = () => {
-            console.error("Failed to load tree data");
+            // Show a concise, non-technical message to the user
+            showError("Unable to load the selected tree. A new blank tree will be used.");
             setCurrentTree(NEW_TREE());
             setIsTreeLoaded(true);
         };
@@ -161,9 +164,10 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                     const tx = db.transaction(storeName, "readwrite");
                     const store = tx.objectStore(storeName);
                     store.put(treeToSave);
-                    console.log("Saved: ", selectedTreeId)
-
-                    tx.onerror = () => console.error("Failed to save tree");
+                    logger.debug("Queued save for tree", selectedTreeId);
+                    tx.onerror = () => {
+                        showError("Failed to save the current tree. Please try again.");
+                    };
 
                     return treeToSave;
                 });
@@ -185,14 +189,14 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                     const tx = db.transaction(storeName, "readwrite");
                     const store = tx.objectStore(storeName);
                     store.put(treeToSave);
-                    console.log("Saved: ", treeToSave.id)
-
                     tx.oncomplete = () => {
                         // Update trees list after successful save
+                        logger.info("Saved tree", treeToSave.id);
                         loadTrees();
                     };
-
-                    tx.onerror = () => console.error("Failed to save tree");
+                    tx.onerror = () => {
+                        showError("Failed to save the current tree. Please try again.");
+                    };
 
                     setSelectedTreeId(treeToSave.id ?? null);
 
@@ -216,12 +220,15 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
             tx.objectStore(storeName).add(newTree);
 
             tx.oncomplete = () => {
+                logger.info("Created new tree", newTree.id);
                 setTrees((prev) => [...prev, { id: newTree.id, name: newTree.name }]);
                 setSelectedTreeId(newTree.id);
                 setCurrentTree(newTree);
             };
 
-            tx.onerror = () => console.error("Failed to create tree");
+            tx.onerror = () => {
+                showError("Failed to create a new tree. Please try again.");
+            };
         },
         [db, isDbReady, storeName, setSelectedTreeId, showError]
     );
@@ -238,6 +245,7 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
             tx.objectStore(storeName).delete(id);
 
             tx.oncomplete = () => {
+                logger.info("Deleted tree", id);
                 setTrees((prev) => prev.filter((t) => t.id !== id));
                 if (selectedTreeId === id) {
                     setSelectedTreeId(null);
@@ -245,7 +253,9 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                 }
             };
 
-            tx.onerror = () => console.error("Failed to delete tree");
+            tx.onerror = () => {
+                showError("Failed to delete the selected tree. Please try again.");
+            };
         },
         [db, isDbReady, storeName, selectedTreeId, setSelectedTreeId, showError]
     );
@@ -277,9 +287,12 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                 if (selectedTreeId === id) {
                     setCurrentTree(updated);
                 }
+                logger.info("Renamed tree", id, "->", newName);
             };
 
-            getReq.onerror = () => console.error("Failed to rename tree");
+            getReq.onerror = () => {
+                showError("Failed to rename the tree. Please try again.");
+            };
         },
         [db, isDbReady, storeName, selectedTreeId, showError]
     );

@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { RenameTreeDialog } from "./RenameTreeDialog";
+import { ErrorProvider } from "@/hooks/useError";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 
 // Mock the context
@@ -15,7 +16,11 @@ const renderComponent = (props = { open: true }) => {
     renameTree: mockRenameTree,
   });
 
-  return render(<RenameTreeDialog {...props} onClose={mockOnClose} />);
+  return render(
+    <ErrorProvider>
+      <RenameTreeDialog {...props} onClose={mockOnClose} />
+    </ErrorProvider>
+  );
 };
 
 describe("RenameTreeDialog", () => {
@@ -90,10 +95,12 @@ describe("RenameTreeDialog", () => {
 
   it("prefills input correctly when dialog is reopened with a different tree", () => {
     const { rerender } = render(
-      <RenameTreeDialog
-        open={true}
-        onClose={mockOnClose}
-      />
+      <ErrorProvider>
+        <RenameTreeDialog
+          open={true}
+          onClose={mockOnClose}
+        />
+      </ErrorProvider>
     );
 
     // Initial tree
@@ -103,7 +110,11 @@ describe("RenameTreeDialog", () => {
     });
 
     // Reopen dialog
-    rerender(<RenameTreeDialog open={true} onClose={mockOnClose} />);
+    rerender(
+      <ErrorProvider>
+        <RenameTreeDialog open={true} onClose={mockOnClose} />
+      </ErrorProvider>
+    );
     const input = screen.getByLabelText("Tree Name") as HTMLInputElement;
     expect(input.value).toBe("Another Tree");
   });
