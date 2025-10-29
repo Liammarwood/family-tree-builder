@@ -18,17 +18,17 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/) f
 
 ### Types
 
-- **feat**: A new feature (triggers a minor version bump)
-- **fix**: A bug fix (triggers a patch version bump)
-- **docs**: Documentation changes only
-- **style**: Code style changes (formatting, missing semi-colons, etc.)
-- **refactor**: Code refactoring without changing functionality
-- **perf**: Performance improvements
-- **test**: Adding or updating tests
-- **build**: Changes to build system or dependencies
-- **ci**: Changes to CI configuration files and scripts
-- **chore**: Other changes that don't modify src or test files
-- **revert**: Reverting a previous commit
+- **feat**: A new feature (triggers a **minor** version bump, e.g., 1.0.0 → 1.1.0)
+- **fix**: A bug fix (triggers a **patch** version bump, e.g., 1.0.0 → 1.0.1)
+- **docs**: Documentation changes (triggers a **patch** version bump)
+- **style**: Code style changes - formatting, missing semi-colons, etc. (triggers a **patch** version bump)
+- **refactor**: Code refactoring without changing functionality (triggers a **patch** version bump)
+- **perf**: Performance improvements (triggers a **patch** version bump)
+- **test**: Adding or updating tests (triggers a **patch** version bump)
+- **build**: Changes to build system or dependencies (triggers a **patch** version bump)
+- **ci**: Changes to CI configuration files and scripts (triggers a **patch** version bump)
+- **chore**: Other changes that don't modify src or test files (triggers a **patch** version bump)
+- **revert**: Reverting a previous commit (triggers a **patch** version bump)
 
 ### Examples
 
