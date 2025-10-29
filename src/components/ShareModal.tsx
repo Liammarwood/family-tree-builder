@@ -143,24 +143,19 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         }
     };
 
-    const handleReceivedTree = async (receivedTree: FamilyTreeObject) => {
+    const handleReceivedTree = (receivedTree: FamilyTreeObject) => {
         // Check if tree with same ID already exists
         const existingTreeSummary = trees.find(t => t.id === receivedTree.id);
         
         if (existingTreeSummary) {
-            // Need to load the full existing tree to compare
-            // This is a temporary workaround - ideally we'd have access to the full tree
-            // For now, we'll use a simple override dialog for basic cases
-            // and the merge dialog when we detect significant changes
-            
-            // Try to access the existing tree from context if it's the current tree
+            // Show merge dialog if this is the current tree (full data available)
             if (currentTree && currentTree.id === receivedTree.id) {
                 // Show merge dialog with detailed comparison
                 setPendingTree(receivedTree);
                 setExistingTreeForMerge(currentTree);
                 setShowMergeDialog(true);
             } else {
-                // Fallback to simple override dialog
+                // Fallback to simple override dialog for non-current trees
                 setPendingTree(receivedTree);
                 setShowOverrideDialog(true);
             }

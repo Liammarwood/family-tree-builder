@@ -54,6 +54,26 @@ type EdgeChange = {
     selected: boolean;
 };
 
+// Helper function to compare node data more reliably
+const areNodesEqual = (node1: Node, node2: Node): boolean => {
+    const data1 = node1.data as FamilyNodeData;
+    const data2 = node2.data as FamilyNodeData;
+    
+    return (
+        data1.name === data2.name &&
+        data1.dateOfBirth === data2.dateOfBirth &&
+        data1.dateOfDeath === data2.dateOfDeath &&
+        data1.countryOfBirth === data2.countryOfBirth &&
+        data1.gender === data2.gender &&
+        data1.occupation === data2.occupation &&
+        data1.maidenName === data2.maidenName &&
+        data1.image === data2.image &&
+        JSON.stringify(data1.parents?.sort()) === JSON.stringify(data2.parents?.sort()) &&
+        JSON.stringify(data1.children.sort()) === JSON.stringify(data2.children.sort()) &&
+        JSON.stringify(data1.partners?.sort()) === JSON.stringify(data2.partners?.sort())
+    );
+};
+
 export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
     open,
     onClose,
@@ -80,7 +100,7 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
                     incomingNode,
                     selected: true,
                 });
-            } else if (JSON.stringify(existingNode.data) !== JSON.stringify(incomingNode.data)) {
+            } else if (!areNodesEqual(existingNode, incomingNode)) {
                 nodeChanges.push({
                     id,
                     type: 'modified',
@@ -200,7 +220,8 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
 
         const mergedTree: FamilyTreeObject = {
             ...existingTree,
-            name: incomingTree.name, // Use incoming tree name
+            // Preserve existing tree name unless user explicitly wants to change it
+            // Future enhancement: make tree name part of selectable changes
             nodes: Array.from(existingNodeMap.values()),
             edges: Array.from(existingEdgeMap.values()),
             updatedAt: Date.now(),
