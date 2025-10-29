@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   release:
@@ -26,17 +27,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install
         run: npm ci
 
       - name: Create release with release-please
-        uses: release-please/action@v2
+        uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: node
-          package-name: family-tree-builder
-          # release-please will open a release PR (or create a release on merge)
-          bump-minor-pre-major: true
-          path: .
