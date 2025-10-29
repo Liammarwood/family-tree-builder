@@ -24,7 +24,11 @@ export async function exportToPDF(element: HTMLElement): Promise<Blob> {
   const img = new Image();
   img.src = pngDataUrl;
 
-  await new Promise((resolve) => (img.onload = resolve));
+  // Avoid implicit `any` on the promise resolve handler by typing the
+  // Promise as `void` and using an explicit callback.
+  await new Promise<void>((resolve) => {
+    img.onload = () => resolve();
+  });
 
   const pdf = new jsPDF({
     orientation: img.width > img.height ? "landscape" : "portrait",

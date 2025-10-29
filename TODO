@@ -1,17 +1,15 @@
-// Add Child - Uses wrong handles
-// Add Siblinbg - Uses wrong handles
-// Add Partner - Should ask for marriage date ( if blank, then status is Partner )
-// Add Person  - Should be an option
-// Manual Connect Parent - Uses wrong handles
-// Add Select Multi Nodes - The selectedNode should be an array, if lenght is 1 then its the same as before, otherwise we are selecting multiple to move them all at once
-// Add second child handle when person has a divorced partner edge / partner
-// Add click two nodes are selected, if they are partners or divorced add child should be avaiable 
-// Add Import /  Export for IndexDB and select which object store to user within the db for the current tree, 
-// Make it a pwa with mobile support
-// Add Receive Tree to override the one in the local store if it exists.
-// Modifyy Export Import for Current tree
-// Fix Mobile View
-// Modify Share to then allow selection of whats added / removed in the changes.
-// Ensure when clicking between People and Relationships only one can be selected at a time.
-// Add Sementic Versioning with Conventual Commits
-// Add Unit testing
+# Features
+* Add Select Multi Nodes - The selectedNode should be an array, if lenght is 1 then its the same as before, otherwise we are selecting multiple to move them all at once
+* Add second child handle when person has a divorced partner edge / partner
+* Add click two nodes are selected, if they are partners or divorced add child should be avaiable 
+* Make it a pwa with mobile support
+* Modify Share to then allow selection of whats added / removed in the changes.
+* Add Unit testing for Componenets
+* Allow users to change styling of the Nodes + Edges, such as colouring, Font, Node Style (Give a couple of options) There should be a new configuraiton Dialog to allow this (Along with Hide Handles, Avatar Shape etc)
+
+# Bugs
+* Fix Mobile View
+* Ensure when clicking between People and Relationships only one can be selected at a time.
+
+# CI / CD / Release
+* Add Sementic Versioning with Conventual Commits

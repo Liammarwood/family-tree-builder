@@ -42,19 +42,14 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
   const isOneEdgeSelected = useMemo(() => selectedEdge !== undefined && edges.filter((e) => e.selected).length === 1, [selectedEdge, edges])
   const isNodeSelected = useMemo(() => selectedNode != undefined && isOneNodeSelected, [selectedNode, isOneNodeSelected])
   const isEdgeSelected = useMemo(() => selectedEdge != undefined && isOneEdgeSelected, [selectedEdge, isOneEdgeSelected])
-
-  // Toggle grid
-  const handleToggleGrid = () => console.log("Toggle Grid") //setShowGrid((g) => !g);
+  const canAddSibling = useMemo(() => selectedNode !== undefined && edges.filter((e) => (e.target === selectedNode.id) && e.data?.relationship === RelationshipType.Parent).length > 0, [edges, selectedNode]);
+  // Toggle grid (no-op placeholder)
+  const handleToggleGrid = () => { /* no-op */ };
 
   // Zoom fit
   const handleZoomFit = () => {
     fitView();
   };
-
-  // Used to check if "Add Sibling" should be enabled
-  const doesSelectedPersonHaveParents = () => {
-    return selectedNode !== undefined && edges.filter((e) => (e.target === selectedNode.id) && e.data?.relationship === RelationshipType.Parent).length > 0;
-  }
 
   const handleDeleteNode = () => {
     const currentSelectedEdge = selectedEdge;
@@ -79,12 +74,14 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
   };
 
   const handleEdit = () => {
-
+    if (selectedNode) {
+      setEditMode({ type: 'edit', nodeId: selectedNode.id, nodeData: selectedNode.data });
+    }
   }
 
   const actions = [
     { icon: <FamilyRestroomIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Add Parent', onClick: () => handleAddNode("parent"), isShown: isNodeSelected },
-    { icon: <GroupAddIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Add Sibling', onClick: () => handleAddNode("sibling"), isShown: isNodeSelected || doesSelectedPersonHaveParents() },
+    { icon: <GroupAddIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Add Sibling', onClick: () => handleAddNode("sibling"), isShown: isNodeSelected && canAddSibling },
     { icon: <PersonAddIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Add Child', onClick: () => handleAddNode("child"), isShown: isNodeSelected },
     { icon: <FavoriteIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Add Partner', onClick: () => handleAddNode("partner"), isShown: isNodeSelected },
     { icon: <HeartBroken fontSize={isMobile ? "small" : "medium"} />, name: 'Add Divorced Partner', onClick: () => handleAddNode("divorced-partner"), isShown: isNodeSelected },
@@ -119,7 +116,8 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
               icon={action.icon}
               slotProps={{
                 tooltip: {
-                  title: action.name
+                  title: action.name,
+                  placement: "left"
                 }
               }}
               onClick={action.onClick}

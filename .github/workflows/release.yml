@@ -1,0 +1,42 @@
+name: Conventional Release
+
+# Runs a conventional-commits-based version bump using `standard-version`.
+# - Triggered manually or on pushes to `main` (skips runs triggered by GitHub Actions bot to avoid loops).
+# - Bumps package.json version, creates a changelog, tags the release, and pushes the commit+tag.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install
+        run: npm ci
+
+      - name: Create release with release-please
+        uses: release-please/action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: node
+          package-name: family-tree-builder
+          # release-please will open a release PR (or create a release on merge)
+          bump-minor-pre-major: true
+          path: .

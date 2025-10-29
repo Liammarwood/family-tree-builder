@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import {
   Box,
-  CircularProgress,
   Typography,
   Paper,
   Modal,
@@ -9,6 +8,9 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { handleImport } from "@/libs/backup";
+import { useError } from "@/hooks/useError";
+import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
+import { Loading } from "./Loading";
 
 type Props = {
   open: boolean;
@@ -18,12 +20,30 @@ type Props = {
 export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { reloadTrees } = useFamilyTreeContext();
+  const { showError } = useError();
+
+  const handleReload = () => {
+    reloadTrees();
+    onClose();
+  }
 
   // --- Drag & Drop ---
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files.length > 0) {
-      handleImport(e.dataTransfer.files[0], setLoading);
+      try {
+        await handleImport(e.dataTransfer.files[0], setLoading, handleReload);
+      } catch (err: unknown) {
+        const isErrorWithMessage = (x: unknown): x is { message?: string } =>
+          typeof x === 'object' && x !== null && 'message' in x && typeof (x as Record<string, unknown>).message === 'string';
+
+        if (isErrorWithMessage(err) && err.message === "NO_DATA_IN_IMPORT") {
+          showError("Import file contained no usable data.", "warning");
+        } else {
+          showError("Failed to import data. Please check the file and try again.");
+        }
+      }
     }
   };
 
@@ -71,7 +91,7 @@ export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
 
         {loading ? (
           <Box display="flex" flexDirection="column" alignItems="center" mt={2}>
-            <CircularProgress />
+            <Loading />
             <Typography mt={2}>Processing...</Typography>
           </Box>
         ) : (
@@ -101,9 +121,22 @@ export const UploadModal: React.FC<Props> = ({ open, onClose }) => {
                 type="file"
                 accept="application/json"
                 style={{ display: "none" }}
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleImport(file, setLoading);
+                  if (file) {
+                    try {
+                      await handleImport(file, setLoading, handleReload);
+                    } catch (err: unknown) {
+                      const isErrorWithMessage = (x: unknown): x is { message?: string } =>
+                        typeof x === 'object' && x !== null && 'message' in x && typeof (x as Record<string, unknown>).message === 'string';
+
+                      if (isErrorWithMessage(err) && err.message === "NO_DATA_IN_IMPORT") {
+                        showError("Import file contained no usable data.", "warning");
+                      } else {
+                        showError("Failed to import data. Please check the file and try again.");
+                      }
+                    }
+                  }
                 }}
               />
             </Box>

@@ -18,7 +18,9 @@ import {
     DialogActions,
 } from "@mui/material";
 import { useFirestoreSignaling } from "@/hooks/useFirestoreSignaling";
+import { logger } from '@/libs/logger';
 import { RequireAuth } from "@/components/RequireAuth";
+import { useError } from "@/hooks/useError";
 import { QRCodeSVG } from "qrcode.react";
 import { FamilyTreeObject } from "@/types/FamilyTreeObject";
 import { CheckCircle, HourglassEmpty, Warning } from "@mui/icons-material";
@@ -51,6 +53,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
     const { createOffer, joinCall } = useFirestoreSignaling();
     const pc = React.useRef<RTCPeerConnection | null>(null);
+    const { showError } = useError();
 
     // 🔹 Reset state and cleanup connection
     const handleClose = () => {
@@ -169,10 +172,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         setChannel(dc);
 
         dc.onopen = () => {
-            console.log("Data channel open ✅");
             // Send JSON once channel is open
             if (isReceiver) {
-                console.warn("Only the initiator can send JSON data.");
+                showError("Only the initiator can send data.", "warning");
                 return;
             } else {
                 dc.send(JSON.stringify(currentTree));
@@ -183,15 +185,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         dc.onmessage = (e) => {
             try {
                 const receivedJson: FamilyTreeObject = JSON.parse(e.data);
-                console.log("📥 Received JSON:", receivedJson);
                 handleReceivedTree(receivedJson);
             } catch (err) {
-                console.warn("Received non-JSON message:", e.data, err);
+                logger.warn("Received non-JSON message:", e.data, err);
             }
         };
 
         dc.onerror = (e) => {
-            console.log("Error", e)
+            showError("A data channel error occurred. The transfer may have failed.");
         }
     };
 

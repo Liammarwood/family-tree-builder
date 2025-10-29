@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -101,8 +101,8 @@ const ExportPreviewDialog: React.FC<ExportPreviewDialogProps> = ({
                     <ReactFlow
                         nodes={getNodes()}
                         edges={getEdges()}
-                        edgeTypes={EDGE_TYPES}
-                        nodeTypes={NODE_TYPES}
+                        edgeTypes={useMemo(() => EDGE_TYPES, [])}
+                        nodeTypes={useMemo(() => NODE_TYPES, [])}
                         minZoom={0.05}
                         maxZoom={2}
                         fitView

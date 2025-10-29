@@ -56,3 +56,12 @@ If you prefer watch mode:
 ```bash
 npm run test:watch
 ```
+
+## Release process (Conventional Commits)
+
+This repository uses `release-please` (GitHub Action) to automate releases based on Conventional Commits. The workflow is defined in `.github/workflows/release.yml` and will open a release PR or create a release/tag when changes are merged to `main`.
+
+- To trigger the release workflow manually go to the Actions tab and run the "Conventional Release" workflow or push to `main`.
+- The UI displays the current package version in the navigation bar (derived from `package.json` or the `NEXT_PUBLIC_APP_VERSION` env var set at build time).
+
+If you need to override the visible version (for example in CI), set the `NEXT_PUBLIC_APP_VERSION` environment variable at build time before running `next build`.

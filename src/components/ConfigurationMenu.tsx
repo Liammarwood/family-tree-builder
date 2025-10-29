@@ -11,7 +11,8 @@ import { signOut } from "firebase/auth";
 import AvatarVariantDropdown from './AvatarVariantDropdown';
 import { useFamilyTreeContext } from '@/hooks/useFamilyTree';
 import { RenameTreeDialog } from './RenameTreeDialog';
-import { handleBackup } from '@/libs/backup';
+import { handleExport } from '@/libs/backup';
+import { useError } from '@/hooks/useError';
 import { ExportType } from '@/types/ExportTypes';
 import ExportPreviewDialog from './ExportPreviewDialog';
 import { FamilyTreeSection } from './FamilyTreeSelection';
@@ -22,6 +23,7 @@ import { useSearchParams } from 'next/navigation';
 const ConfigMenu: React.FC = () => {
     const { showHandles, toggleHandles } = useConfiguration();
     const { currentTree, deleteTree } = useFamilyTreeContext();
+    const { showError } = useError();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [isRenameTreeModalOpen, setRenameTreeModalOpen] = useState<boolean>(false);
     const [isSelectModalOpen, setSelectModalOpen] = useState<boolean>(false);
@@ -129,7 +131,21 @@ const ConfigMenu: React.FC = () => {
                     Export as PDF
                 </MenuItem>
 
-                <MenuItem onClick={() => handleBackup(currentTree?.id)}>
+                <MenuItem onClick={async () => {
+                    try {
+                        await handleExport(currentTree?.id);
+                    } catch (err: unknown) {
+                        // Handle known warning cases from the backup utility
+                        const isErrorWithMessage = (x: unknown): x is { message?: string } =>
+                          typeof x === 'object' && x !== null && 'message' in x && typeof (x as Record<string, unknown>).message === 'string';
+
+                        if (isErrorWithMessage(err) && err.message === "NO_RECORD_FOUND") {
+                            showError("No record found to export.", "warning");
+                        } else {
+                            showError("Failed to export data. Please try again.");
+                        }
+                    }
+                }}>
                     <ListItemIcon>
                         <Download fontSize="small" />
                     </ListItemIcon>

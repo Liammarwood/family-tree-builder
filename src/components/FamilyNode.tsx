@@ -125,12 +125,12 @@ export const FamilyTreeNode = ({
 
           {/* Details: Born, Country, Died as rows */}
           <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {data.dateOfBirth && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Cake sx={{ fontSize: 16, color: 'success.main' }} />
               <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem', minWidth: 60 }}>
                 <strong>Born:</strong> {formatDate(data.dateOfBirth)}
               </Typography>
-            </Box>
+            </Box>}
             {data.countryOfBirth && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Public sx={{ fontSize: 16, color: 'primary.main' }} />

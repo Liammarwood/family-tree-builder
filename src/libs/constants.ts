@@ -1,5 +1,5 @@
+import { AltFamilyTreeNode } from "@/components/AltFamilyTreeNode";
 import DraggableEdge from "@/components/DraggableEdge";
-import { FamilyTreeNode } from "@/components/FamilyNode";
 import { RelationshipEdge } from "@/components/RelationshipEdge";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { Node } from "reactflow";
@@ -26,7 +26,7 @@ export const INITIAL_NODE: Node<FamilyNodeData> = {
     },
 };
 export const INITIAL_TREE = { nodes: [INITIAL_NODE], edges: [] };
-export const NODE_TYPES = { family: FamilyTreeNode };
+export const NODE_TYPES = { family: AltFamilyTreeNode };
 export const EDGE_TYPES = { partner: RelationshipEdge, draggable: DraggableEdge }
 export function GENERATE_ID() {
     return Math.random().toString(36).substring(2, 9);
