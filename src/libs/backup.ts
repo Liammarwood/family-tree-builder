@@ -18,6 +18,12 @@ type ExportDataMap<T> = Record<string, ExportStoreData<T>>;
  */
 export const handleExport = async (currentTreeId: string | undefined): Promise<void> => {
   if(!currentTreeId) return;
+  
+  // Check IndexedDB availability
+  if (!window.indexedDB) {
+    throw new Error("INDEXEDDB_NOT_AVAILABLE");
+  }
+  
   try {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -75,6 +81,13 @@ export const handleImport = async (
   reload: () => void
 ): Promise<void> => {
   setLoading(true);
+  
+  // Check IndexedDB availability
+  if (!window.indexedDB) {
+    setLoading(false);
+    throw new Error("INDEXEDDB_NOT_AVAILABLE");
+  }
+  
   try {
     const text = await file.text();
     const importData: ExportDataMap<FamilyTreeObject> = JSON.parse(text);
