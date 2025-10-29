@@ -2,6 +2,7 @@ import { AppBar, Box, Toolbar, Typography, useMediaQuery } from "@mui/material";
 import ConfigurationMenu from "@/components/ConfigurationMenu";
 import FamilyTreeToolbar from "./FamilyTreeToolbar";
 import { EditMode } from "@/types/EditMode";
+import { APP_VERSION } from '@/libs/version';
 
 type Props = {
     setEditMode: (edit: EditMode) => void;
@@ -27,9 +28,12 @@ export default function NavigationBar({ setEditMode }: Props) {
                     </Typography>
                 </Box>
 
-                {/* Right side: toolbar actions */}
-                {!isMobile && <Box sx={{ display: "flex", gap: 1 }}>
+                {/* Right side: toolbar actions + version */}
+                {!isMobile && <Box sx={{ display: "flex", gap: 1, alignItems: 'center' }}>
                     <FamilyTreeToolbar setEditMode={setEditMode} />
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                        v{APP_VERSION}
+                    </Typography>
                 </Box>}
             </Toolbar>
         </AppBar>

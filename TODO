@@ -4,7 +4,7 @@
 * Add click two nodes are selected, if they are partners or divorced add child should be avaiable 
 * Make it a pwa with mobile support
 * Modify Share to then allow selection of whats added / removed in the changes.
-* Add Unit testing
+* Add Unit testing for Componenets
 * Allow users to change styling of the Nodes + Edges, such as colouring, Font, Node Style (Give a couple of options) There should be a new configuraiton Dialog to allow this (Along with Hide Handles, Avatar Shape etc)
 
 # Bugs
