@@ -48,6 +48,13 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
         let dbInstance: IDBDatabase | null = null;
 
         const openDB = () => {
+            // Check if IndexedDB is available (Safari private mode can disable it)
+            if (!window.indexedDB) {
+                showError("Your browser doesn't support offline storage. Please use a different browser or disable private browsing mode.");
+                setIsDbReady(false);
+                return;
+            }
+
             const openRequest = indexedDB.open(dbName, 1);
 
             openRequest.onupgradeneeded = () => {
@@ -66,7 +73,12 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
 
             openRequest.onerror = (e) => {
                 // Inform the user in plain language; don't leak internal error details
-                showError("Failed to open the browser database. Some features may be unavailable.");
+                showError("Failed to open the browser database. Some features may be unavailable. If you're in private browsing mode, try normal browsing mode.");
+                setIsDbReady(false);
+            };
+
+            openRequest.onblocked = () => {
+                showError("Database is blocked. Please close other tabs with this app open and try again.");
                 setIsDbReady(false);
             };
         };
@@ -79,7 +91,7 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                 setIsDbReady(false);
             }
         };
-    }, [dbName, storeName]);
+    }, [dbName, storeName, showError]);
 
 
     useEffect(() => {
