@@ -1,3 +1,12 @@
+## [1.0.1](https://github.com/Liammarwood/family-tree-builder/compare/v1.0.0...v1.0.1) (2025-10-30)
+
+
+### Bug Fixes
+
+* Align siblings at same Y-axis and ensure proper multi-generational layering ([00e04d1](https://github.com/Liammarwood/family-tree-builder/commit/00e04d10db680a5723602e9a8e6d7f4a491526c8))
+* Fixing the issue with saving to IndexDB ([f943e47](https://github.com/Liammarwood/family-tree-builder/commit/f943e47848480f0c2a5bee8c20b3552938aae27c))
+* Prioritize partner positioning over sibling alignment ([cc4b2a3](https://github.com/Liammarwood/family-tree-builder/commit/cc4b2a3a769bc2cadcf7b526af3c45ce4ffed6a0))
+
 # 1.0.0 (2025-10-29)
 
 
