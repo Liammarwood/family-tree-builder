@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControlLabel, Switch, Select, MenuItem, InputLabel, FormControl, Stack, Typography, Box, TextField, InputAdornment } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControlLabel, Switch, Select, MenuItem, InputLabel, FormControl, Stack, Typography, Box } from '@mui/material';
 import AvatarVariantDropdown from './AvatarVariantDropdown';
 import { useConfiguration } from '@/hooks/useConfiguration';
 import { NodeStyle, ThemeConfig } from '@/types/ConfigurationTypes';
@@ -14,7 +14,7 @@ type Props = {
 }
 
 export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) {
-  const { showHandles, toggleHandles, avatarVariant, setAvatarVariant, nodeColor, setNodeColor, edgeColor, setEdgeColor, textColor, setTextColor, fontFamily, setFontFamily, nodeStyle, setNodeStyle } = useConfiguration();
+  const { showHandles, toggleHandles, nodeColor, setNodeColor, edgeColor, setEdgeColor, textColor, setTextColor, fontFamily, setFontFamily, nodeStyle, setNodeStyle } = useConfiguration();
   const { currentTree, saveTree } = useFamilyTreeContext();
 
   // When dialog opens, load current tree config into the configuration context
@@ -33,7 +33,7 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Family Tree Configuration</DialogTitle>
-  <DialogContent sx={{ overflowX: 'hidden' }}>
+      <DialogContent sx={{ overflowX: 'hidden' }}>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <FormControlLabel control={<Switch checked={showHandles} onChange={() => toggleHandles()} />} label={showHandles ? 'Show Handles' : 'Hide Handles'} />
 
@@ -89,11 +89,11 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
           <FormControl fullWidth>
             <InputLabel id="font-select-label">Font family</InputLabel>
             <Select labelId="font-select-label" value={fontFamily} label="Font family" onChange={(e) => setFontFamily(e.target.value)}>
-                <MenuItem value={'Inter, Roboto, "Helvetica Neue", Arial'}>System (Inter/Roboto)</MenuItem>
-                <MenuItem value={'Georgia, serif'}>Serif (Georgia)</MenuItem>
-                <MenuItem value={'"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'}>UI (Segoe)</MenuItem>
-                <MenuItem value={'"Courier New", Courier, monospace'}>Monospace (Courier New)</MenuItem>
-                <MenuItem value={'"Comic Sans MS", "Comic Sans", cursive'}>Casual (Comic Sans)</MenuItem>
+              <MenuItem value={'Inter, Roboto, "Helvetica Neue", Arial'}>System (Inter/Roboto)</MenuItem>
+              <MenuItem value={'Georgia, serif'}>Serif (Georgia)</MenuItem>
+              <MenuItem value={'"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'}>UI (Segoe)</MenuItem>
+              <MenuItem value={'"Courier New", Courier, monospace'}>Monospace (Courier New)</MenuItem>
+              <MenuItem value={'"Comic Sans MS", "Comic Sans", cursive'}>Casual (Comic Sans)</MenuItem>
             </Select>
           </FormControl>
 
@@ -110,7 +110,7 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
             {/* Wrap preview in a scaling container so the fixed NODE_WIDTH doesn't cause horizontal scroll */}
             <Box sx={{ maxWidth: '100%', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
               <Box sx={{ width: NODE_WIDTH, transform: 'scale(0.8)', transformOrigin: 'top center' }}>
-                <FamilyTreeNode preview selected={false as any} data={{ id: 'preview', name: 'John Doe', dateOfBirth: '1980-01-01', occupation: 'Carpenter', image: '', gender: 'Male' } as any} id={''} type={''} zIndex={0} isConnectable={false} xPos={0} yPos={0} dragging={false} />
+                <FamilyTreeNode preview selected={false} data={{ id: 'preview', name: 'John Doe', dateOfBirth: '1980-01-01', occupation: 'Carpenter', image: '', gender: 'Male' }} id={''} type={''} zIndex={0} isConnectable={false} xPos={0} yPos={0} dragging={false} />
               </Box>
             </Box>
           </Box>

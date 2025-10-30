@@ -27,7 +27,7 @@ type FamilyTreeProps = {
 }
 export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTreeProps) {
   const { selectedTreeId, currentTree, isTreeLoaded, saveTree } = useFamilyTreeContext();
-  const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, setAvatarVariant, edgeColor } = useConfiguration();
+  const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, edgeColor } = useConfiguration();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -91,7 +91,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
     return edges.map((e) => {
       // If an edge already has a style.stroke use it, otherwise apply configured color
       const existing = e.style || {};
-      if ((existing as any).stroke) return e;
+      if (existing.stroke) return e;
       return { ...e, style: { ...existing, stroke } };
     });
   }, [edges, edgeColor]);

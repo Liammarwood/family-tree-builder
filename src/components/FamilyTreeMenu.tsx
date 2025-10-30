@@ -5,7 +5,6 @@ import ImageIcon from "@mui/icons-material/Image"
 import TuneIcon from '@mui/icons-material/Tune';
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useConfiguration } from '@/hooks/useConfiguration';
 import { auth } from "@/firebaseConfig";
 import { signOut } from "firebase/auth";
 import { useFamilyTreeContext } from '@/hooks/useFamilyTree';
@@ -21,7 +20,6 @@ import { useSearchParams } from 'next/navigation';
 import FamilyTreeConfigurationDialog from './FamilyTreeConfigurationDialog';
 
 const FamilyTreeMenu: React.FC = () => {
-    const { showHandles, toggleHandles } = useConfiguration();
     const { currentTree, deleteTree } = useFamilyTreeContext();
     const { showError } = useError();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -91,7 +89,7 @@ const FamilyTreeMenu: React.FC = () => {
                     <ListItemIcon>
                         <TuneIcon fontSize="small" />
                     </ListItemIcon>
-                    Configure Tree
+                    Appearance Settings
                 </MenuItem>
 
                 <MenuItem onClick={() => setRenameTreeModalOpen(true)}>

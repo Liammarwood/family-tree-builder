@@ -11,7 +11,6 @@ import {
     Alert,
     Stack,
     Chip,
-    Snackbar,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -46,9 +45,6 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     const [isReceiver, setIsReceiver] = useState<boolean>(false);
     const [hasJoined, setHasJoined] = useState<boolean>(false);
     const [pendingTree, setPendingTree] = useState<FamilyTreeObject | null>(null);
-    const [snackOpen, setSnackOpen] = useState<boolean>(false);
-    const [snackMessage, setSnackMessage] = useState<string | null>(null);
-    const [snackSeverity, setSnackSeverity] = useState<"success" | "error" | "info" | "warning">("success");
     const [existingTreeForMerge, setExistingTreeForMerge] = useState<FamilyTreeObject | null>(null);
     const [showOverrideDialog, setShowOverrideDialog] = useState<boolean>(false);
     const [showMergeDialog, setShowMergeDialog] = useState<boolean>(false);
@@ -61,6 +57,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     const { createOffer, joinCall } = useFirestoreSignaling();
     const pc = React.useRef<RTCPeerConnection | null>(null);
     const { showError } = useError();
+    const suppressDataChannelErrors = React.useRef(false);
 
     // Reset state and cleanup connection
     const handleClose = () => {
@@ -82,19 +79,36 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         setShowOverrideDialog(false);
         setShowMergeDialog(false);
         setHasJoined(false);
-        setSnackOpen(false);
     };
 
     const cleanupConnection = () => {
+        // Suppress data channel errors that may fire when intentionally
+        // closing the connection (avoid showing "transfer may have failed").
+        suppressDataChannelErrors.current = true;
+
         if (pc.current) {
             pc.current.onconnectionstatechange = null;
             pc.current.onicecandidate = null;
-            pc.current.close();
+            try {
+                pc.current.close();
+            } catch (e) {
+                logger.warn("Error while closing peer connection", e);
+            }
             pc.current = null;
         }
         if (channel) {
-            channel.close();
+            try {
+                channel.close();
+            } catch (e) {
+                logger.warn("Error while closing data channel", e);
+            }
         }
+
+        // Re-enable error reporting after a short grace period to allow any
+        // closure-related events to settle without showing user-facing errors.
+        setTimeout(() => {
+            suppressDataChannelErrors.current = false;
+        }, 500);
     };
 
     const handleJoinCall = async (id?: string) => {
@@ -241,6 +255,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         };
 
         dc.onerror = (e) => {
+            // If we're intentionally closing the connection, suppress this
+            // error because it's expected during shutdown.
+            if (suppressDataChannelErrors.current) {
+                logger.info("Suppressed data channel error during cleanup", e);
+                return;
+            }
             showError("A data channel error occurred. The transfer may have failed.");
         }
     };
@@ -250,14 +270,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         const shareUrl = `${window.location.origin}?call=${callId}`;
         try {
             await navigator.clipboard.writeText(shareUrl);
-            setSnackMessage("Shareable link copied to clipboard");
-            setSnackSeverity("success");
-            setSnackOpen(true);
         } catch (err) {
             logger.warn("Failed to copy share link", err);
-            setSnackMessage("Failed to copy link to clipboard");
-            setSnackSeverity("error");
-            setSnackOpen(true);
         }
     };
 
@@ -265,21 +279,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         if (!callId) return;
         try {
             await navigator.clipboard.writeText(callId);
-            setSnackMessage("Call ID copied to clipboard");
-            setSnackSeverity("success");
-            setSnackOpen(true);
         } catch (err) {
             logger.warn("Failed to copy call id", err);
-            setSnackMessage("Failed to copy call ID");
-            setSnackSeverity("error");
-            setSnackOpen(true);
         }
     };
 
-    const handleSnackClose = () => {
-        setSnackOpen(false);
-        setSnackMessage(null);
-    };
 
     return (
         <RequireAuth>
@@ -313,12 +317,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                                     label="Receive Family Tree ID"
                                     value={callInput}
                                     onChange={(e) => setCallInput(e.target.value)}
+                                    disabled={hasJoined}
                                     fullWidth
                                 />
                                 <Button
                                     variant="contained"
                                     onClick={() => handleJoinCall()}
-                                    disabled={!callInput || !isDbReady}
+                                    disabled={!callInput || !isDbReady || hasJoined}
                                 >
                                     Receive
                                 </Button>
@@ -338,7 +343,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                             </Box>
                             <Box display="flex" gap={1} alignItems="center" justifyContent="center">
                                 <Button onClick={handleCopyLink}>Copy Shareable Link</Button>
-                                <Button onClick={() => { navigator.clipboard.writeText(callId || ""); }}>
+                                <Button onClick={handleCopyId}>
                                     Copy ID
                                 </Button>
                             </Box>

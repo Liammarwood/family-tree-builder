@@ -176,7 +176,11 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                     // Ensure the tree has the correct ID and updated timestamp
                     const treeToSave = {
                         ...next,
-                        id: selectedTreeId,
+                        // Preserve an explicit id on the incoming value (e.g. when
+                        // receiving a tree over the wire). Only fall back to the
+                        // currently selected tree id when the incoming value has
+                        // no id.
+                        id: next.id ?? selectedTreeId,
                         updatedAt: Date.now(),
                     };
 
@@ -295,6 +299,7 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                     return treeToSave;
                 });
             }
+            loadTrees();
         },
         [db, isDbReady, selectedTreeId, storeName, setSelectedTreeId, loadTrees, showError]
     );

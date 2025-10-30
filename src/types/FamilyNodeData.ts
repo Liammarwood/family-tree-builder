@@ -10,7 +10,7 @@ export type FamilyNodeData = {
   image?: string; // URL or base64
   // Relationships
   parents?: string[]; // multiple parents
-  children: string[];
+  children?: string[];
   partners?: string[]; // partner node ids
   createdAt?: number;
 };
