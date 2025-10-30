@@ -14,6 +14,8 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import GridOnIcon from "@mui/icons-material/GridOn";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import {
   Delete,
   Edit,
@@ -25,6 +27,8 @@ import { RelationshipEdgeData, RelationshipType } from "@/types/RelationshipEdge
 import { EditMode } from "@/types/EditMode";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { autoLayoutFamilyTree } from "@/libs/autoLayout";
+import { useClipboard } from "@/hooks/useClipboard";
+import { copySelectedNodes, pasteClipboardData } from "@/libs/clipboard";
 
 type FamilyTreeToolbarProps = {
   setEditMode: (edit: EditMode) => void;
@@ -37,6 +41,7 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
   const { setNodes, setEdges, fitView } = useReactFlow();
   const nodes = useStore((state) => state.getNodes()) as Node<FamilyNodeData>[];
   const edges = useStore((state) => state.edges) as Edge<RelationshipEdgeData>[];
+  const { clipboard, setClipboard } = useClipboard();
   
   // Optimization: Combine related calculations into single memos to reduce passes
   const selectionState = useMemo(() => {
@@ -73,10 +78,11 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
       isOneNodeSelected: selectedNodeCount === 1,
       isOneEdgeSelected: selectedEdgeCount === 1,
       canAddSibling: hasParentEdge && selectedNodeCount === 1,
+      hasAnyNodeSelected: selectedNodeCount > 0,
     };
   }, [nodes, edges]);
   
-  const { selectedNode, selectedEdge, isOneNodeSelected, isOneEdgeSelected, canAddSibling } = selectionState;
+  const { selectedNode, selectedEdge, isOneNodeSelected, isOneEdgeSelected, canAddSibling, hasAnyNodeSelected } = selectionState;
   const isNodeSelected = selectedNode !== undefined && isOneNodeSelected;
   const isEdgeSelected = selectedEdge !== undefined && isOneEdgeSelected;
   
@@ -124,6 +130,35 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     }
   }
 
+  // Copy selected nodes and their interlinking edges
+  const handleCopy = () => {
+    const clipboardData = copySelectedNodes(nodes, edges);
+    if (clipboardData) {
+      setClipboard(clipboardData);
+    }
+  };
+
+  // Paste clipboard data as new nodes with offset positions
+  const handlePaste = () => {
+    if (!clipboard) return;
+    
+    const { nodes: newNodes, edges: newEdges } = pasteClipboardData(clipboard, nodes);
+    
+    // Add new nodes and edges to the tree
+    setNodes((prevNodes) => [...prevNodes, ...newNodes]);
+    setEdges((prevEdges) => [...prevEdges, ...newEdges]);
+    
+    // Deselect all existing nodes and select only the pasted nodes
+    setTimeout(() => {
+      setNodes((prevNodes) => 
+        prevNodes.map((n) => ({
+          ...n,
+          selected: newNodes.some((newNode) => newNode.id === n.id)
+        }))
+      );
+    }, 0);
+  };
+
   const actions = [
     { icon: <FamilyRestroomIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Add Parent', onClick: () => handleAddNode("parent"), isShown: isNodeSelected },
     { icon: <GroupAddIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Add Sibling', onClick: () => handleAddNode("sibling"), isShown: isNodeSelected && canAddSibling },
@@ -131,6 +166,8 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     { icon: <FavoriteIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Add Partner', onClick: () => handleAddNode("partner"), isShown: isNodeSelected },
     { icon: <HeartBroken fontSize={isMobile ? "small" : "medium"} />, name: 'Add Divorced Partner', onClick: () => handleAddNode("divorced-partner"), isShown: isNodeSelected },
     { icon: <Delete fontSize={isMobile ? "small" : "medium"} />, name: 'Delete Person or Relationship', onClick: () => handleDeleteNode(), isShown: isNodeSelected || isEdgeSelected },
+    { icon: <ContentCopyIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Copy Selected Nodes', onClick: () => handleCopy(), isShown: hasAnyNodeSelected },
+    { icon: <ContentPasteIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Paste Nodes', onClick: () => handlePaste(), isShown: clipboard !== null },
     { icon: <AddIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Add Person', onClick: () => handleAddNode(), isShown: true },
     { icon: <AccountTree fontSize={isMobile ? "small" : "medium"} />, name: 'Auto Layout', onClick: () => handleAutoLayout(), isShown: true },
     { icon: <GridOnIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Toggle Grid', onClick: () => handleToggleGrid(), isShown: true },
