@@ -236,6 +236,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     const setupDataChannel = (dc: RTCDataChannel, isLocalInitiator: boolean) => {
         setChannel(dc);
 
+        // Buffer for receiving chunked data
+        let receivedChunks: string[] = [];
+        let expectedChunks = 0;
+
         dc.onopen = () => {
             // If this side created the data channel (initiator), send the tree.
             // If this is the remote-created channel (receiver), do nothing and wait for onmessage.
@@ -257,9 +261,38 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
                     const treeData = JSON.stringify(currentTree);
                     logger.info(`Sending family tree data, size: ${treeData.length} bytes`);
-                    dc.send(treeData);
+                    
+                    // Chunk size: 16KB (safe for most WebRTC implementations)
+                    const CHUNK_SIZE = 16 * 1024;
+                    
+                    if (treeData.length <= CHUNK_SIZE) {
+                        // Small data, send directly
+                        dc.send(JSON.stringify({ type: 'single', data: treeData }));
+                        logger.info("Family tree sent successfully (single message)");
+                    } else {
+                        // Large data, send in chunks
+                        const totalChunks = Math.ceil(treeData.length / CHUNK_SIZE);
+                        logger.info(`Splitting data into ${totalChunks} chunks of max ${CHUNK_SIZE} bytes`);
+                        
+                        for (let i = 0; i < totalChunks; i++) {
+                            const start = i * CHUNK_SIZE;
+                            const end = Math.min(start + CHUNK_SIZE, treeData.length);
+                            const chunk = treeData.substring(start, end);
+                            
+                            const message = JSON.stringify({
+                                type: 'chunk',
+                                index: i,
+                                total: totalChunks,
+                                data: chunk
+                            });
+                            
+                            dc.send(message);
+                            logger.info(`Sent chunk ${i + 1}/${totalChunks}`);
+                        }
+                        logger.info("All chunks sent successfully");
+                    }
+                    
                     setSuccessMessage(`${currentTree.name} Family Tree Sent`);
-                    logger.info("Family tree sent successfully");
                 } catch (e) {
                     logger.error("Failed to send family tree over data channel", e);
                     showError("Failed to send the family tree. Please try again.");
@@ -270,14 +303,49 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
         dc.onmessage = (e) => {
             try {
-                logger.info(`Received data, size: ${e.data.length} bytes`);
-                const receivedJson: FamilyTreeObject = JSON.parse(e.data);
-                logger.info(`Successfully parsed family tree: ${receivedJson.name}`);
-                handleReceivedTree(receivedJson);
+                logger.info(`Received message, size: ${e.data.length} bytes`);
+                const message = JSON.parse(e.data);
+                
+                if (message.type === 'single') {
+                    // Single message, parse directly
+                    const receivedJson: FamilyTreeObject = JSON.parse(message.data);
+                    logger.info(`Successfully parsed family tree: ${receivedJson.name}`);
+                    handleReceivedTree(receivedJson);
+                } else if (message.type === 'chunk') {
+                    // Chunked message
+                    if (expectedChunks === 0) {
+                        expectedChunks = message.total;
+                        receivedChunks = new Array(message.total);
+                        logger.info(`Receiving chunked data: ${message.total} chunks expected`);
+                    }
+                    
+                    receivedChunks[message.index] = message.data;
+                    logger.info(`Received chunk ${message.index + 1}/${message.total}`);
+                    
+                    // Check if all chunks received
+                    const allReceived = receivedChunks.every(chunk => chunk !== undefined);
+                    if (allReceived) {
+                        const completeData = receivedChunks.join('');
+                        logger.info(`All chunks received, total size: ${completeData.length} bytes`);
+                        
+                        const receivedJson: FamilyTreeObject = JSON.parse(completeData);
+                        logger.info(`Successfully parsed family tree: ${receivedJson.name}`);
+                        handleReceivedTree(receivedJson);
+                        
+                        // Reset for next transfer
+                        receivedChunks = [];
+                        expectedChunks = 0;
+                    }
+                } else {
+                    logger.warn("Received message with unknown type:", message.type);
+                }
             } catch (err) {
                 logger.error("Failed to parse received message as family tree", err);
                 logger.warn("Received data:", e.data);
                 showError("Received invalid data. The transfer may have failed.");
+                // Reset chunked transfer state on error
+                receivedChunks = [];
+                expectedChunks = 0;
             }
         };
 
@@ -301,6 +369,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
         dc.onclose = () => {
             logger.info("Data channel closed");
+            // Clean up any partial transfers
+            receivedChunks = [];
+            expectedChunks = 0;
         };
     };
 
