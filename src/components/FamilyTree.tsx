@@ -19,6 +19,7 @@ import { RelationshipForm } from "@/types/RelationshipForm";
 import { DetailsPane } from "./DetailsPane";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 import { RelationshipType } from "@/types/RelationshipEdgeData";
+import { syncNodeRelationships, validateParentAddition } from "@/libs/syncNodeRelationships";
 
 type FamilyTreeProps = {
   showGrid: boolean;
@@ -85,6 +86,27 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
     }
   }, [isTreeLoaded, currentTree, nodes, edges, saveTree, selectedTreeId]);
 
+  // 3️⃣ Sync node relationships (parents, children, partners) with edges
+  useEffect(() => {
+    // Sync node data relationships based on current edges
+    const syncedNodes = syncNodeRelationships(nodes, edges);
+    
+    // Only update if relationships have actually changed to avoid infinite loops
+    const hasChanged = syncedNodes.some((syncedNode, index) => {
+      const currentNode = nodes[index];
+      return (
+        JSON.stringify(syncedNode.data.parents) !== JSON.stringify(currentNode.data.parents) ||
+        JSON.stringify(syncedNode.data.children) !== JSON.stringify(currentNode.data.children) ||
+        JSON.stringify(syncedNode.data.partners) !== JSON.stringify(currentNode.data.partners)
+      );
+    });
+
+    if (hasChanged) {
+      setNodes(syncedNodes);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edges]); // Only depend on edges to avoid circular dependencies
+
   // Apply configured edge color to connection line and ensure edges use it by default
   const styledEdges = React.useMemo(() => {
     const stroke = edgeColor || '#b1b1b7';
@@ -110,6 +132,23 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
     // Defensive checks
     if (!source || !target || source === target) return;
 
+    // Validate parent relationships before creating
+    if (form.type === "parent") {
+      // ParentEdge: target is child, source is parent
+      const validation = validateParentAddition(target, source, nodes);
+      if (!validation.valid) {
+        alert(validation.error); // TODO: Replace with proper toast/snackbar
+        return;
+      }
+    } else if (form.type === "child") {
+      // ChildEdge: source is child, target is parent (reversed)
+      const validation = validateParentAddition(source, target, nodes);
+      if (!validation.valid) {
+        alert(validation.error); // TODO: Replace with proper toast/snackbar
+        return;
+      }
+    }
+
     // Update edges depending on relationship type
     const newEdges: Edge[] = [];
     switch (form.type) {
@@ -120,13 +159,13 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
         newEdges.push(DivorcedEdge(source, target, form.dateOfMarriage || "", form.dateOfDivorce || ""));
         break;
       case "child":
-        newEdges.push(ChildEdge(source, target));
+        newEdges.push(ChildEdge(source, target, nodes, edges));
         break;
       case "parent":
-        newEdges.push(ParentEdge(target, source));
+        newEdges.push(ParentEdge(target, source, nodes, edges));
         break;
       case "sibling":
-        newEdges.push(...SiblingEdge(target, edges.filter((e) => e.target === source && e.data?.relationship === RelationshipType.Parent)));
+        newEdges.push(...SiblingEdge(target, edges.filter((e) => e.target === source && e.data?.relationship === RelationshipType.Parent), nodes, edges));
         break;
       default:
         break;
@@ -233,13 +272,31 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
         // If no node is selected then there can't be any relationships
         if (!selectedNode || editMode.relation === undefined) return [...currentEdges]
 
+        // Validate parent relationships before creating
+        const allNodes = [...nodes, newNode]; // Include the new node for validation
+        if (editMode.relation === "parent") {
+          // selectedNode is child, newId is parent
+          const validation = validateParentAddition(selectedNode.id, newId, allNodes);
+          if (!validation.valid) {
+            alert(validation.error); // TODO: Replace with proper toast/snackbar
+            return [...currentEdges];
+          }
+        } else if (editMode.relation === "child") {
+          // selectedNode is parent, newId is child
+          const validation = validateParentAddition(newId, selectedNode.id, allNodes);
+          if (!validation.valid) {
+            alert(validation.error); // TODO: Replace with proper toast/snackbar
+            return [...currentEdges];
+          }
+        }
+
         const newEdges: Edge[] = [];
         switch (editMode.relation) {
           case "parent":
-            newEdges.push(ParentEdge(selectedNode.id, newId));
+            newEdges.push(ParentEdge(selectedNode.id, newId, allNodes, currentEdges));
             break;
           case "child":
-            newEdges.push(ChildEdge(selectedNode.id, newId));
+            newEdges.push(ChildEdge(selectedNode.id, newId, allNodes, currentEdges));
             break;
           case "divorced-partner":
             newEdges.push(DivorcedEdge(selectedNode.id, newId, form.dateOfMarriage, form.dateOfDivorce));
@@ -248,7 +305,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
             newEdges.push(PartnerEdge(selectedNode.id, newId, form.dateOfMarriage));
             break;
           case "sibling":
-            newEdges.push(...SiblingEdge(newId, currentEdges.filter((e) => e.target === selectedNode.id && e.data?.relationship === RelationshipType.Parent)));
+            newEdges.push(...SiblingEdge(newId, currentEdges.filter((e) => e.target === selectedNode.id && e.data?.relationship === RelationshipType.Parent), allNodes, currentEdges));
             break;
           default:
             break;

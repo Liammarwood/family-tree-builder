@@ -1,5 +1,5 @@
-import React from "react";
-import { Handle, Position, NodeProps } from "reactflow";
+import React, { useMemo } from "react";
+import { Handle, Position, NodeProps, useStore } from "reactflow";
 import { Avatar, Box, Card, CardContent, Chip, Typography, Badge } from "@mui/material";
 import { Male, Female, Public } from "@mui/icons-material";
 import CountryFlag from "react-country-flag";
@@ -8,6 +8,7 @@ import { Work, Cake, CalendarToday } from "@mui/icons-material";
 import { NODE_WIDTH } from '@/libs/spacing';
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { useConfiguration } from "@/hooks/useConfiguration";
+import { getChildHandleGroups } from "@/libs/handleGroups";
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return '';
@@ -20,8 +21,19 @@ export const AltFamilyTreeNode = ({
   selected,
   data,
   preview,
+  id,
 }: NodeProps<FamilyNodeData> & { preview?: boolean }) => {
   const { showHandles, avatarVariant, nodeColor, textColor, fontFamily, nodeStyle } = useConfiguration();
+
+  // Get all nodes and edges from React Flow store to compute child handle groups
+  const nodes = useStore((state) => state.nodes);
+  const edges = useStore((state) => state.edges);
+
+  // Compute child handle groups for this node
+  const childHandleGroups = useMemo(() => {
+    if (preview) return [];
+    return getChildHandleGroups(id, nodes, edges);
+  }, [id, nodes, edges, preview]);
 
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
@@ -211,12 +223,40 @@ export const AltFamilyTreeNode = ({
         id="parent"
         style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%', zIndex: 11 }}
       />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="child"
-        style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }}
-      />
+      
+      {/* Dynamic child handles - one per child group */}
+      {childHandleGroups.length > 0 ? (
+        childHandleGroups.map((group, index) => {
+          // Calculate position: distribute handles evenly across the bottom
+          const totalGroups = childHandleGroups.length;
+          const leftPercent = totalGroups === 1 
+            ? 50 
+            : ((index + 1) / (totalGroups + 1)) * 100;
+          
+          return (
+            <Handle
+              key={group.handleId}
+              type="source"
+              position={Position.Bottom}
+              id={group.handleId}
+              style={{ 
+                ...bigHandle, 
+                visibility: showHandles && !preview ? "visible" : "hidden", 
+                left: `${leftPercent}%` 
+              }}
+            />
+          );
+        })
+      ) : (
+        // Default child handle if no children
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="child-0"
+          style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }}
+        />
+      )}
+      
       <Handle
         type="source"
         position={Position.Right}

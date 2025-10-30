@@ -19,7 +19,9 @@ describe('edges helpers', () => {
   });
 
   it('builds parent edge (parent -> child)', () => {
-    const e = ParentEdge('child1', 'parent1');
+    const nodes: any[] = [];
+    const edges: any[] = [];
+    const e = ParentEdge('child1', 'parent1', nodes, edges);
     // ParentEdge returns source=parent and target=child
     expect(e.source).toBe('parent1');
     expect(e.target).toBe('child1');
@@ -28,7 +30,9 @@ describe('edges helpers', () => {
   });
 
   it('builds child edge (child -> parent)', () => {
-    const e = ChildEdge('child1', 'parent1');
+    const nodes: any[] = [];
+    const edges: any[] = [];
+    const e = ChildEdge('child1', 'parent1', nodes, edges);
     expect(e.source).toBe('child1');
     expect(e.target).toBe('parent1');
     expect(e.data.relationship).toBe(RelationshipType.Parent);
@@ -37,11 +41,13 @@ describe('edges helpers', () => {
   });
 
   it('builds sibling edges from parent edges', () => {
+    const nodes: any[] = [];
+    const edges: any[] = [];
     const parentEdges: any[] = [
       { source: 'p1' },
       { source: 'p2' },
     ];
-    const siblings = SiblingEdge('t', parentEdges as any);
+    const siblings = SiblingEdge('t', parentEdges as any, nodes, edges);
     expect(Array.isArray(siblings)).toBe(true);
     expect(siblings.length).toBe(2);
     expect(siblings[0].source).toBe('p1');
