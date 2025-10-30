@@ -35,6 +35,24 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Features
+
+### Auto Layout
+
+The family tree builder includes an intelligent auto-layout feature that automatically arranges nodes in a hierarchical family tree structure:
+
+- **Hierarchical positioning**: Parents are positioned above their children
+- **Partner alignment**: Partners are positioned next to each other at the same level
+- **Sibling organization**: Siblings are arranged horizontally at the same generation level
+- **Multi-generational support**: Handles complex family trees spanning multiple generations
+
+To use the auto-layout feature:
+1. Click the **Auto Layout** button (tree icon) in the toolbar
+2. The tree will automatically reorganize with proper hierarchical positioning
+3. The view will automatically fit to show the entire tree
+
+The layout algorithm uses [ELK.js](https://www.eclipse.org/elk/) for sophisticated graph layout with relationship-aware positioning.
+
 ## Running tests (new)
 
 This project now includes unit tests for the auto-layout logic using Jest + ts-jest.

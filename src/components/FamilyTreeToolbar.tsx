@@ -18,11 +18,13 @@ import {
   Delete,
   Edit,
   HeartBroken,
+  AccountTree,
 } from "@mui/icons-material";
 import { useReactFlow, useStore, Node, Edge } from "reactflow";
 import { RelationshipEdgeData, RelationshipType } from "@/types/RelationshipEdgeData";
 import { EditMode } from "@/types/EditMode";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
+import { autoLayoutFamilyTree } from "@/libs/autoLayout";
 
 type FamilyTreeToolbarProps = {
   setEditMode: (edit: EditMode) => void;
@@ -43,12 +45,21 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
   const isNodeSelected = useMemo(() => selectedNode != undefined && isOneNodeSelected, [selectedNode, isOneNodeSelected])
   const isEdgeSelected = useMemo(() => selectedEdge != undefined && isOneEdgeSelected, [selectedEdge, isOneEdgeSelected])
   const canAddSibling = useMemo(() => selectedNode !== undefined && edges.filter((e) => (e.target === selectedNode.id) && e.data?.relationship === RelationshipType.Parent).length > 0, [edges, selectedNode]);
+  
   // Toggle grid (no-op placeholder)
   const handleToggleGrid = () => { /* no-op */ };
 
   // Zoom fit
   const handleZoomFit = () => {
     fitView();
+  };
+
+  // Auto-layout
+  const handleAutoLayout = async () => {
+    const layoutedNodes = await autoLayoutFamilyTree(nodes, edges);
+    setNodes(layoutedNodes);
+    // Fit view after layout to show the entire tree
+    setTimeout(() => fitView(), 100);
   };
 
   const handleDeleteNode = () => {
@@ -87,6 +98,7 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     { icon: <HeartBroken fontSize={isMobile ? "small" : "medium"} />, name: 'Add Divorced Partner', onClick: () => handleAddNode("divorced-partner"), isShown: isNodeSelected },
     { icon: <Delete fontSize={isMobile ? "small" : "medium"} />, name: 'Delete Person or Relationship', onClick: () => handleDeleteNode(), isShown: isNodeSelected || isEdgeSelected },
     { icon: <AddIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Add Person', onClick: () => handleAddNode(), isShown: true },
+    { icon: <AccountTree fontSize={isMobile ? "small" : "medium"} />, name: 'Auto Layout', onClick: () => handleAutoLayout(), isShown: true },
     { icon: <GridOnIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Toggle Grid', onClick: () => handleToggleGrid(), isShown: true },
     { icon: <ZoomOutMapIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Zoom Fit', onClick: () => handleZoomFit(), isShown: true },
     { icon: <Edit fontSize={isMobile ? "small" : "medium"} />, name: 'Edit Selected', onClick: () => handleEdit(), isShown: isMobile }
