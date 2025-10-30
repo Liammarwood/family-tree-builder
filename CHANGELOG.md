@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.1.1...v1.2.0) (2025-10-30)
+
+
+### Features
+
+* Add in-app help modal documenting all features ([#19](https://github.com/Liammarwood/family-tree-builder/issues/19)) ([565dea8](https://github.com/Liammarwood/family-tree-builder/commit/565dea8bfb04162debe1c6cf8c58ec13b9970add))
+
 ## [1.1.1](https://github.com/Liammarwood/family-tree-builder/compare/v1.1.0...v1.1.1) (2025-10-30)
 
 

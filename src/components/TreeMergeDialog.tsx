@@ -39,12 +39,21 @@ type TreeMergeDialogProps = {
     onApplyChanges: (mergedTree: FamilyTreeObject) => void;
 };
 
+type FieldChange = {
+    field: string;
+    label: string;
+    oldValue: string | string[] | null | undefined;
+    newValue: string | string[] | null | undefined;
+    selected: boolean;
+};
+
 type NodeChange = {
     id: string;
     type: 'added' | 'modified' | 'deleted';
     existingNode?: Node;
     incomingNode?: Node;
     selected: boolean;
+    fieldChanges?: FieldChange[]; // Only for 'modified' type
 };
 
 type EdgeChange = {
@@ -70,6 +79,8 @@ const areNodesEqual = (node1: Node, node2: Node): boolean => {
     const data2 = node2.data as FamilyNodeData;
     
     return (
+        node1.position.x === node2.position.x &&
+        node1.position.y === node2.position.y &&
         data1.name === data2.name &&
         data1.dateOfBirth === data2.dateOfBirth &&
         data1.dateOfDeath === data2.dateOfDeath &&
@@ -82,6 +93,137 @@ const areNodesEqual = (node1: Node, node2: Node): boolean => {
         areArraysEqual(data1.children, data2.children) &&
         areArraysEqual(data1.partners, data2.partners)
     );
+};
+
+// Helper function to detect field-level changes in modified nodes
+const detectFieldChanges = (existingNode: Node, incomingNode: Node): FieldChange[] => {
+    const existingData = existingNode.data as FamilyNodeData;
+    const incomingData = incomingNode.data as FamilyNodeData;
+    const changes: FieldChange[] = [];
+
+    // Check position changes
+    if (existingNode.position.x !== incomingNode.position.x || existingNode.position.y !== incomingNode.position.y) {
+        changes.push({
+            field: 'position',
+            label: 'Node Position',
+            oldValue: null, // We don't show coordinates to user
+            newValue: null,
+            selected: true,
+        });
+    }
+
+    // Check data field changes
+    if (existingData.name !== incomingData.name) {
+        changes.push({
+            field: 'name',
+            label: 'Name',
+            oldValue: existingData.name,
+            newValue: incomingData.name,
+            selected: true,
+        });
+    }
+
+    if (existingData.dateOfBirth !== incomingData.dateOfBirth) {
+        changes.push({
+            field: 'dateOfBirth',
+            label: 'Date of Birth',
+            oldValue: existingData.dateOfBirth,
+            newValue: incomingData.dateOfBirth,
+            selected: true,
+        });
+    }
+
+    if (existingData.dateOfDeath !== incomingData.dateOfDeath) {
+        changes.push({
+            field: 'dateOfDeath',
+            label: 'Date of Death',
+            oldValue: existingData.dateOfDeath || 'None',
+            newValue: incomingData.dateOfDeath || 'None',
+            selected: true,
+        });
+    }
+
+    if (existingData.countryOfBirth !== incomingData.countryOfBirth) {
+        changes.push({
+            field: 'countryOfBirth',
+            label: 'Country of Birth',
+            oldValue: existingData.countryOfBirth || 'None',
+            newValue: incomingData.countryOfBirth || 'None',
+            selected: true,
+        });
+    }
+
+    if (existingData.gender !== incomingData.gender) {
+        changes.push({
+            field: 'gender',
+            label: 'Gender',
+            oldValue: existingData.gender || 'None',
+            newValue: incomingData.gender || 'None',
+            selected: true,
+        });
+    }
+
+    if (existingData.occupation !== incomingData.occupation) {
+        changes.push({
+            field: 'occupation',
+            label: 'Occupation',
+            oldValue: existingData.occupation || 'None',
+            newValue: incomingData.occupation || 'None',
+            selected: true,
+        });
+    }
+
+    if (existingData.maidenName !== incomingData.maidenName) {
+        changes.push({
+            field: 'maidenName',
+            label: 'Maiden Name',
+            oldValue: existingData.maidenName || 'None',
+            newValue: incomingData.maidenName || 'None',
+            selected: true,
+        });
+    }
+
+    if (existingData.image !== incomingData.image) {
+        changes.push({
+            field: 'image',
+            label: 'Photo',
+            oldValue: existingData.image ? 'Set' : 'None',
+            newValue: incomingData.image ? 'Set' : 'None',
+            selected: true,
+        });
+    }
+
+    if (!areArraysEqual(existingData.parents, incomingData.parents)) {
+        changes.push({
+            field: 'parents',
+            label: 'Parents',
+            oldValue: existingData.parents,
+            newValue: incomingData.parents,
+            selected: true,
+        });
+    }
+
+    if (!areArraysEqual(existingData.children, incomingData.children)) {
+        changes.push({
+            field: 'children',
+            label: 'Children',
+            oldValue: existingData.children,
+            newValue: incomingData.children,
+            selected: true,
+        });
+    }
+
+    if (!areArraysEqual(existingData.partners, incomingData.partners)) {
+        changes.push({
+            field: 'partners',
+            label: 'Partners',
+            oldValue: existingData.partners,
+            newValue: incomingData.partners,
+            selected: true,
+        });
+    }
+
+    return changes;
 };
 
 export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
@@ -111,12 +253,14 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
                     selected: true,
                 });
             } else if (!areNodesEqual(existingNode, incomingNode)) {
+                const fieldChanges = detectFieldChanges(existingNode, incomingNode);
                 nodeChanges.push({
                     id,
                     type: 'modified',
                     existingNode,
                     incomingNode,
                     selected: true,
+                    fieldChanges,
                 });
             }
         }
@@ -166,19 +310,83 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
     const [selectedEdgeChanges, setSelectedEdgeChanges] = useState<Map<string, boolean>>(() =>
         new Map(edgeChanges.map(ec => [ec.id, ec.selected]))
     );
+    // Map of nodeId -> field -> boolean for field-level selections
+    const [selectedFieldChanges, setSelectedFieldChanges] = useState<Map<string, Map<string, boolean>>>(() => {
+        const map = new Map<string, Map<string, boolean>>();
+        nodeChanges.forEach(nc => {
+            if (nc.type === 'modified' && nc.fieldChanges) {
+                const fieldMap = new Map<string, boolean>();
+                nc.fieldChanges.forEach(fc => {
+                    fieldMap.set(fc.field, fc.selected);
+                });
+                map.set(nc.id, fieldMap);
+            }
+        });
+        return map;
+    });
 
     // Reset selections when trees change
     React.useEffect(() => {
         setSelectedNodeChanges(new Map(nodeChanges.map(nc => [nc.id, nc.selected])));
         setSelectedEdgeChanges(new Map(edgeChanges.map(ec => [ec.id, ec.selected])));
+        const fieldMap = new Map<string, Map<string, boolean>>();
+        nodeChanges.forEach(nc => {
+            if (nc.type === 'modified' && nc.fieldChanges) {
+                const innerMap = new Map<string, boolean>();
+                nc.fieldChanges.forEach(fc => {
+                    innerMap.set(fc.field, fc.selected);
+                });
+                fieldMap.set(nc.id, innerMap);
+            }
+        });
+        setSelectedFieldChanges(fieldMap);
     }, [nodeChanges, edgeChanges]);
 
     const handleNodeToggle = (id: string) => {
+        const nodeChange = nodeChanges.find(nc => nc.id === id);
+        const newValue = !selectedNodeChanges.get(id);
+        
         setSelectedNodeChanges(prev => {
             const newMap = new Map(prev);
-            newMap.set(id, !prev.get(id));
+            newMap.set(id, newValue);
             return newMap;
         });
+
+        // For modified nodes, also toggle all field changes
+        if (nodeChange?.type === 'modified' && nodeChange.fieldChanges) {
+            setSelectedFieldChanges(prev => {
+                const newMap = new Map(prev);
+                const fieldMap = new Map<string, boolean>();
+                nodeChange.fieldChanges!.forEach(fc => {
+                    fieldMap.set(fc.field, newValue);
+                });
+                newMap.set(id, fieldMap);
+                return newMap;
+            });
+        }
+    };
+
+    const handleFieldToggle = (nodeId: string, field: string) => {
+        let newFieldMap: Map<string, boolean> | undefined;
+        
+        setSelectedFieldChanges(prev => {
+            const newMap = new Map(prev);
+            const fieldMap = new Map(prev.get(nodeId) || new Map());
+            fieldMap.set(field, !fieldMap.get(field));
+            newMap.set(nodeId, fieldMap);
+            newFieldMap = fieldMap;
+            return newMap;
+        });
+
+        // Update parent node selection based on whether any fields are selected after toggle
+        if (newFieldMap) {
+            const anySelected = Array.from(newFieldMap.values()).some(v => v);
+            setSelectedNodeChanges(prev => {
+                const newMap = new Map(prev);
+                newMap.set(nodeId, anySelected);
+                return newMap;
+            });
+        }
     };
 
     const handleEdgeToggle = (id: string) => {
@@ -191,7 +399,22 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
 
     const handleSelectAllNodes = () => {
         const allSelected = nodeChanges.every(nc => selectedNodeChanges.get(nc.id));
-        setSelectedNodeChanges(new Map(nodeChanges.map(nc => [nc.id, !allSelected])));
+        const newValue = !allSelected;
+        
+        setSelectedNodeChanges(new Map(nodeChanges.map(nc => [nc.id, newValue])));
+        
+        // Also update all field selections for modified nodes
+        const newFieldMap = new Map<string, Map<string, boolean>>();
+        nodeChanges.forEach(nc => {
+            if (nc.type === 'modified' && nc.fieldChanges) {
+                const fieldMap = new Map<string, boolean>();
+                nc.fieldChanges.forEach(fc => {
+                    fieldMap.set(fc.field, newValue);
+                });
+                newFieldMap.set(nc.id, fieldMap);
+            }
+        });
+        setSelectedFieldChanges(newFieldMap);
     };
 
     const handleSelectAllEdges = () => {
@@ -206,14 +429,39 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
 
         // Apply selected node changes
         for (const change of nodeChanges) {
-            if (selectedNodeChanges.get(change.id)) {
-                if (change.type === 'added' && change.incomingNode) {
-                    existingNodeMap.set(change.id, change.incomingNode);
-                } else if (change.type === 'modified' && change.incomingNode) {
-                    existingNodeMap.set(change.id, change.incomingNode);
-                } else if (change.type === 'deleted') {
-                    existingNodeMap.delete(change.id);
+            if (change.type === 'added' && change.incomingNode && selectedNodeChanges.get(change.id)) {
+                existingNodeMap.set(change.id, change.incomingNode);
+            } else if (change.type === 'modified' && change.existingNode && change.incomingNode && change.fieldChanges) {
+                // For modified nodes, check if any field changes are selected
+                const fieldSelections = selectedFieldChanges.get(change.id);
+                const hasSelectedFields = fieldSelections && Array.from(fieldSelections.values()).some(v => v);
+
+                if (hasSelectedFields && fieldSelections) {
+                    // Create a merged node starting from existing
+                    const existingNode = change.existingNode;
+                    const incomingNode = change.incomingNode;
+                    const mergedNode = { ...existingNode };
+                    const mergedData = { ...(existingNode.data as FamilyNodeData) };
+
+                    // Apply each selected field change
+                    change.fieldChanges.forEach(fc => {
+                        if (fieldSelections.get(fc.field)) {
+                            if (fc.field === 'position') {
+                                mergedNode.position = { ...incomingNode.position };
+                            } else {
+                                // Apply data field change
+                                const incomingData = incomingNode.data as FamilyNodeData;
+                                const key = fc.field as keyof FamilyNodeData;
+                                (mergedData as Record<string, unknown>)[fc.field] = incomingData[key];
+                            }
+                        }
+                    });
+
+                    mergedNode.data = mergedData;
+                    existingNodeMap.set(change.id, mergedNode);
                 }
+            } else if (change.type === 'deleted' && selectedNodeChanges.get(change.id)) {
+                existingNodeMap.delete(change.id);
             }
         }
 
@@ -272,26 +520,37 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
                     {data.dateOfDeath && <Typography variant="body2">Death: {data.dateOfDeath}</Typography>}
                 </Box>
             );
-        } else if (change.type === 'modified' && change.existingNode && change.incomingNode) {
-            const existingData = change.existingNode.data as FamilyNodeData;
-            const incomingData = change.incomingNode.data as FamilyNodeData;
+        } else if (change.type === 'modified' && change.fieldChanges) {
+            // Show individual field changes with checkboxes
+            const fieldSelections = selectedFieldChanges.get(change.id);
             return (
-                <Box sx={{ pl: 2, fontSize: '0.875rem' }}>
-                    {existingData.name !== incomingData.name && (
-                        <Typography variant="body2">
-                            Name: <s>{existingData.name}</s> → {incomingData.name}
-                        </Typography>
-                    )}
-                    {existingData.dateOfBirth !== incomingData.dateOfBirth && (
-                        <Typography variant="body2">
-                            Birth: <s>{existingData.dateOfBirth}</s> → {incomingData.dateOfBirth}
-                        </Typography>
-                    )}
-                    {existingData.dateOfDeath !== incomingData.dateOfDeath && (
-                        <Typography variant="body2">
-                            Death: <s>{existingData.dateOfDeath || 'None'}</s> → {incomingData.dateOfDeath || 'None'}
-                        </Typography>
-                    )}
+                <Box sx={{ pl: 4, mt: 1 }}>
+                    <Stack spacing={0.5}>
+                        {change.fieldChanges.map(fc => (
+                            <FormControlLabel
+                                key={fc.field}
+                                control={
+                                    <Checkbox
+                                        size="small"
+                                        checked={fieldSelections?.get(fc.field) || false}
+                                        onChange={() => handleFieldToggle(change.id, fc.field)}
+                                    />
+                                }
+                                label={
+                                    <Typography variant="body2">
+                                        {fc.label}:{' '}
+                                        {fc.field === 'position' ? (
+                                            <span style={{ color: '#1976d2' }}>Changed</span>
+                                        ) : (
+                                            <>
+                                                <s>{String(fc.oldValue)}</s> → {String(fc.newValue)}
+                                            </>
+                                        )}
+                                    </Typography>
+                                }
+                            />
+                        ))}
+                    </Stack>
                 </Box>
             );
         } else if (change.type === 'deleted' && change.existingNode) {
@@ -307,10 +566,32 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
         return null;
     };
 
-    const totalChanges = nodeChanges.length + edgeChanges.length;
-    const selectedChangesCount = 
-        Array.from(selectedNodeChanges.values()).filter(Boolean).length +
-        Array.from(selectedEdgeChanges.values()).filter(Boolean).length;
+    // Calculate total changes including field-level changes for modified nodes
+    const totalChanges = nodeChanges.reduce((total, nc) => {
+        if (nc.type === 'modified' && nc.fieldChanges) {
+            return total + nc.fieldChanges.length;
+        }
+        return total + 1;
+    }, 0) + edgeChanges.length;
+    
+    const selectedChangesCount = (() => {
+        let count = 0;
+        // Count selected added/deleted nodes
+        nodeChanges.forEach(nc => {
+            if (nc.type !== 'modified' && selectedNodeChanges.get(nc.id)) {
+                count += 1;
+            } else if (nc.type === 'modified') {
+                // Count selected field changes
+                const fieldSelections = selectedFieldChanges.get(nc.id);
+                if (fieldSelections) {
+                    count += Array.from(fieldSelections.values()).filter(Boolean).length;
+                }
+            }
+        });
+        // Count selected edge changes
+        count += Array.from(selectedEdgeChanges.values()).filter(Boolean).length;
+        return count;
+    })();
 
     return (
         <Dialog

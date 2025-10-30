@@ -338,8 +338,9 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
         });
       });
 
+      // Only trigger edit mode if not in multi-select mode
       // Defer non-visual work slightly to avoid blocking UI
-      if (!isMobile) {
+      if (!isMobile && !isMultiSelect) {
         requestAnimationFrame(() => {
           setEditMode({ type: 'edit', nodeId: clickedNode.id, nodeData: clickedNode.data });
         });
