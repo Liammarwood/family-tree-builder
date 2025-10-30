@@ -25,6 +25,7 @@ export type GenerationFilter = {
   enabled: boolean;
   ancestorGenerations: number;
   descendantGenerations: number;
+  siblingGenerations: number;
 };
 
 type FamilyTreeProps = {
@@ -104,7 +105,8 @@ export default function FamilyTree({ showGrid, editMode, setEditMode, generation
       edges,
       selectedNode.id,
       generationFilter.ancestorGenerations,
-      generationFilter.descendantGenerations
+      generationFilter.descendantGenerations,
+      generationFilter.siblingGenerations
     );
   }, [nodes, edges, selectedNode, generationFilter]);
 

@@ -19,6 +19,7 @@ export default function Home() {
     enabled: false,
     ancestorGenerations: 2,
     descendantGenerations: 2,
+    siblingGenerations: 2,
   });
 
   return (

@@ -301,6 +301,31 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false, generat
             valueLabelDisplay="auto"
             disabled={!generationFilter?.enabled}
           />
+
+          <Typography gutterBottom sx={{ mt: 3 }}>
+            Sibling Generations: {generationFilter?.siblingGenerations || 0}
+          </Typography>
+          <Slider
+            value={generationFilter?.siblingGenerations || 0}
+            onChange={(_, value) => {
+              if (setGenerationFilter && generationFilter) {
+                setGenerationFilter({
+                  ...generationFilter,
+                  siblingGenerations: value as number,
+                });
+              }
+            }}
+            min={0}
+            max={10}
+            step={1}
+            marks={[
+              { value: 0, label: 'None' },
+              { value: 1, label: 'Aunts/Uncles' },
+              { value: 2, label: 'Great' },
+            ]}
+            valueLabelDisplay="auto"
+            disabled={!generationFilter?.enabled}
+          />
         </Box>
       </Popover>
     </Fragment>

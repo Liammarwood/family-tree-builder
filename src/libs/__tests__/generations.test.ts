@@ -1,4 +1,4 @@
-import { calculateGenerationLevels, filterByGenerationLevel } from '@/libs/generations';
+import { calculateGenerationLevels, filterByGenerationLevel, calculateExtendedGenerationInfo } from '@/libs/generations';
 import { Node, Edge } from 'reactflow';
 import { FamilyNodeData } from '@/types/FamilyNodeData';
 import { RelationshipType } from '@/types/RelationshipEdgeData';
@@ -649,5 +649,290 @@ describe('filterByGenerationLevel', () => {
     const result = filterByGenerationLevel(nodes, edges, 'child', 1, 0);
     expect(result.nodes).toHaveLength(3); // child, parent1, parent2
     expect(result.nodes.map(n => n.id).sort()).toEqual(['child', 'parent1', 'parent2']);
+  });
+  
+  it('filters siblings at generation levels with siblingGenerations parameter', () => {
+    // Create a family tree with aunts/uncles
+    const nodes: Node<FamilyNodeData>[] = [
+      {
+        id: 'child',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'child',
+          name: 'Child',
+          dateOfBirth: '1990-01-01',
+          children: [],
+          parents: ['parent'],
+          partners: [],
+        },
+      },
+      {
+        id: 'parent',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'parent',
+          name: 'Parent',
+          dateOfBirth: '1960-01-01',
+          children: ['child'],
+          parents: ['grandparent'],
+          partners: [],
+        },
+      },
+      {
+        id: 'aunt',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'aunt',
+          name: 'Aunt',
+          dateOfBirth: '1962-01-01',
+          children: [],
+          parents: ['grandparent'],
+          partners: [],
+        },
+      },
+      {
+        id: 'grandparent',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'grandparent',
+          name: 'Grandparent',
+          dateOfBirth: '1930-01-01',
+          children: ['parent', 'aunt'],
+          parents: [],
+          partners: [],
+        },
+      },
+    ];
+    
+    const edges: Edge[] = [
+      {
+        id: 'grandparent-parent',
+        source: 'grandparent',
+        target: 'parent',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'grandparent-aunt',
+        source: 'grandparent',
+        target: 'aunt',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-aunt',
+        source: 'parent',
+        target: 'aunt',
+        data: { relationship: RelationshipType.Sibling },
+      },
+      {
+        id: 'parent-child',
+        source: 'parent',
+        target: 'child',
+        data: { relationship: RelationshipType.Parent },
+      },
+    ];
+    
+    // Test 1: Show parents but not aunts/uncles (siblingGenerations: 0)
+    const result1 = filterByGenerationLevel(nodes, edges, 'child', 1, 0, 0);
+    expect(result1.nodes).toHaveLength(2); // child, parent (no aunt)
+    expect(result1.nodes.map(n => n.id).sort()).toEqual(['child', 'parent']);
+    
+    // Test 2: Show parents and aunts/uncles (siblingGenerations: 1)
+    const result2 = filterByGenerationLevel(nodes, edges, 'child', 1, 0, 1);
+    expect(result2.nodes).toHaveLength(3); // child, parent, aunt
+    expect(result2.nodes.map(n => n.id).sort()).toEqual(['aunt', 'child', 'parent']);
+    
+    // Test 3: Show grandparents and aunts/uncles (siblingGenerations: 1)
+    const result3 = filterByGenerationLevel(nodes, edges, 'child', 2, 0, 1);
+    expect(result3.nodes).toHaveLength(4); // child, parent, aunt, grandparent
+    expect(result3.nodes.map(n => n.id).sort()).toEqual(['aunt', 'child', 'grandparent', 'parent']);
+  });
+  
+  it('filters great aunts/uncles with siblingGenerations parameter', () => {
+    // Create a family tree with great aunts/uncles
+    const nodes: Node<FamilyNodeData>[] = [
+      {
+        id: 'child',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'child',
+          name: 'Child',
+          dateOfBirth: '1990-01-01',
+          children: [],
+          parents: ['parent'],
+          partners: [],
+        },
+      },
+      {
+        id: 'parent',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'parent',
+          name: 'Parent',
+          dateOfBirth: '1960-01-01',
+          children: ['child'],
+          parents: ['grandparent'],
+          partners: [],
+        },
+      },
+      {
+        id: 'grandparent',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'grandparent',
+          name: 'Grandparent',
+          dateOfBirth: '1930-01-01',
+          children: ['parent'],
+          parents: ['greatgrandparent'],
+          partners: [],
+        },
+      },
+      {
+        id: 'greataunt',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'greataunt',
+          name: 'Great Aunt',
+          dateOfBirth: '1932-01-01',
+          children: [],
+          parents: ['greatgrandparent'],
+          partners: [],
+        },
+      },
+      {
+        id: 'greatgrandparent',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'greatgrandparent',
+          name: 'Great Grandparent',
+          dateOfBirth: '1900-01-01',
+          children: ['grandparent', 'greataunt'],
+          parents: [],
+          partners: [],
+        },
+      },
+    ];
+    
+    const edges: Edge[] = [
+      {
+        id: 'greatgrandparent-grandparent',
+        source: 'greatgrandparent',
+        target: 'grandparent',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'greatgrandparent-greataunt',
+        source: 'greatgrandparent',
+        target: 'greataunt',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'grandparent-greataunt',
+        source: 'grandparent',
+        target: 'greataunt',
+        data: { relationship: RelationshipType.Sibling },
+      },
+      {
+        id: 'grandparent-parent',
+        source: 'grandparent',
+        target: 'parent',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-child',
+        source: 'parent',
+        target: 'child',
+        data: { relationship: RelationshipType.Parent },
+      },
+    ];
+    
+    // Test 1: Show up to great-grandparents but no great aunts/uncles (siblingGenerations: 1)
+    const result1 = filterByGenerationLevel(nodes, edges, 'child', 3, 0, 1);
+    expect(result1.nodes).toHaveLength(4); // child, parent, grandparent, greatgrandparent (no greataunt)
+    expect(result1.nodes.map(n => n.id).sort()).toEqual(['child', 'grandparent', 'greatgrandparent', 'parent']);
+    
+    // Test 2: Show up to great-grandparents and great aunts/uncles (siblingGenerations: 2)
+    const result2 = filterByGenerationLevel(nodes, edges, 'child', 3, 0, 2);
+    expect(result2.nodes).toHaveLength(5); // all nodes
+    expect(result2.nodes.map(n => n.id).sort()).toEqual(['child', 'grandparent', 'greataunt', 'greatgrandparent', 'parent']);
+  });
+  
+  it('maintains backward compatibility when siblingGenerations is undefined', () => {
+    // Existing tests should still work when siblingGenerations is not provided
+    const nodes: Node<FamilyNodeData>[] = [
+      {
+        id: 'child',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'child',
+          name: 'Child',
+          dateOfBirth: '1990-01-01',
+          children: [],
+          parents: ['parent'],
+          partners: [],
+        },
+      },
+      {
+        id: 'parent',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'parent',
+          name: 'Parent',
+          dateOfBirth: '1960-01-01',
+          children: ['child'],
+          parents: [],
+          partners: [],
+        },
+      },
+      {
+        id: 'sibling',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'sibling',
+          name: 'Sibling',
+          dateOfBirth: '1992-01-01',
+          children: [],
+          parents: ['parent'],
+          partners: [],
+        },
+      },
+    ];
+    
+    const edges: Edge[] = [
+      {
+        id: 'parent-child',
+        source: 'parent',
+        target: 'child',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'parent-sibling',
+        source: 'parent',
+        target: 'sibling',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'child-sibling',
+        source: 'child',
+        target: 'sibling',
+        data: { relationship: RelationshipType.Sibling },
+      },
+    ];
+    
+    // When siblingGenerations is undefined, siblings at generation 0 should be included (old behavior)
+    const result = filterByGenerationLevel(nodes, edges, 'child', 1, 0);
+    expect(result.nodes).toHaveLength(3); // child, parent, sibling
+    expect(result.nodes.map(n => n.id).sort()).toEqual(['child', 'parent', 'sibling']);
   });
 });
