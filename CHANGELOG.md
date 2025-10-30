@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/Liammarwood/family-tree-builder/compare/v1.2.0...v1.2.1) (2025-10-30)
+
+
+### Bug Fixes
+
+* Ensure that expectedChunks is equal to receivedChunks before progressing ([409eebe](https://github.com/Liammarwood/family-tree-builder/commit/409eebe64f02b3d7e7bb85dac1506f227ca50d90))
+
 # [1.2.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.1.1...v1.2.0) (2025-10-30)
 
 
