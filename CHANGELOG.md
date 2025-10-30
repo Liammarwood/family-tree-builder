@@ -1,3 +1,16 @@
+# [1.3.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.2.2...v1.3.0) (2025-10-30)
+
+
+### Bug Fixes
+
+* Add Linting Rules and adding more config options ([a56da50](https://github.com/Liammarwood/family-tree-builder/commit/a56da50dc677d1bb1e0fd8f85ac90a09b85ae58f))
+
+
+### Features
+
+* Add demo page for export configuration and complete implementation ([0d91b93](https://github.com/Liammarwood/family-tree-builder/commit/0d91b93bcab6d460cb05d51102210df05eb2a72a))
+* Add export configuration for family tree title, font sizes, dates visibility, and node type selection ([a10c6e8](https://github.com/Liammarwood/family-tree-builder/commit/a10c6e8f51505e409159470f1625dc56e7372540))
+
 ## [1.2.2](https://github.com/Liammarwood/family-tree-builder/compare/v1.2.1...v1.2.2) (2025-10-30)
 
 
