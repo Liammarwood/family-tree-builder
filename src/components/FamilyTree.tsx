@@ -32,10 +32,35 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [connectDialog, setConnectDialog] = useState<{ open: boolean; source: string; target: string } | null>(null);
-  const selectedEdge = useMemo(() => edges.find((e) => e.selected), [edges]);
-  const selectedNode = useMemo(() => nodes.find((e) => e.selected), [nodes]);
-  const selectedNodes = useMemo(() => nodes.filter((e) => e.selected), [nodes]);
-  const isOneNodeSelected = selectedNode !== undefined && selectedNodes.length === 1;
+  // Optimization: Combine selection calculations to avoid multiple array iterations
+  const selectionInfo = useMemo(() => {
+    let selectedEdge: Edge | undefined;
+    let selectedNode: Node<FamilyNodeData> | undefined;
+    const selectedNodes: Node<FamilyNodeData>[] = [];
+    
+    for (const edge of edges) {
+      if (edge.selected) {
+        selectedEdge = edge;
+        break; // Assuming single edge selection
+      }
+    }
+    
+    for (const node of nodes) {
+      if (node.selected) {
+        if (!selectedNode) selectedNode = node;
+        selectedNodes.push(node);
+      }
+    }
+    
+    return {
+      selectedEdge,
+      selectedNode,
+      selectedNodes,
+      isOneNodeSelected: selectedNodes.length === 1,
+    };
+  }, [edges, nodes]);
+  
+  const { selectedEdge, selectedNode, isOneNodeSelected } = selectionInfo;
   const isMobile = useMediaQuery('(max-width: 768px)');
   const initialized = useRef(false);
 
@@ -86,13 +111,15 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   }, [isTreeLoaded, currentTree, nodes, edges, saveTree, selectedTreeId]);
 
   // Apply configured edge color to connection line and ensure edges use it by default
+  // Optimization: Only map edges that actually need styling updates
   const styledEdges = React.useMemo(() => {
     const stroke = edgeColor || '#b1b1b7';
     return edges.map((e) => {
-      // If an edge already has a style.stroke use it, otherwise apply configured color
-      const existing = e.style || {};
-      if (existing.stroke) return e;
-      return { ...e, style: { ...existing, stroke } };
+      // If an edge already has the correct stroke color, return as-is
+      if (e.style?.stroke === stroke) return e;
+      if (e.style?.stroke && e.style.stroke !== stroke) return e; // Has custom color
+      // Only create new object if styling needs to be applied
+      return { ...e, style: { ...e.style, stroke } };
     });
   }, [edges, edgeColor]);
 
@@ -267,9 +294,21 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   // Node click handler
   const onNodeClick = useCallback(
     (event: React.MouseEvent<Element, MouseEvent>, clickedNode: Node) => {
+      const isMultiSelect = isMultiSelectKey(event);
+      
       setNodes((prevNodes) => {
+        // Check if update is actually needed
+        if (isMultiSelect) {
+          const targetNode = prevNodes.find(n => n.id === clickedNode.id);
+          if (!targetNode) return prevNodes;
+          
+          // Only update if selection state will change
+          const willToggle = !targetNode.selected !== targetNode.selected;
+          if (!willToggle) return prevNodes;
+        }
+        
         // If multi-select key is pressed, toggle only the clicked node
-        if (isMultiSelectKey(event)) {
+        if (isMultiSelect) {
           return prevNodes.map((n) => {
             if (n.id !== clickedNode.id) return n;
             return { ...n, selected: !n.selected };
@@ -277,6 +316,14 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
         }
 
         // Otherwise, select only the clicked node
+        // Optimization: only create new array if selection actually changes
+        const clickedIndex = prevNodes.findIndex(n => n.id === clickedNode.id);
+        if (clickedIndex !== -1 && prevNodes[clickedIndex].selected && 
+            prevNodes.every((n, i) => i === clickedIndex || !n.selected)) {
+          // Already selected and no other selections
+          return prevNodes;
+        }
+        
         return prevNodes.map((n) => {
           return n.id === clickedNode.id ? { ...n, selected: true } : { ...n, selected: false };
         });

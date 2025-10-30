@@ -12,7 +12,7 @@ export async function exportToPNG(element: HTMLElement): Promise<string> {
   return htmlToImage.toPng(element, {
     cacheBust: true,
     backgroundColor: "#fff",
-    pixelRatio: 5, // Increase to make it better quality
+    pixelRatio: 2, // Balance quality and performance (reduced from 5)
   });
 }
 
