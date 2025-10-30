@@ -6,6 +6,14 @@ import {
   SpeedDialIcon,
   Tooltip,
   useMediaQuery,
+  Popover,
+  Box,
+  Typography,
+  Slider,
+  Switch,
+  FormControlLabel,
+  Divider,
+  Chip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
@@ -19,20 +27,25 @@ import {
   Edit,
   HeartBroken,
   AccountTree,
+  FilterAlt,
 } from "@mui/icons-material";
 import { useReactFlow, useStore, Node, Edge } from "reactflow";
 import { RelationshipEdgeData, RelationshipType } from "@/types/RelationshipEdgeData";
 import { EditMode } from "@/types/EditMode";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { autoLayoutFamilyTree } from "@/libs/autoLayout";
+import { GenerationFilter } from "@/components/FamilyTree";
 
 type FamilyTreeToolbarProps = {
   setEditMode: (edit: EditMode) => void;
   hidden?: boolean;
+  generationFilter?: GenerationFilter;
+  setGenerationFilter?: (filter: GenerationFilter) => void;
 };
 
-export default function FamilyTreeToolbar({ setEditMode, hidden = false }: FamilyTreeToolbarProps) {
+export default function FamilyTreeToolbar({ setEditMode, hidden = false, generationFilter, setGenerationFilter }: FamilyTreeToolbarProps) {
   const [open, setOpen] = useState(false);
+  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLButtonElement | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { setNodes, setEdges, fitView } = useReactFlow();
   const nodes = useStore((state) => state.getNodes()) as Node<FamilyNodeData>[];
@@ -48,6 +61,17 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
   
   // Toggle grid (no-op placeholder)
   const handleToggleGrid = () => { /* no-op */ };
+
+  // Handle generation filter
+  const handleOpenFilter = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setFilterAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseFilter = () => {
+    setFilterAnchorEl(null);
+  };
+
+  const filterPopoverOpen = Boolean(filterAnchorEl);
 
   // Zoom fit
   const handleZoomFit = () => {
@@ -104,6 +128,14 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     { icon: <Edit fontSize={isMobile ? "small" : "medium"} />, name: 'Edit Selected', onClick: () => handleEdit(), isShown: isMobile }
   ];
 
+  // Generation filter action (shown separately in desktop view)
+  const filterAction = {
+    icon: generationFilter?.enabled ? <FilterAlt fontSize={isMobile ? "small" : "medium"} color="primary" /> : <FilterAlt fontSize={isMobile ? "small" : "medium"} />,
+    name: 'Filter by Generation',
+    onClick: handleOpenFilter,
+    isShown: !isMobile && !!generationFilter && !!setGenerationFilter
+  };
+
   if (isMobile) {
     return (
       <SpeedDial
@@ -151,6 +183,126 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
         </IconButton>
       </Tooltip>
         : null)}
+      
+      {/* Generation Filter Button */}
+      {filterAction.isShown && (
+        <Tooltip title={filterAction.name}>
+          <IconButton
+            onClick={filterAction.onClick}
+            size={isMobile ? "small" : "medium"}
+          >
+            {filterAction.icon}
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {/* Generation Filter Popover */}
+      <Popover
+        open={filterPopoverOpen}
+        anchorEl={filterAnchorEl}
+        onClose={handleCloseFilter}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <Box sx={{ p: 3, minWidth: 300 }}>
+          <Typography variant="h6" gutterBottom>
+            Generation Filter
+          </Typography>
+          
+          <FormControlLabel
+            control={
+              <Switch
+                checked={generationFilter?.enabled || false}
+                onChange={(e) => {
+                  if (setGenerationFilter && generationFilter) {
+                    setGenerationFilter({
+                      ...generationFilter,
+                      enabled: e.target.checked,
+                    });
+                  }
+                }}
+                disabled={!isNodeSelected}
+              />
+            }
+            label="Enable Filter"
+          />
+          
+          {!isNodeSelected && (
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+              Select a person to filter by generation
+            </Typography>
+          )}
+
+          {generationFilter?.enabled && (
+            <Chip 
+              label="Filter Active" 
+              color="primary" 
+              size="small" 
+              sx={{ mb: 2 }}
+            />
+          )}
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography gutterBottom>
+            Ancestor Generations: {generationFilter?.ancestorGenerations || 0}
+          </Typography>
+          <Slider
+            value={generationFilter?.ancestorGenerations || 0}
+            onChange={(_, value) => {
+              if (setGenerationFilter && generationFilter) {
+                setGenerationFilter({
+                  ...generationFilter,
+                  ancestorGenerations: value as number,
+                });
+              }
+            }}
+            min={0}
+            max={10}
+            step={1}
+            marks={[
+              { value: 0, label: 'None' },
+              { value: 1, label: 'Parents' },
+              { value: 2, label: 'Grandparents' },
+              { value: 3, label: 'Great' },
+            ]}
+            valueLabelDisplay="auto"
+            disabled={!generationFilter?.enabled}
+          />
+
+          <Typography gutterBottom sx={{ mt: 3 }}>
+            Descendant Generations: {generationFilter?.descendantGenerations || 0}
+          </Typography>
+          <Slider
+            value={generationFilter?.descendantGenerations || 0}
+            onChange={(_, value) => {
+              if (setGenerationFilter && generationFilter) {
+                setGenerationFilter({
+                  ...generationFilter,
+                  descendantGenerations: value as number,
+                });
+              }
+            }}
+            min={0}
+            max={10}
+            step={1}
+            marks={[
+              { value: 0, label: 'None' },
+              { value: 1, label: 'Children' },
+              { value: 2, label: 'Grandchildren' },
+              { value: 3, label: 'Great' },
+            ]}
+            valueLabelDisplay="auto"
+            disabled={!generationFilter?.enabled}
+          />
+        </Box>
+      </Popover>
     </Fragment>
   );
 }
