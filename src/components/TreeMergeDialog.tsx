@@ -357,7 +357,7 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
             setSelectedFieldChanges(prev => {
                 const newMap = new Map(prev);
                 const fieldMap = new Map<string, boolean>();
-                nodeChange.fieldChanges.forEach(fc => {
+                nodeChange.fieldChanges!.forEach(fc => {
                     fieldMap.set(fc.field, newValue);
                 });
                 newMap.set(id, fieldMap);
