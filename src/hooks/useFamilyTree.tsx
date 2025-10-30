@@ -193,14 +193,14 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                     // DB state races.
                     const doSave = (tree: FamilyTreeObject) => {
                         let attempts = 0;
-                        const maxAttempts = 5;
+                        const maxAttempts = 3; // Reduced from 5 for faster failure
 
                         const trySave = () => {
                             attempts += 1;
                             if (!db || !isDbReady) {
                                 if (attempts < maxAttempts) {
-                                    // Wait for DB to become ready and try again
-                                    setTimeout(trySave, 250 * attempts);
+                                    // Exponential backoff: 100ms, 200ms, 400ms
+                                    setTimeout(trySave, 100 * Math.pow(2, attempts - 1));
                                     return;
                                 }
 
@@ -218,10 +218,9 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                                 };
                             } catch (e) {
                                 // Transaction creation can throw if the DB is
-                                // closing. Retry a few times, then surface an
-                                // error to the user.
+                                // closing. Retry with exponential backoff.
                                 if (attempts < maxAttempts) {
-                                    setTimeout(trySave, 250 * attempts);
+                                    setTimeout(trySave, 100 * Math.pow(2, attempts - 1));
                                 } else {
                                     logger.warn("Failed to create IDB transaction after retries", e);
                                     showError("Failed to save the current tree. Please try again.");
@@ -254,13 +253,14 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                     // selected-tree branch above.
                     const doSaveAndFinish = (tree: FamilyTreeObject) => {
                         let attempts = 0;
-                        const maxAttempts = 5;
+                        const maxAttempts = 3; // Reduced from 5 for faster failure
 
                         const trySave = () => {
                             attempts += 1;
                             if (!db || !isDbReady) {
                                 if (attempts < maxAttempts) {
-                                    setTimeout(trySave, 250 * attempts);
+                                    // Exponential backoff: 100ms, 200ms, 400ms
+                                    setTimeout(trySave, 100 * Math.pow(2, attempts - 1));
                                     return;
                                 }
                                 showError("Database not available. Failed to save the current tree.");
@@ -281,7 +281,8 @@ function useFamilyTree(dbName = DB_NAME, storeName = STORE_NAME) {
                                 };
                             } catch (e) {
                                 if (attempts < maxAttempts) {
-                                    setTimeout(trySave, 250 * attempts);
+                                    // Exponential backoff
+                                    setTimeout(trySave, 100 * Math.pow(2, attempts - 1));
                                 } else {
                                     logger.warn("Failed to create IDB transaction after retries", e);
                                     showError("Failed to save the current tree. Please try again.");

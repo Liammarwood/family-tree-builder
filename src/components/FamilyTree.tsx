@@ -95,17 +95,26 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   }, [selectedTreeId, currentTree, setEdges, setNodes]);
 
   // 2️⃣ Sync effect
+  // Store previous values to detect actual changes
+  const prevNodesRef = useRef(nodes);
+  const prevEdgesRef = useRef(edges);
+  
   useEffect(() => {
     if (!isTreeLoaded || !currentTree || !selectedTreeId) return;
 
     // First time: sync value → state
     if (!initialized.current) {
       initialized.current = true;
+      prevNodesRef.current = nodes;
+      prevEdgesRef.current = edges;
       return;
     }
 
     // After initial load: sync state → value only if changed
-    if (currentTree.nodes !== nodes || currentTree.edges !== edges) {
+    // Optimization: Use refs to avoid triggering on object reference changes
+    if (prevNodesRef.current !== nodes || prevEdgesRef.current !== edges) {
+      prevNodesRef.current = nodes;
+      prevEdgesRef.current = edges;
       saveTree({ ...currentTree, nodes, edges });
     }
   }, [isTreeLoaded, currentTree, nodes, edges, saveTree, selectedTreeId]);
