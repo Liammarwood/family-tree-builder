@@ -344,7 +344,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     
                     // Check if all chunks received
                     const allReceived = receivedChunks.every(chunk => chunk !== undefined);
-                    if (allReceived) {
+                    if (receivedCount === expectedChunks && allReceived) {
                         const completeData = receivedChunks.join('');
                         logger.info(`All chunks received, total size: ${completeData.length} bytes`);
                         
@@ -383,7 +383,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             if (typeof RTCErrorEvent !== 'undefined' && e instanceof RTCErrorEvent) {
                 logger.error("RTCErrorEvent details:", {
                     error: e.error,
-                    message: e.message
+                    message: e.error.message
                 });
             }
             showError("A data channel error occurred. The transfer may have failed.");
