@@ -19,13 +19,22 @@ import { RelationshipForm } from "@/types/RelationshipForm";
 import { DetailsPane } from "./DetailsPane";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 import { RelationshipType } from "@/types/RelationshipEdgeData";
+import { filterByGenerationLevel } from "@/libs/generations";
+
+export type GenerationFilter = {
+  enabled: boolean;
+  ancestorGenerations: number;
+  descendantGenerations: number;
+  siblingGenerations: number;
+};
 
 type FamilyTreeProps = {
   showGrid: boolean;
   editMode: EditMode | null;
   setEditMode: (edit: EditMode | null) => void;
+  generationFilter?: GenerationFilter;
 }
-export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTreeProps) {
+export default function FamilyTree({ showGrid, editMode, setEditMode, generationFilter }: FamilyTreeProps) {
   const { selectedTreeId, currentTree, isTreeLoaded, saveTree } = useFamilyTreeContext();
   const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, edgeColor } = useConfiguration();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
@@ -85,16 +94,32 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
     }
   }, [isTreeLoaded, currentTree, nodes, edges, saveTree, selectedTreeId]);
 
+  // Apply generation filter if enabled
+  const { nodes: filteredNodes, edges: filteredEdges } = React.useMemo(() => {
+    if (!generationFilter?.enabled || !selectedNode) {
+      return { nodes, edges };
+    }
+    
+    return filterByGenerationLevel(
+      nodes,
+      edges,
+      selectedNode.id,
+      generationFilter.ancestorGenerations,
+      generationFilter.descendantGenerations,
+      generationFilter.siblingGenerations
+    );
+  }, [nodes, edges, selectedNode, generationFilter]);
+
   // Apply configured edge color to connection line and ensure edges use it by default
   const styledEdges = React.useMemo(() => {
     const stroke = edgeColor || '#b1b1b7';
-    return edges.map((e) => {
+    return filteredEdges.map((e) => {
       // If an edge already has a style.stroke use it, otherwise apply configured color
       const existing = e.style || {};
       if (existing.stroke) return e;
       return { ...e, style: { ...existing, stroke } };
     });
-  }, [edges, edgeColor]);
+  }, [filteredEdges, edgeColor]);
 
   // Handle manual connection between nodes
   const onConnect = useCallback((params: { source: string | null; target: string | null }) => {
@@ -384,7 +409,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
           ) : (
             <ThemeFromConfig>
               <ReactFlow
-                nodes={nodes}
+                nodes={filteredNodes}
                 edges={styledEdges}
               edgeTypes={memoEdgeTypes}
               nodeTypes={memoNodeTypes}
