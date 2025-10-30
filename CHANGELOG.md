@@ -1,3 +1,16 @@
+# [1.1.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.0.1...v1.1.0) (2025-10-30)
+
+
+### Bug Fixes
+
+* Adding Fixes to Sharing ([4168a1e](https://github.com/Liammarwood/family-tree-builder/commit/4168a1e91f1211cb05075eeaf335342cc5d398fa))
+* Adding Fixes to Sharing ([15a5362](https://github.com/Liammarwood/family-tree-builder/commit/15a536219a301f01c07451133a8df502e205c307))
+
+
+### Features
+
+* Node Configuration ([b50b12e](https://github.com/Liammarwood/family-tree-builder/commit/b50b12e90c068884daeb786806aa2ad44b4d128a))
+
 ## [1.0.1](https://github.com/Liammarwood/family-tree-builder/compare/v1.0.0...v1.0.1) (2025-10-30)
 
 
