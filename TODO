@@ -1,15 +1,10 @@
 # Features
-* Add Select Multi Nodes - The selectedNode should be an array, if lenght is 1 then its the same as before, otherwise we are selecting multiple to move them all at once
 * Add second child handle when person has a divorced partner edge / partner
-* Add click two nodes are selected, if they are partners or divorced add child should be avaiable 
-* Make it a pwa with mobile support
-* Modify Share to then allow selection of whats added / removed in the changes.
 * Add Unit testing for Componenets
-* Allow users to change styling of the Nodes + Edges, such as colouring, Font, Node Style (Give a couple of options) There should be a new configuraiton Dialog to allow this (Along with Hide Handles, Avatar Shape etc)
 
 # Bugs
 * Fix Mobile View
 * Ensure when clicking between People and Relationships only one can be selected at a time.
 
 # CI / CD / Release
-* Add Sementic Versioning with Conventual Commits
+* Add E2E Testing to be ran
