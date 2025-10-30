@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IconButton, Menu, MenuItem, Divider, ListItemIcon, Typography } from '@mui/material';
-import { AccountCircle, Delete, Download, Edit, Forest, PictureAsPdf, Upload } from "@mui/icons-material"
+import { AccountCircle, Delete, Download, Edit, Forest, PictureAsPdf, Share, Upload } from "@mui/icons-material"
 import ImageIcon from "@mui/icons-material/Image"
 import TuneIcon from '@mui/icons-material/Tune';
 import MenuIcon from "@mui/icons-material/Menu";
@@ -148,6 +148,13 @@ const FamilyTreeMenu: React.FC = () => {
                         <Upload fontSize="small" />
                     </ListItemIcon>
                     Import Data
+                </MenuItem>
+
+                <MenuItem onClick={() => setShareModalOpen(true)}>
+                    <ListItemIcon>
+                        <Share fontSize="small" />
+                    </ListItemIcon>
+                    Share Tree
                 </MenuItem>
 
                 <Divider />

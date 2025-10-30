@@ -11,6 +11,7 @@ import {
     Alert,
     Stack,
     Chip,
+    Snackbar,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -43,14 +44,17 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     const [channel, setChannel] = useState<RTCDataChannel | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [isReceiver, setIsReceiver] = useState<boolean>(false);
+    const [hasJoined, setHasJoined] = useState<boolean>(false);
     const [pendingTree, setPendingTree] = useState<FamilyTreeObject | null>(null);
+    const [snackOpen, setSnackOpen] = useState<boolean>(false);
+    const [snackMessage, setSnackMessage] = useState<string | null>(null);
+    const [snackSeverity, setSnackSeverity] = useState<"success" | "error" | "info" | "warning">("success");
     const [existingTreeForMerge, setExistingTreeForMerge] = useState<FamilyTreeObject | null>(null);
     const [showOverrideDialog, setShowOverrideDialog] = useState<boolean>(false);
     const [showMergeDialog, setShowMergeDialog] = useState<boolean>(false);
     const { isDbReady, trees, saveTree, currentTree } = useFamilyTreeContext();
 
     const setCallInput = (input: string) => {
-        setIsReceiver(true);
         _setCallInput(input);
     }
 
@@ -58,7 +62,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     const pc = React.useRef<RTCPeerConnection | null>(null);
     const { showError } = useError();
 
-    // 🔹 Reset state and cleanup connection
+    // Reset state and cleanup connection
     const handleClose = () => {
         resetState();
         onClose();
@@ -77,6 +81,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         setExistingTreeForMerge(null);
         setShowOverrideDialog(false);
         setShowMergeDialog(false);
+        setHasJoined(false);
+        setSnackOpen(false);
     };
 
     const cleanupConnection = () => {
@@ -92,18 +98,25 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     };
 
     const handleJoinCall = async (id?: string) => {
+        // The user is explicitly joining as the receiver
+        setIsReceiver(true);
         setLoading(true);
         const joinId = id || callInput;
         pc.current = initPeerConnection();
 
         pc.current.ondatachannel = (e) => {
             const dc = e.channel;
-            setupDataChannel(dc);
+            // This side did NOT create the channel, so it's the receiver side for this channel
+            setupDataChannel(dc, false);
         };
 
         try {
             await joinCall(pc.current, joinId);
             setCallId(joinId);
+            // mark that we've joined so the receive input is disabled
+            setHasJoined(true);
+            // Clear the typed call input to avoid confusion now that we've joined
+            _setCallInput("");
         } finally {
             setLoading(false);
         }
@@ -129,15 +142,20 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     };
 
     const handleCreateOffer = async () => {
+        // Creating an offer means this side is the initiator
+        setIsReceiver(false);
         setLoading(true);
         pc.current = initPeerConnection();
 
         const dataChannel = pc.current.createDataChannel("json");
-        setupDataChannel(dataChannel);
+    // We created this data channel, so we're the initiator for it
+    setupDataChannel(dataChannel, true);
 
         try {
             const newCallId = await createOffer(pc.current);
             setCallId(newCallId);
+            // Clear any typed call input when switching to initiator
+            _setCallInput("");
         } finally {
             setLoading(false);
         }
@@ -196,18 +214,21 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         setExistingTreeForMerge(null);
     };
 
-    const setupDataChannel = (dc: RTCDataChannel) => {
+    const setupDataChannel = (dc: RTCDataChannel, isLocalInitiator: boolean) => {
         setChannel(dc);
 
         dc.onopen = () => {
-            // Send JSON once channel is open
-            if (isReceiver) {
-                showError("Only the initiator can send data.", "warning");
-                return;
-            } else {
-                dc.send(JSON.stringify(currentTree));
-                setSuccessMessage(`${currentTree?.name} Family Tree Sent`);
+            // If this side created the data channel (initiator), send the tree.
+            // If this is the remote-created channel (receiver), do nothing and wait for onmessage.
+            if (isLocalInitiator) {
+                try {
+                    dc.send(JSON.stringify(currentTree));
+                    setSuccessMessage(`${currentTree?.name} Family Tree Sent`);
+                } catch (e) {
+                    logger.warn("Failed to send family tree over data channel", e);
+                }
             }
+            setConnected(true);
         };
 
         dc.onmessage = (e) => {
@@ -224,11 +245,40 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         }
     };
 
-    const handleCopyLink = () => {
-        if (callId) {
-            const shareUrl = `${window.location.origin}?call=${callId}`;
-            navigator.clipboard.writeText(shareUrl);
+    const handleCopyLink = async () => {
+        if (!callId) return;
+        const shareUrl = `${window.location.origin}?call=${callId}`;
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setSnackMessage("Shareable link copied to clipboard");
+            setSnackSeverity("success");
+            setSnackOpen(true);
+        } catch (err) {
+            logger.warn("Failed to copy share link", err);
+            setSnackMessage("Failed to copy link to clipboard");
+            setSnackSeverity("error");
+            setSnackOpen(true);
         }
+    };
+
+    const handleCopyId = async () => {
+        if (!callId) return;
+        try {
+            await navigator.clipboard.writeText(callId);
+            setSnackMessage("Call ID copied to clipboard");
+            setSnackSeverity("success");
+            setSnackOpen(true);
+        } catch (err) {
+            logger.warn("Failed to copy call id", err);
+            setSnackMessage("Failed to copy call ID");
+            setSnackSeverity("error");
+            setSnackOpen(true);
+        }
+    };
+
+    const handleSnackClose = () => {
+        setSnackOpen(false);
+        setSnackMessage(null);
     };
 
     return (
@@ -280,18 +330,23 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                         <>
                             <Box textAlign="center" alignItems="center" justifyItems="center">
                                 <Typography>Scan the QR Code to Join:</Typography>
+                                <br />
                                 <QRCodeSVG
                                     value={`${window.location.origin}?call=${callId}`}
                                     size={180}
                                 />
                             </Box>
-
-                            <Button onClick={handleCopyLink}>Copy Shareable Link</Button>
+                            <Box display="flex" gap={1} alignItems="center" justifyContent="center">
+                                <Button onClick={handleCopyLink}>Copy Shareable Link</Button>
+                                <Button onClick={() => { navigator.clipboard.writeText(callId || ""); }}>
+                                    Copy ID
+                                </Button>
+                            </Box>
 
                             {connected ? (
                                 <Chip
                                     icon={<CheckCircle />}
-                                    label="Connected"
+                                    label={isReceiver ? "Connected — waiting for data" : "Connected"}
                                     color="success"
                                     variant="filled"
                                     sx={{ fontWeight: 500 }}
