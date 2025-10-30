@@ -16,6 +16,7 @@ import {
     DialogContent,
     DialogContentText,
     DialogActions,
+    LinearProgress,
 } from "@mui/material";
 import { useFirestoreSignaling } from "@/hooks/useFirestoreSignaling";
 import { logger } from '@/libs/logger';
@@ -48,6 +49,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     const [existingTreeForMerge, setExistingTreeForMerge] = useState<FamilyTreeObject | null>(null);
     const [showOverrideDialog, setShowOverrideDialog] = useState<boolean>(false);
     const [showMergeDialog, setShowMergeDialog] = useState<boolean>(false);
+    const [transferProgress, setTransferProgress] = useState<{ current: number; total: number } | null>(null);
     const { isDbReady, trees, saveTree, currentTree } = useFamilyTreeContext();
 
     const setCallInput = (input: string) => {
@@ -79,6 +81,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         setShowOverrideDialog(false);
         setShowMergeDialog(false);
         setHasJoined(false);
+        setTransferProgress(null);
     };
 
     const cleanupConnection = () => {
@@ -269,10 +272,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                         // Small data, send directly
                         dc.send(JSON.stringify({ type: 'single', data: treeData }));
                         logger.info("Family tree sent successfully (single message)");
+                        setSuccessMessage(`${currentTree.name} Family Tree Sent`);
                     } else {
                         // Large data, send in chunks
                         const totalChunks = Math.ceil(treeData.length / CHUNK_SIZE);
                         logger.info(`Splitting data into ${totalChunks} chunks of max ${CHUNK_SIZE} bytes`);
+                        
+                        // Show initial progress
+                        setTransferProgress({ current: 0, total: totalChunks });
                         
                         for (let i = 0; i < totalChunks; i++) {
                             const start = i * CHUNK_SIZE;
@@ -288,11 +295,18 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                             
                             dc.send(message);
                             logger.info(`Sent chunk ${i + 1}/${totalChunks}`);
+                            
+                            // Update progress
+                            setTransferProgress({ current: i + 1, total: totalChunks });
                         }
                         logger.info("All chunks sent successfully");
+                        
+                        // Clear progress and show success message
+                        setTimeout(() => {
+                            setTransferProgress(null);
+                            setSuccessMessage(`${currentTree.name} Family Tree Sent`);
+                        }, 500);
                     }
-                    
-                    setSuccessMessage(`${currentTree.name} Family Tree Sent`);
                 } catch (e) {
                     logger.error("Failed to send family tree over data channel", e);
                     showError("Failed to send the family tree. Please try again.");
@@ -317,10 +331,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                         expectedChunks = message.total;
                         receivedChunks = new Array(message.total);
                         logger.info(`Receiving chunked data: ${message.total} chunks expected`);
+                        // Initialize progress
+                        setTransferProgress({ current: 0, total: message.total });
                     }
                     
                     receivedChunks[message.index] = message.data;
                     logger.info(`Received chunk ${message.index + 1}/${message.total}`);
+                    
+                    // Update progress
+                    const receivedCount = receivedChunks.filter(chunk => chunk !== undefined).length;
+                    setTransferProgress({ current: receivedCount, total: message.total });
                     
                     // Check if all chunks received
                     const allReceived = receivedChunks.every(chunk => chunk !== undefined);
@@ -335,6 +355,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                         // Reset for next transfer
                         receivedChunks = [];
                         expectedChunks = 0;
+                        // Clear progress after a short delay
+                        setTimeout(() => setTransferProgress(null), 500);
                     }
                 } else {
                     logger.warn("Received message with unknown type:", message.type);
@@ -419,6 +441,24 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     {loading && <CircularProgress />}
 
                     {successMessage && <Alert severity="success">{successMessage}</Alert>}
+
+                    {transferProgress && (
+                        <Box sx={{ width: '100%' }}>
+                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                                <Typography variant="body2" color="text.secondary">
+                                    {isReceiver ? 'Receiving data...' : 'Sending data...'}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    {transferProgress.current} / {transferProgress.total} chunks
+                                </Typography>
+                            </Box>
+                            <LinearProgress 
+                                variant="determinate" 
+                                value={(transferProgress.current / transferProgress.total) * 100}
+                                sx={{ height: 8, borderRadius: 1 }}
+                            />
+                        </Box>
+                    )}
 
                     {!callId && !loading && (
                         <>
