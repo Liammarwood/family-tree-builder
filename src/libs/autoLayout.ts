@@ -156,8 +156,9 @@ function calculateGenerations(
   
   // Recursive function to calculate generation
   const getGeneration = (nodeId: string, visited = new Set<string>()): number => {
-    if (generations.has(nodeId)) {
-      return generations.get(nodeId)!;
+    const existingGen = generations.get(nodeId);
+    if (existingGen !== undefined) {
+      return existingGen;
     }
     
     // Prevent infinite loops
@@ -229,7 +230,7 @@ function adjustPartnerPositions(
     const leftNode = sourceNode.position.x < targetNode.position.x ? sourceNode : targetNode;
     const rightNode = leftNode === sourceNode ? targetNode : sourceNode;
 
-    // Align Y positions - use average
+    // Align Y positions - partners must be at same Y level (use average of their initial positions)
     const avgY = (leftNode.position.y + rightNode.position.y) / 2;
     leftNode.position.y = avgY;
     rightNode.position.y = avgY;

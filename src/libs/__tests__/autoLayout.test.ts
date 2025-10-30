@@ -2,6 +2,7 @@ import { autoLayoutFamilyTree } from '@/libs/autoLayout';
 import { Node, Edge } from 'reactflow';
 import { FamilyNodeData } from '@/types/FamilyNodeData';
 import { RelationshipType } from '@/types/RelationshipEdgeData';
+import { NODE_WIDTH, BASE_SPACING } from '@/libs/spacing';
 
 describe('autoLayoutFamilyTree', () => {
   it('returns empty array for empty input', async () => {
@@ -755,12 +756,12 @@ describe('autoLayoutFamilyTree', () => {
     // Check that no children overlap (sorted by X position)
     const sortedChildren = [...children].sort((a, b) => a.position.x - b.position.x);
     for (let i = 0; i < sortedChildren.length - 1; i++) {
-      const currentRight = sortedChildren[i].position.x + 220; // NODE_WIDTH
+      const currentRight = sortedChildren[i].position.x + NODE_WIDTH;
       const nextLeft = sortedChildren[i + 1].position.x;
       const gap = nextLeft - currentRight;
       
-      // Gap should be at least BASE_SPACING (30)
-      expect(gap).toBeGreaterThanOrEqual(30);
+      // Gap should be at least BASE_SPACING
+      expect(gap).toBeGreaterThanOrEqual(BASE_SPACING);
     }
   });
 
