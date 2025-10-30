@@ -21,7 +21,7 @@ export const AltFamilyTreeNode = ({
   data,
   preview,
 }: NodeProps<FamilyNodeData> & { preview?: boolean }) => {
-  const { showHandles, avatarVariant, nodeColor, textColor, fontFamily, nodeStyle } = useConfiguration();
+  const { showHandles, avatarVariant, nodeColor, textColor, fontFamily, nodeStyle, showDates, nameFontSize, dateFontSize } = useConfiguration();
 
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
@@ -111,7 +111,7 @@ export const AltFamilyTreeNode = ({
                 sx={{
                   fontWeight: 700,
                   color: isDeceased ? 'text.secondary' : (textColor || 'primary.dark'),
-                  fontSize: '1.1rem',
+                  fontSize: `${nameFontSize}px`,
                   lineHeight: 1.2,
                   fontFamily: fontFamily,
                 }}
@@ -124,7 +124,7 @@ export const AltFamilyTreeNode = ({
                   sx={{
                     color: 'text.secondary',
                     fontStyle: 'italic',
-                    fontSize: '0.8rem',
+                    fontSize: `${nameFontSize * 0.8}px`,
                     mt: 0.3
                   }}
                 >
@@ -147,18 +147,18 @@ export const AltFamilyTreeNode = ({
 
             {/* Dates */}
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-              {data.dateOfBirth && (
+              {showDates && data.dateOfBirth && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Cake sx={{ fontSize: 18, color: 'success.main' }} />
-                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: `${dateFontSize}px` }}>
                     <strong>Born:</strong> {formatDate(data.dateOfBirth)}
                   </Typography>
                 </Box>
               )}
-              {data.dateOfDeath && (
+              {showDates && data.dateOfDeath && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CalendarToday sx={{ fontSize: 18, color: 'error.main' }} />
-                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: `${dateFontSize}px` }}>
                     <strong>Died:</strong> {formatDate(data.dateOfDeath)}
                   </Typography>
                 </Box>
@@ -167,7 +167,7 @@ export const AltFamilyTreeNode = ({
               {data.countryOfBirth && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Public sx={{ fontSize: 18, color: 'primary.main' }} />
-                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: `${dateFontSize}px` }}>
                     <strong>Country of Birth:</strong>
                   </Typography>
                   <CountryFlag

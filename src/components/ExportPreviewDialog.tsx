@@ -14,7 +14,7 @@ import { useConfiguration } from "@/hooks/useConfiguration";
 import { ExportType } from "@/types/ExportTypes";
 import ReactFlow, { Controls, ReactFlowInstance, useReactFlow } from "reactflow"
 import { calculateEarliestDateOfBirth } from "@/libs/nodes";
-import { EDGE_TYPES, NODE_TYPES, GRID_SIZE } from "@/libs/constants";
+import { EDGE_TYPES, getNodeTypes, GRID_SIZE } from "@/libs/constants";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 import ThemeFromConfig from './ThemeFromConfig';
 
@@ -29,7 +29,7 @@ const ExportPreviewDialog: React.FC<ExportPreviewDialogProps> = ({
     onClose,
     exportType
 }) => {
-    const { setShowHandles } = useConfiguration();
+    const { setShowHandles, exportTitle, nodeComponentType } = useConfiguration();
     const { getNodes, getEdges } = useReactFlow();
     const exportRef = useRef<HTMLDivElement>(null);
     const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
@@ -96,7 +96,7 @@ const ExportPreviewDialog: React.FC<ExportPreviewDialogProps> = ({
                             textAlign: "center"
                         }}
                     >
-                        <p>{currentTree?.name} Family Tree</p>
+                        <p>{exportTitle || `${currentTree?.name} Family Tree`}</p>
                         <p><b>{calculateEarliestDateOfBirth(getNodes()).getFullYear()} - {new Date().getFullYear()}</b></p>
                     </div>
                     <ThemeFromConfig>
@@ -104,7 +104,7 @@ const ExportPreviewDialog: React.FC<ExportPreviewDialogProps> = ({
                         nodes={getNodes()}
                         edges={getEdges()}
                         edgeTypes={useMemo(() => EDGE_TYPES, [])}
-                        nodeTypes={useMemo(() => NODE_TYPES, [])}
+                        nodeTypes={useMemo(() => getNodeTypes(nodeComponentType), [nodeComponentType])}
                         minZoom={0.05}
                         maxZoom={2}
                         fitView

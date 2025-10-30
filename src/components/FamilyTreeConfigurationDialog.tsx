@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControlLabel, Switch, Select, MenuItem, InputLabel, FormControl, Stack, Typography, Box } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControlLabel, Switch, Select, MenuItem, InputLabel, FormControl, Stack, Typography, Box, TextField, Slider } from '@mui/material';
 import AvatarVariantDropdown from './AvatarVariantDropdown';
 import { useConfiguration } from '@/hooks/useConfiguration';
 import { NodeStyle, ThemeConfig } from '@/types/ConfigurationTypes';
@@ -14,7 +14,19 @@ type Props = {
 }
 
 export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) {
-  const { showHandles, toggleHandles, nodeColor, setNodeColor, edgeColor, setEdgeColor, textColor, setTextColor, fontFamily, setFontFamily, nodeStyle, setNodeStyle } = useConfiguration();
+  const { 
+    showHandles, toggleHandles, 
+    nodeColor, setNodeColor, 
+    edgeColor, setEdgeColor, 
+    textColor, setTextColor, 
+    fontFamily, setFontFamily, 
+    nodeStyle, setNodeStyle,
+    exportTitle, setExportTitle,
+    showDates, setShowDates,
+    nameFontSize, setNameFontSize,
+    dateFontSize, setDateFontSize,
+    nodeComponentType, setNodeComponentType
+  } = useConfiguration();
   const { currentTree, saveTree } = useFamilyTreeContext();
 
   // When dialog opens, load current tree config into the configuration context
@@ -27,6 +39,14 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
       setTextColor(cfg.textColor || textColor || '#5d4e37');
       setFontFamily(cfg.fontFamily || fontFamily);
       setNodeStyle(cfg.nodeStyle || nodeStyle);
+      // Load export config if available
+      if (cfg.exportConfig) {
+        setExportTitle(cfg.exportConfig.title || '');
+        setShowDates(cfg.exportConfig.showDates ?? true);
+        setNameFontSize(cfg.exportConfig.nameFontSize || 16);
+        setDateFontSize(cfg.exportConfig.dateFontSize || 12);
+        setNodeComponentType(cfg.exportConfig.nodeComponentType || 'AltFamilyTreeNode');
+      }
     }
   }, [open, currentTree]);
 
@@ -105,6 +125,63 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
               <MenuItem value={'rounded'}>Rounded</MenuItem>
             </Select>
           </FormControl>
+
+          {/* Export Configuration Section */}
+          <Typography variant="h6" sx={{ mt: 2 }}>Export Configuration</Typography>
+          
+          <TextField
+            fullWidth
+            label="Export Title"
+            value={exportTitle}
+            onChange={(e) => setExportTitle(e.target.value)}
+            placeholder="e.g., Smith Family Tree"
+            helperText="Leave empty to use default tree name"
+          />
+
+          <FormControl fullWidth>
+            <InputLabel id="node-component-label">Node Component</InputLabel>
+            <Select 
+              labelId="node-component-label" 
+              value={nodeComponentType} 
+              label="Node Component" 
+              onChange={(e) => setNodeComponentType(e.target.value as import('@/types/ConfigurationTypes').NodeComponentType)}
+            >
+              <MenuItem value={'FamilyTreeNode'}>Family Tree Node</MenuItem>
+              <MenuItem value={'AltFamilyTreeNode'}>Alt Family Tree Node</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControlLabel 
+            control={<Switch checked={showDates} onChange={(e) => setShowDates(e.target.checked)} />} 
+            label="Show Dates" 
+          />
+
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>Name Font Size: {nameFontSize}px</Typography>
+            <Slider
+              value={nameFontSize}
+              onChange={(_, value) => setNameFontSize(value as number)}
+              min={10}
+              max={24}
+              step={1}
+              marks
+              valueLabelDisplay="auto"
+            />
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>Date Font Size: {dateFontSize}px</Typography>
+            <Slider
+              value={dateFontSize}
+              onChange={(_, value) => setDateFontSize(value as number)}
+              min={8}
+              max={18}
+              step={1}
+              marks
+              valueLabelDisplay="auto"
+            />
+          </Box>
+
           {/* Live preview of a node using current configuration */}
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', overflowX: 'hidden' }}>
             {/* Wrap preview in a scaling container so the fixed NODE_WIDTH doesn't cause horizontal scroll */}
@@ -130,6 +207,13 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
                 textColor,
                 fontFamily,
                 nodeStyle,
+                exportConfig: {
+                  title: exportTitle,
+                  showDates,
+                  nameFontSize,
+                  dateFontSize,
+                  nodeComponentType,
+                }
               }
             };
             saveTree(updated);

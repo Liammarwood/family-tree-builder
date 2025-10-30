@@ -21,7 +21,7 @@ export const FamilyTreeNode = ({
   // preview prop when rendering standalone preview outside React Flow
   preview,
 }: NodeProps<FamilyNodeData> & { preview?: boolean }) => {
-  const { showHandles, avatarVariant, nodeColor, fontFamily, nodeStyle, textColor } = useConfiguration();
+  const { showHandles, avatarVariant, nodeColor, fontFamily, nodeStyle, textColor, showDates, nameFontSize, dateFontSize } = useConfiguration();
 
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
@@ -86,7 +86,7 @@ export const FamilyTreeNode = ({
               sx={{
                 fontWeight: 600,
                 color: isDeceased ? 'text.secondary' : (textColor || 'text.primary'),
-                fontSize: '1rem',
+                fontSize: `${nameFontSize}px`,
                 lineHeight: 1.2,
               }}
             >
@@ -98,7 +98,7 @@ export const FamilyTreeNode = ({
                 sx={{
                   color: isDeceased ? 'text.secondary' : (textColor || 'text.secondary'),
                   fontStyle: 'italic',
-                  fontSize: '0.8rem',
+                  fontSize: `${nameFontSize * 0.8}px`,
                   mt: 0.3
                 }}
               >
@@ -128,16 +128,16 @@ export const FamilyTreeNode = ({
 
           {/* Details: Born, Country, Died as rows */}
           <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start' }}>
-            {data.dateOfBirth && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {showDates && data.dateOfBirth && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Cake sx={{ fontSize: 16, color: 'success.main' }} />
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem', minWidth: 60 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: `${dateFontSize}px`, minWidth: 60 }}>
                 <strong>Born:</strong> {formatDate(data.dateOfBirth)}
               </Typography>
             </Box>}
             {data.countryOfBirth && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Public sx={{ fontSize: 16, color: 'primary.main' }} />
-                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: `${dateFontSize}px` }}>
                   <strong>Country of Birth:</strong> <CountryFlag
                     countryCode={getCode(data.countryOfBirth) || ''}
                     svg
@@ -148,10 +148,10 @@ export const FamilyTreeNode = ({
 
               </Box>
             )}
-            {data.dateOfDeath && (
+            {showDates && data.dateOfDeath && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CalendarToday sx={{ fontSize: 16, color: 'error.main' }} />
-                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: `${dateFontSize}px` }}>
                   <strong>Died:</strong> {formatDate(data.dateOfDeath)}
                 </Typography>
               </Box>
