@@ -226,35 +226,53 @@ export const AltFamilyTreeNode = ({
       
       {/* Dynamic child handles - one per child group */}
       {childHandleGroups.length > 0 ? (
-        childHandleGroups.map((group, index) => {
-          // Calculate position: distribute handles evenly across the bottom
-          const totalGroups = childHandleGroups.length;
-          const leftPercent = totalGroups === 1 
-            ? 50 
-            : ((index + 1) / (totalGroups + 1)) * 100;
-          
-          return (
-            <Handle
-              key={group.handleId}
-              type="source"
-              position={Position.Bottom}
-              id={group.handleId}
-              style={{ 
-                ...bigHandle, 
-                visibility: showHandles && !preview ? "visible" : "hidden", 
-                left: `${leftPercent}%` 
-              }}
-            />
-          );
-        })
+        <>
+          {childHandleGroups.map((group, index) => {
+            // Calculate position: distribute handles evenly across the bottom
+            const totalGroups = childHandleGroups.length;
+            const leftPercent = totalGroups === 1 
+              ? 50 
+              : ((index + 1) / (totalGroups + 1)) * 100;
+            
+            return (
+              <Handle
+                key={group.handleId}
+                type="source"
+                position={Position.Bottom}
+                id={group.handleId}
+                style={{ 
+                  ...bigHandle, 
+                  visibility: showHandles && !preview ? "visible" : "hidden", 
+                  left: `${leftPercent}%` 
+                }}
+              />
+            );
+          })}
+          {/* Legacy handle for backward compatibility with existing edges */}
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="child"
+            style={{ ...bigHandle, visibility: "hidden", left: '50%' }}
+          />
+        </>
       ) : (
-        // Default child handle if no children
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id="child-0"
-          style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }}
-        />
+        <>
+          {/* Default child handle if no children */}
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="child-0"
+            style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }}
+          />
+          {/* Legacy handle for backward compatibility with existing edges */}
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="child"
+            style={{ ...bigHandle, visibility: "hidden", left: '50%' }}
+          />
+        </>
       )}
       
       <Handle
