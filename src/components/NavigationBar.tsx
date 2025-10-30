@@ -1,10 +1,12 @@
-import { AppBar, Box, Toolbar, Typography, useMediaQuery, IconButton } from "@mui/material";
+import { AppBar, Box, Toolbar, Typography, useMediaQuery, IconButton, Tooltip } from "@mui/material";
 import FamilyTreeMenu from "@/components/FamilyTreeMenu";
 import FamilyTreeToolbar from "./FamilyTreeToolbar";
 import { EditMode } from "@/types/EditMode";
 import { APP_VERSION } from '@/libs/version';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AboutModal from './AboutModal';
+import HelpModal from './HelpModal';
 import React from 'react';
 
 type Props = {
@@ -15,6 +17,7 @@ type Props = {
 export default function NavigationBar({ setEditMode }: Props) {
     const isMobile = useMediaQuery("(max-width: 768px)");
     const [aboutOpen, setAboutOpen] = React.useState(false);
+    const [helpOpen, setHelpOpen] = React.useState(false);
     return (
         <AppBar position="static" color="default" elevation={1}>
             <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -38,9 +41,17 @@ export default function NavigationBar({ setEditMode }: Props) {
                     <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
                         v{APP_VERSION}
                     </Typography>
-                    <IconButton aria-label="about" size="small" onClick={() => setAboutOpen(true)}>
-                      <InfoOutlinedIcon fontSize="small" />
-                    </IconButton>
+                    <Tooltip title="Help">
+                      <IconButton aria-label="help" size="small" onClick={() => setHelpOpen(true)}>
+                        <HelpOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="About">
+                      <IconButton aria-label="about" size="small" onClick={() => setAboutOpen(true)}>
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
                     <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
                 </Box>}
             </Toolbar>
