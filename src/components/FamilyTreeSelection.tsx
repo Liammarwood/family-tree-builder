@@ -39,7 +39,7 @@ export const FamilyTreeSection: React.FC<FamilyTreeSectionProps> = ({
     if (isCreatingNew && newTreeName.trim() !== "") {
       // Create new tree and select it
       createTree(newTreeName);
-    } else if (!isCreatingNew) {
+    } else if (!isCreatingNew && localSelectedTreeId !== selectedTreeId) {
       setSelectedTreeId(localSelectedTreeId);
     }
     onClose();

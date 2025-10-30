@@ -1,5 +1,5 @@
 import { AppBar, Box, Toolbar, Typography, useMediaQuery, IconButton } from "@mui/material";
-import ConfigurationMenu from "@/components/ConfigurationMenu";
+import FamilyTreeMenu from "@/components/FamilyTreeMenu";
 import FamilyTreeToolbar from "./FamilyTreeToolbar";
 import { EditMode } from "@/types/EditMode";
 import { APP_VERSION } from '@/libs/version';
@@ -20,7 +20,7 @@ export default function NavigationBar({ setEditMode }: Props) {
             <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
                 {/* Left side: burger + title */}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <ConfigurationMenu />
+                    <FamilyTreeMenu />
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         <img
                             src="favicon.ico"

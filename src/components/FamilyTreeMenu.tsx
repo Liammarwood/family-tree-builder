@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { IconButton, Menu, MenuItem, Divider, ListItemIcon, Typography } from '@mui/material';
-import { AccountCircle, Delete, Download, Edit, Forest, PictureAsPdf, Upload } from "@mui/icons-material"
+import { AccountCircle, Delete, Download, Edit, Forest, PictureAsPdf, Share, Upload } from "@mui/icons-material"
 import ImageIcon from "@mui/icons-material/Image"
 import TuneIcon from '@mui/icons-material/Tune';
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useConfiguration } from '@/hooks/useConfiguration';
 import { auth } from "@/firebaseConfig";
 import { signOut } from "firebase/auth";
-import AvatarVariantDropdown from './AvatarVariantDropdown';
 import { useFamilyTreeContext } from '@/hooks/useFamilyTree';
 import { RenameTreeDialog } from './RenameTreeDialog';
 import { handleExport } from '@/libs/backup';
@@ -19,9 +17,9 @@ import { FamilyTreeSection } from './FamilyTreeSelection';
 import { ShareModal } from './ShareModal';
 import { UploadModal } from './UploadModal';
 import { useSearchParams } from 'next/navigation';
+import FamilyTreeConfigurationDialog from './FamilyTreeConfigurationDialog';
 
-const ConfigMenu: React.FC = () => {
-    const { showHandles, toggleHandles } = useConfiguration();
+const FamilyTreeMenu: React.FC = () => {
     const { currentTree, deleteTree } = useFamilyTreeContext();
     const { showError } = useError();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -31,6 +29,7 @@ const ConfigMenu: React.FC = () => {
     const [isShareModalOpen, setShareModalOpen] = useState<boolean>(false);
     const [isExportPDFOpen, setExportPDFOpen] = useState<boolean>(false);
     const [isExportPNGOpen, setExportPNGOpen] = useState<boolean>(false);
+    const [isConfigOpen, setConfigOpen] = useState<boolean>(false);
     const searchParams = useSearchParams();
 
     const open = Boolean(anchorEl);
@@ -83,25 +82,15 @@ const ConfigMenu: React.FC = () => {
                 </MenuItem>
 
                 <Typography variant="subtitle2" sx={{ px: 2, pt: 1, color: 'text.secondary' }}>
-                    Configuration
+                    Current Family Tree
                 </Typography>
 
-                <MenuItem onClick={() => toggleHandles()}>
+                <MenuItem onClick={() => setConfigOpen(true)}>
                     <ListItemIcon>
                         <TuneIcon fontSize="small" />
                     </ListItemIcon>
-                    {showHandles ? "Hide" : "Show"} Handles
+                    Appearance Settings
                 </MenuItem>
-
-                <MenuItem>
-                    <AvatarVariantDropdown />
-                </MenuItem>
-
-                <Divider />
-
-                <Typography variant="subtitle2" sx={{ px: 2, pt: 1, color: 'text.secondary' }}>
-                    Current Family Tree
-                </Typography>
 
                 <MenuItem onClick={() => setRenameTreeModalOpen(true)}>
                     <ListItemIcon>
@@ -159,6 +148,13 @@ const ConfigMenu: React.FC = () => {
                     Import Data
                 </MenuItem>
 
+                <MenuItem onClick={() => setShareModalOpen(true)}>
+                    <ListItemIcon>
+                        <Share fontSize="small" />
+                    </ListItemIcon>
+                    Share Tree
+                </MenuItem>
+
                 <Divider />
 
                 <MenuItem onClick={() => setSelectModalOpen(true)}>
@@ -198,8 +194,9 @@ const ConfigMenu: React.FC = () => {
                     setExportPNGOpen(false);
                 }}
             />
+            <FamilyTreeConfigurationDialog open={isConfigOpen} onClose={() => setConfigOpen(false)} />
         </>
     );
 };
 
-export default ConfigMenu;
+export default FamilyTreeMenu;

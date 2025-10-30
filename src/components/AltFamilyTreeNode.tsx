@@ -18,9 +18,10 @@ function formatDate(dateStr?: string) {
 
 export const AltFamilyTreeNode = ({
   selected,
-  data
-}: NodeProps<FamilyNodeData>) => {
-  const { showHandles, avatarVariant } = useConfiguration();
+  data,
+  preview,
+}: NodeProps<FamilyNodeData> & { preview?: boolean }) => {
+  const { showHandles, avatarVariant, nodeColor, textColor, fontFamily, nodeStyle } = useConfiguration();
 
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
@@ -86,10 +87,10 @@ export const AltFamilyTreeNode = ({
         sx={{
           borderRadius: 3,
           border: '2.5px solid',
-          borderColor: selected ? '#ff9800' : (isDeceased ? 'grey.300' : 'primary.light'),
+          borderColor: selected ? '#ff9800' : (isDeceased ? 'grey.300' : (nodeColor || 'primary.light')),
           background: isDeceased
             ? 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)'
-            : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            : (nodeStyle === 'card' ? `linear-gradient(135deg, ${nodeColor} 0%, #f8f9fa 100%)` : nodeStyle === 'compact' ? nodeColor : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'),
           boxShadow: selected
             ? '0 0 0 6px #ffe0b2, 0 8px 24px #ff980033'
             : '0 8px 24px rgba(0,0,0,0.12)',
@@ -109,9 +110,10 @@ export const AltFamilyTreeNode = ({
                 variant="h6"
                 sx={{
                   fontWeight: 700,
-                  color: isDeceased ? 'text.secondary' : 'primary.dark',
+                  color: isDeceased ? 'text.secondary' : (textColor || 'primary.dark'),
                   fontSize: '1.1rem',
-                  lineHeight: 1.2
+                  lineHeight: 1.2,
+                  fontFamily: fontFamily,
                 }}
               >
                 {data.name}
@@ -185,15 +187,15 @@ export const AltFamilyTreeNode = ({
                 label={data.occupation}
                 size="small"
                 sx={{
-                  backgroundColor: isDeceased ? 'grey.200' : 'primary.main',
-                  color: isDeceased ? 'text.secondary' : 'white',
+                  backgroundColor: isDeceased ? 'grey.200' : (nodeColor || 'primary.main'),
+                  color: isDeceased ? 'text.secondary' : (textColor || 'white'),
                   fontWeight: 600,
                   fontSize: '0.75rem',
                   height: 32,
                   px: 1,
                   width: '100%',
                   '& .MuiChip-icon': {
-                    color: isDeceased ? 'text.secondary' : 'white'
+                    color: isDeceased ? 'text.secondary' : (textColor || 'white')
                   }
                 }}
               />
@@ -207,25 +209,25 @@ export const AltFamilyTreeNode = ({
         type="target"
         position={Position.Top}
         id="parent"
-        style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", left: '50%', zIndex: 11 }}
+        style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%', zIndex: 11 }}
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="child"
-        style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", left: '50%' }}
+        style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="right"
-        style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", top: "50%" }}
+        style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", top: "50%" }}
       />
       <Handle
         type="target"
         position={Position.Left}
         id="left"
-        style={{ ...bigHandle, visibility: showHandles ? "visible" : "hidden", top: "50%" }}
+        style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", top: "50%" }}
       />
     </Box>
   );
