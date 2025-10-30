@@ -5,6 +5,8 @@ import ImageIcon from "@mui/icons-material/Image"
 import TuneIcon from '@mui/icons-material/Tune';
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from '@mui/icons-material/Logout';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { auth } from "@/firebaseConfig";
 import { signOut } from "firebase/auth";
 import { useFamilyTreeContext } from '@/hooks/useFamilyTree';
@@ -18,6 +20,8 @@ import { ShareModal } from './ShareModal';
 import { UploadModal } from './UploadModal';
 import { useSearchParams } from 'next/navigation';
 import FamilyTreeConfigurationDialog from './FamilyTreeConfigurationDialog';
+import HelpModal from './HelpModal';
+import AboutModal from './AboutModal';
 
 const FamilyTreeMenu: React.FC = () => {
     const { currentTree, deleteTree } = useFamilyTreeContext();
@@ -30,6 +34,8 @@ const FamilyTreeMenu: React.FC = () => {
     const [isExportPDFOpen, setExportPDFOpen] = useState<boolean>(false);
     const [isExportPNGOpen, setExportPNGOpen] = useState<boolean>(false);
     const [isConfigOpen, setConfigOpen] = useState<boolean>(false);
+    const [isHelpOpen, setHelpOpen] = useState<boolean>(false);
+    const [isAboutOpen, setAboutOpen] = useState<boolean>(false);
     const searchParams = useSearchParams();
 
     const open = Boolean(anchorEl);
@@ -166,6 +172,26 @@ const FamilyTreeMenu: React.FC = () => {
 
                 <Divider />
 
+                <Typography variant="subtitle2" sx={{ px: 2, pt: 1, color: 'text.secondary' }}>
+                    Help & Info
+                </Typography>
+
+                <MenuItem onClick={() => setHelpOpen(true)}>
+                    <ListItemIcon>
+                        <HelpOutlineIcon fontSize="small" />
+                    </ListItemIcon>
+                    User Guide
+                </MenuItem>
+
+                <MenuItem onClick={() => setAboutOpen(true)}>
+                    <ListItemIcon>
+                        <InfoOutlinedIcon fontSize="small" />
+                    </ListItemIcon>
+                    About
+                </MenuItem>
+
+                <Divider />
+
                 <MenuItem onClick={() => signOut(auth)}>
                     <ListItemIcon>
                         <LogoutIcon fontSize="small" />
@@ -195,6 +221,8 @@ const FamilyTreeMenu: React.FC = () => {
                 }}
             />
             <FamilyTreeConfigurationDialog open={isConfigOpen} onClose={() => setConfigOpen(false)} />
+            <HelpModal open={isHelpOpen} onClose={() => setHelpOpen(false)} />
+            <AboutModal open={isAboutOpen} onClose={() => setAboutOpen(false)} />
         </>
     );
 };
