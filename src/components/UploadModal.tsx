@@ -10,7 +10,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { handleImport } from "@/libs/backup";
 import { useError } from "@/hooks/useError";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
-import { Loading } from "./Loading";
+import { Loading } from "@/components/Loading";
 
 type Props = {
   open: boolean;

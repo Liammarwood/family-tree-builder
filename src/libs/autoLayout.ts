@@ -2,7 +2,7 @@ import ELK, { ElkNode } from 'elkjs/lib/elk.bundled.js';
 import { Node, Edge } from 'reactflow';
 import { FamilyNodeData } from '@/types/FamilyNodeData';
 import { RelationshipType } from '@/types/RelationshipEdgeData';
-import { NODE_WIDTH, NODE_HEIGHT, BASE_SPACING, PARTNER_SPACING } from './spacing';
+import { NODE_WIDTH, NODE_HEIGHT, BASE_SPACING, PARTNER_SPACING } from '@/libs/spacing';
 
 const elk = new ELK();
 

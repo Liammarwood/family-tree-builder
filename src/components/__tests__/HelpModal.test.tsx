@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import HelpModal from '../HelpModal';
+import HelpModal from '@/components/HelpModal';
 
 describe('HelpModal', () => {
   it('renders the help modal when open', () => {

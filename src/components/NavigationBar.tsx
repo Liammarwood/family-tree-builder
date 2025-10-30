@@ -1,12 +1,12 @@
 import { AppBar, Box, Toolbar, Typography, useMediaQuery, IconButton, Tooltip } from "@mui/material";
 import FamilyTreeMenu from "@/components/FamilyTreeMenu";
-import FamilyTreeToolbar from "./FamilyTreeToolbar";
+import FamilyTreeToolbar from "@/components/FamilyTreeToolbar";
 import { EditMode } from "@/types/EditMode";
 import { APP_VERSION } from '@/libs/version';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import AboutModal from './AboutModal';
-import HelpModal from './HelpModal';
+import AboutModal from '@/components/AboutModal';
+import HelpModal from '@/components/HelpModal';
 import React from 'react';
 
 type Props = {

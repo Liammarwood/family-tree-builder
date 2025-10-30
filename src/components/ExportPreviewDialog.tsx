@@ -13,10 +13,10 @@ import { exportToPNG, exportToPDF, triggerDownload } from "@/libs/export";
 import { useConfiguration } from "@/hooks/useConfiguration";
 import { ExportType } from "@/types/ExportTypes";
 import ReactFlow, { Controls, ReactFlowInstance, useReactFlow } from "reactflow"
-import { calculateEarliestDateOfBirth } from "@/libs/nodes";
-import { EDGE_TYPES, NODE_TYPES, GRID_SIZE } from "@/libs/constants";
+import { EDGE_TYPES, getNodeTypes, GRID_SIZE } from "@/libs/constants";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
-import ThemeFromConfig from './ThemeFromConfig';
+import ThemeFromConfig from '@/components/ThemeFromConfig';
+import { FamilyTreeName } from '@/components/FamilyTreeName';
 
 type ExportPreviewDialogProps = {
     open: boolean;
@@ -29,7 +29,7 @@ const ExportPreviewDialog: React.FC<ExportPreviewDialogProps> = ({
     onClose,
     exportType
 }) => {
-    const { setShowHandles } = useConfiguration();
+    const { setShowHandles, exportTitle, nodeComponentType } = useConfiguration();
     const { getNodes, getEdges } = useReactFlow();
     const exportRef = useRef<HTMLDivElement>(null);
     const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
@@ -77,34 +77,14 @@ const ExportPreviewDialog: React.FC<ExportPreviewDialogProps> = ({
                         borderWidth: "2px",
                         borderColor: "black",
                     }}
-                >
-                    {/* Fixed Title */}
-                    <div
-                        style={{
-                            position: "absolute",
-                            top: 0,
-                            marginTop: "5px",
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            zIndex: 10,
-                            padding: "12px 24px",
-                            backgroundColor: "rgba(255, 255, 255, 0.9)",
-                            borderRadius: 4,
-                            borderWidth: "2px",
-                            borderColor: "black",
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                            textAlign: "center"
-                        }}
-                    >
-                        <p>{currentTree?.name} Family Tree</p>
-                        <p><b>{calculateEarliestDateOfBirth(getNodes()).getFullYear()} - {new Date().getFullYear()}</b></p>
-                    </div>
+                >                    
                     <ThemeFromConfig>
+                    <FamilyTreeName name={exportTitle || `${currentTree?.name} Family Tree`} nodes={getNodes()} />
                     <ReactFlow
                         nodes={getNodes()}
                         edges={getEdges()}
                         edgeTypes={useMemo(() => EDGE_TYPES, [])}
-                        nodeTypes={useMemo(() => NODE_TYPES, [])}
+                        nodeTypes={useMemo(() => getNodeTypes(nodeComponentType), [nodeComponentType])}
                         minZoom={0.05}
                         maxZoom={2}
                         fitView

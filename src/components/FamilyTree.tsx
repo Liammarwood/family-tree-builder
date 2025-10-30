@@ -4,11 +4,11 @@ import React, { useState, useCallback, useRef, useMemo, useEffect } from "react"
 import ReactFlow, { Background, Controls, Node, Edge, BackgroundVariant, useNodesState, useEdgesState, ConnectionLineType } from "reactflow";
 import "reactflow/dist/style.css";
 import { Box, Stack, useMediaQuery } from "@mui/material";
-import { ManualConnectionDialog, ManualConnectionForm } from "./ManualConnectionDialog";
+import { ManualConnectionDialog, ManualConnectionForm } from "@/components/ManualConnectionDialog";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { ChildEdge, DivorcedEdge, ParentEdge, PartnerEdge, SiblingEdge } from "@/libs/edges";
 import { EDGE_TYPES, GENERATE_ID, GRID_SIZE, NODE_TYPES } from "@/libs/constants";
-import ThemeFromConfig from './ThemeFromConfig';
+import ThemeFromConfig from '@/components/ThemeFromConfig';
 import { useConfiguration } from '@/hooks/useConfiguration';
 import { EditMode } from "@/types/EditMode";
 import { Loading } from "@/components/Loading";
@@ -16,7 +16,7 @@ import PersonDetailsPane from "@/components/PersonDetailsPane";
 import RelationshipDetailsPane from "@/components/RelationshipDetailsPane";
 import { PersonDetailsForm } from "@/types/PersonDetailsForm";
 import { RelationshipForm } from "@/types/RelationshipForm";
-import { DetailsPane } from "./DetailsPane";
+import { DetailsPane } from "@/components/DetailsPane";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 import { RelationshipType } from "@/types/RelationshipEdgeData";
 
@@ -37,21 +37,21 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
     let selectedEdge: Edge | undefined;
     let selectedNode: Node<FamilyNodeData> | undefined;
     const selectedNodes: Node<FamilyNodeData>[] = [];
-    
+
     for (const edge of edges) {
       if (edge.selected) {
         selectedEdge = edge;
         break; // Assuming single edge selection
       }
     }
-    
+
     for (const node of nodes) {
       if (node.selected) {
         if (!selectedNode) selectedNode = node;
         selectedNodes.push(node);
       }
     }
-    
+
     return {
       selectedEdge,
       selectedNode,
@@ -59,7 +59,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
       isOneNodeSelected: selectedNodes.length === 1,
     };
   }, [edges, nodes]);
-  
+
   const { selectedEdge, selectedNode, isOneNodeSelected } = selectionInfo;
   const isMobile = useMediaQuery('(max-width: 768px)');
   const initialized = useRef(false);
@@ -98,7 +98,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   // Store previous values to detect actual changes
   const prevNodesRef = useRef(nodes);
   const prevEdgesRef = useRef(edges);
-  
+
   useEffect(() => {
     if (!isTreeLoaded || !currentTree || !selectedTreeId) return;
 
@@ -216,7 +216,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
     if (!editMode) return;
 
     if (editMode.type === "edit" && selectedNode) {
-  // saving edited node
+      // saving edited node
       setNodes((nds) =>
         nds.map((n) =>
           n.id === selectedNode.id
@@ -259,7 +259,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
         },
       };
 
-  // new node created
+      // new node created
 
       // Add node
       setNodes([...nodes, newNode]);
@@ -304,18 +304,18 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   const onNodeClick = useCallback(
     (event: React.MouseEvent<Element, MouseEvent>, clickedNode: Node) => {
       const isMultiSelect = isMultiSelectKey(event);
-      
+
       setNodes((prevNodes) => {
         // Check if update is actually needed
         if (isMultiSelect) {
           const targetNode = prevNodes.find(n => n.id === clickedNode.id);
           if (!targetNode) return prevNodes;
-          
+
           // Only update if selection state will change
           const willToggle = !targetNode.selected !== targetNode.selected;
           if (!willToggle) return prevNodes;
         }
-        
+
         // If multi-select key is pressed, toggle only the clicked node
         if (isMultiSelect) {
           return prevNodes.map((n) => {
@@ -327,12 +327,12 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
         // Otherwise, select only the clicked node
         // Optimization: only create new array if selection actually changes
         const clickedIndex = prevNodes.findIndex(n => n.id === clickedNode.id);
-        if (clickedIndex !== -1 && prevNodes[clickedIndex].selected && 
-            prevNodes.every((n, i) => i === clickedIndex || !n.selected)) {
+        if (clickedIndex !== -1 && prevNodes[clickedIndex].selected &&
+          prevNodes.every((n, i) => i === clickedIndex || !n.selected)) {
           // Already selected and no other selections
           return prevNodes;
         }
-        
+
         return prevNodes.map((n) => {
           return n.id === clickedNode.id ? { ...n, selected: true } : { ...n, selected: false };
         });
@@ -403,7 +403,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
                 editMode={editMode}
                 onSave={handleSave}
                 onCancel={handleCancel}
-                onDelete={() => {}}
+                onDelete={() => { }}
               />
             )}
 
@@ -413,7 +413,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
                 selectedEdge={selectedEdge}
                 onSave={handleRelationshipSave}
                 onCancel={handleCancel}
-                onDelete={() => {}}
+                onDelete={() => { }}
               />
             )}
         </DetailsPane>
@@ -440,36 +440,36 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
               <ReactFlow
                 nodes={nodes}
                 edges={styledEdges}
-              edgeTypes={memoEdgeTypes}
-              nodeTypes={memoNodeTypes}
-              onNodeClick={onNodeClick}
-              onEdgesChange={onEdgesChange}
-              onNodesChange={onNodesChange}
-              onPaneClick={onPaneClick}
-              onNodeDragStop={onNodeDragStop}
+                edgeTypes={memoEdgeTypes}
+                nodeTypes={memoNodeTypes}
+                onNodeClick={onNodeClick}
+                onEdgesChange={onEdgesChange}
+                onNodesChange={onNodesChange}
+                onPaneClick={onPaneClick}
+                onNodeDragStop={onNodeDragStop}
                 connectionLineStyle={{ stroke: edgeColor || '#b1b1b7', strokeWidth: 2 }}
-              fitView
-              snapToGrid={true}
-              snapGrid={[GRID_SIZE, GRID_SIZE]}
-              onConnect={onConnect}
-              connectionLineType={ConnectionLineType.Step}
-              minZoom={0.05}
-              maxZoom={2}
-              attributionPosition={"top-center"}
-            >
-              <ManualConnectionDialog
-                onClose={() => setConnectDialog(null)}
-                isOpen={!!connectDialog}
-                onConfirm={handleConnectConfirm}
-              />
-              <Controls />
-              <Background
-                gap={GRID_SIZE}
-                color="#e0e0e0"
-                variant={
-                  showGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots
-                }
-              />
+                fitView
+                snapToGrid={true}
+                snapGrid={[GRID_SIZE, GRID_SIZE]}
+                onConnect={onConnect}
+                connectionLineType={ConnectionLineType.Step}
+                minZoom={0.05}
+                maxZoom={2}
+                attributionPosition={"top-center"}
+              >
+                <ManualConnectionDialog
+                  onClose={() => setConnectDialog(null)}
+                  isOpen={!!connectDialog}
+                  onConfirm={handleConnectConfirm}
+                />
+                <Controls />
+                <Background
+                  gap={GRID_SIZE}
+                  color="#e0e0e0"
+                  variant={
+                    showGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots
+                  }
+                />
               </ReactFlow>
             </ThemeFromConfig>
           )}
