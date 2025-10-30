@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ShareModal } from '../ShareModal';
+import { ShareModal } from '@/components/ShareModal';
 import * as firestoreSignaling from '@/hooks/useFirestoreSignaling';
 import * as familyTreeContext from '@/hooks/useFamilyTree';
 import * as errorHook from '@/hooks/useError';

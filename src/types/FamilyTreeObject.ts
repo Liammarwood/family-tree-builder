@@ -11,7 +11,7 @@ export type FamilyTreeMeta = FamilyTreeSummary & {
   updatedAt: number;
 };
 
-import { ThemeConfig } from './ConfigurationTypes';
+import { ThemeConfig } from '@/types/ConfigurationTypes';
 
 export type FamilyTreeObject = FamilyTreeMeta & {
   nodes: Node[];

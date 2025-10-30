@@ -10,18 +10,18 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { auth } from "@/firebaseConfig";
 import { signOut } from "firebase/auth";
 import { useFamilyTreeContext } from '@/hooks/useFamilyTree';
-import { RenameTreeDialog } from './RenameTreeDialog';
+import { RenameTreeDialog } from '@/components/RenameTreeDialog';
 import { handleExport } from '@/libs/backup';
 import { useError } from '@/hooks/useError';
 import { ExportType } from '@/types/ExportTypes';
-import ExportPreviewDialog from './ExportPreviewDialog';
-import { FamilyTreeSection } from './FamilyTreeSelection';
-import { ShareModal } from './ShareModal';
-import { UploadModal } from './UploadModal';
+import ExportPreviewDialog from '@/components/ExportPreviewDialog';
+import { FamilyTreeSection } from '@/components/FamilyTreeSelection';
+import { ShareModal } from '@/components/ShareModal';
+import { UploadModal } from '@/components/UploadModal';
 import { useSearchParams } from 'next/navigation';
-import FamilyTreeConfigurationDialog from './FamilyTreeConfigurationDialog';
-import HelpModal from './HelpModal';
-import AboutModal from './AboutModal';
+import FamilyTreeConfigurationDialog from '@/components/FamilyTreeConfigurationDialog';
+import HelpModal from '@/components/HelpModal';
+import AboutModal from '@/components/AboutModal';
 
 const FamilyTreeMenu: React.FC = () => {
     const { currentTree, deleteTree } = useFamilyTreeContext();

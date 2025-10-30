@@ -26,12 +26,18 @@ interface ConfigurationState {
   setExportTitle: (title: string) => void;
   showDates: boolean;
   setShowDates: (show: boolean) => void;
+  showTitleDates: boolean;
+  setShowTitleDates: (show: boolean) => void;
   nameFontSize: number;
   setNameFontSize: (size: number) => void;
+  titleFontSize: number;
+  setTitleFontSize: (size: number) => void;
   dateFontSize: number;
   setDateFontSize: (size: number) => void;
   nodeComponentType: NodeComponentType;
   setNodeComponentType: (type: NodeComponentType) => void;
+  titleDateFontSize: number;
+  setTitleDateFontSize: (size: number) => void;
 }
 
 // Create context
@@ -54,13 +60,14 @@ export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children })
   const [textColor, setTextColor] = useState<string>('#5d4e37');
   const [fontFamily, setFontFamily] = useState<string>('Inter, Roboto, "Helvetica Neue", Arial');
   const [nodeStyle, setNodeStyle] = useState<import('@/types/ConfigurationTypes').NodeStyle>('card');
-  // Export configuration
   const [exportTitle, setExportTitle] = useState<string>('');
   const [showDates, setShowDates] = useState<boolean>(true);
   const [nameFontSize, setNameFontSize] = useState<number>(16);
+  const [titleFontSize, setTitleFontSize] = useState<number>(16);
   const [dateFontSize, setDateFontSize] = useState<number>(12);
   const [nodeComponentType, setNodeComponentType] = useState<NodeComponentType>('AltFamilyTreeNode');
-
+  const [showTitleDates, setShowTitleDates] = useState<boolean>(true);
+  const [titleDateFontSize, setTitleDateFontSize] = useState<number>(12);
   const toggleHandles = () => {
     setShowHandles(!showHandles);
   }
@@ -94,6 +101,12 @@ export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children })
       setDateFontSize,
       nodeComponentType,
       setNodeComponentType,
+      titleFontSize,
+      setTitleFontSize,
+      showTitleDates,
+      setShowTitleDates,
+      titleDateFontSize,
+      setTitleDateFontSize
     }}>
       {children} {/* <-- must return children here */}
     </ConfigurationContext.Provider>

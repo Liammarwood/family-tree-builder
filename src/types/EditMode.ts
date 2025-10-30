@@ -1,4 +1,4 @@
-import { FamilyNodeData } from "./FamilyNodeData";
+import { FamilyNodeData } from "@/types/FamilyNodeData";
 
 export type EditMode = { 
   type: "edit" | "add";

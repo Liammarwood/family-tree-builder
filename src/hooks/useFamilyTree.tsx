@@ -7,7 +7,7 @@ import {
     FamilyTreeSummary
 } from "@/types/FamilyTreeObject";
 import { useState, useEffect, useCallback, SetStateAction } from "react";
-import { useError } from "./useError";
+import { useError } from "@/hooks/useError";
 import { logger } from '@/libs/logger';
 import React from "react";
 

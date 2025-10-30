@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import { getNames } from "country-list";
 import { EditMode } from "@/types/EditMode";
-import ImageModal from "./ImageModal";
+import ImageModal from "@/components/ImageModal";
 import { PersonDetailsForm } from "@/types/PersonDetailsForm";
 
 const initialFormState: PersonDetailsForm = {

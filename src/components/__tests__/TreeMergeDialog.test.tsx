@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { TreeMergeDialog } from '../TreeMergeDialog';
+import { TreeMergeDialog } from '@/components/TreeMergeDialog';
 import { FamilyTreeObject } from '@/types/FamilyTreeObject';
 import { Node, Edge } from 'reactflow';
 

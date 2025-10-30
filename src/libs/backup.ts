@@ -1,5 +1,5 @@
 import { FamilyTreeObject } from "@/types/FamilyTreeObject";
-import { DB_NAME, DB_VERSION, STORE_NAME } from "./constants";
+import { DB_NAME, DB_VERSION, STORE_NAME } from "@/libs/constants";
 
 interface ObjectStoreSchema {
   keyPath: string | string[] | null;

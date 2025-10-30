@@ -4,8 +4,8 @@
 
 import { Node, Edge } from 'reactflow';
 import { FamilyNodeData } from '@/types/FamilyNodeData';
-import { calculateEarliestDateOfBirth } from '../nodes';
-import { autoLayoutFamilyTree } from '../autoLayout';
+import { calculateEarliestDateOfBirth } from '@/libs/nodes';
+import { autoLayoutFamilyTree } from '@/libs/autoLayout';
 import { RelationshipType } from '@/types/RelationshipEdgeData';
 
 describe('Performance optimizations', () => {

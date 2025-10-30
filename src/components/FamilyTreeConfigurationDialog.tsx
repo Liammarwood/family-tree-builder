@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControlLabel, Switch, Select, MenuItem, InputLabel, FormControl, Stack, Typography, Box, TextField, Slider } from '@mui/material';
-import AvatarVariantDropdown from './AvatarVariantDropdown';
+import AvatarVariantDropdown from '@/components/AvatarVariantDropdown';
 import { useConfiguration } from '@/hooks/useConfiguration';
 import { NodeStyle, ThemeConfig } from '@/types/ConfigurationTypes';
 import { FamilyTreeObject } from '@/types/FamilyTreeObject';
 import { useFamilyTreeContext } from '@/hooks/useFamilyTree';
-import { FamilyTreeNode } from './FamilyNode';
+import { FamilyTreeNode } from '@/components/reactflow/FamilyNode';
 import { NODE_WIDTH } from '@/libs/spacing';
+import { AltFamilyTreeNode } from '@/components/reactflow/AltFamilyTreeNode';
+import { FamilyTreeName } from '@/components/FamilyTreeName';
 
 type Props = {
   open: boolean;
@@ -14,18 +16,21 @@ type Props = {
 }
 
 export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) {
-  const { 
-    showHandles, toggleHandles, 
-    nodeColor, setNodeColor, 
-    edgeColor, setEdgeColor, 
-    textColor, setTextColor, 
-    fontFamily, setFontFamily, 
+  const {
+    showHandles, toggleHandles,
+    nodeColor, setNodeColor,
+    edgeColor, setEdgeColor,
+    textColor, setTextColor,
+    fontFamily, setFontFamily,
     nodeStyle, setNodeStyle,
     exportTitle, setExportTitle,
     showDates, setShowDates,
     nameFontSize, setNameFontSize,
     dateFontSize, setDateFontSize,
-    nodeComponentType, setNodeComponentType
+    nodeComponentType, setNodeComponentType,
+    titleFontSize, setTitleFontSize,
+    titleDateFontSize, setTitleDateFontSize,
+    showTitleDates, setShowTitleDates
   } = useConfiguration();
   const { currentTree, saveTree } = useFamilyTreeContext();
 
@@ -118,43 +123,26 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
           </FormControl>
 
           <FormControl fullWidth>
-            <InputLabel id="node-style-label">Node style</InputLabel>
-            <Select labelId="node-style-label" value={nodeStyle} label="Node style" onChange={(e) => setNodeStyle(e.target.value as NodeStyle)}>
+            <InputLabel id="node-style-label">Person Panel Background Style</InputLabel>
+            <Select labelId="node-style-label" value={nodeStyle} label="Person Panel Background Style" onChange={(e) => setNodeStyle(e.target.value as NodeStyle)}>
               <MenuItem value={'card'}>Card</MenuItem>
               <MenuItem value={'compact'}>Compact</MenuItem>
               <MenuItem value={'rounded'}>Rounded</MenuItem>
             </Select>
           </FormControl>
 
-          {/* Export Configuration Section */}
-          <Typography variant="h6" sx={{ mt: 2 }}>Export Configuration</Typography>
-          
-          <TextField
-            fullWidth
-            label="Export Title"
-            value={exportTitle}
-            onChange={(e) => setExportTitle(e.target.value)}
-            placeholder="e.g., Smith Family Tree"
-            helperText="Leave empty to use default tree name"
-          />
-
           <FormControl fullWidth>
-            <InputLabel id="node-component-label">Node Component</InputLabel>
-            <Select 
-              labelId="node-component-label" 
-              value={nodeComponentType} 
-              label="Node Component" 
+            <InputLabel id="node-component-label">Person Panel Style</InputLabel>
+            <Select
+              labelId="node-component-label"
+              value={nodeComponentType}
+              label="Node Component"
               onChange={(e) => setNodeComponentType(e.target.value as import('@/types/ConfigurationTypes').NodeComponentType)}
             >
-              <MenuItem value={'FamilyTreeNode'}>Family Tree Node</MenuItem>
-              <MenuItem value={'AltFamilyTreeNode'}>Alt Family Tree Node</MenuItem>
+              <MenuItem value={'FamilyTreeNode'}>Family Tree Style 1</MenuItem>
+              <MenuItem value={'AltFamilyTreeNode'}>Family Tree Style 2</MenuItem>
             </Select>
           </FormControl>
-
-          <FormControlLabel 
-            control={<Switch checked={showDates} onChange={(e) => setShowDates(e.target.checked)} />} 
-            label="Show Dates" 
-          />
 
           <Box>
             <Typography variant="subtitle2" gutterBottom>Name Font Size: {nameFontSize}px</Typography>
@@ -182,14 +170,73 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
             />
           </Box>
 
+          <FormControlLabel
+            control={<Switch checked={showDates} onChange={(e) => setShowDates(e.target.checked)} />}
+            label="Show Dates"
+          />
+
+          <Typography variant="subtitle1" gutterBottom>Person Panel Preview</Typography>
+
           {/* Live preview of a node using current configuration */}
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', overflowX: 'hidden' }}>
             {/* Wrap preview in a scaling container so the fixed NODE_WIDTH doesn't cause horizontal scroll */}
             <Box sx={{ maxWidth: '100%', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
               <Box sx={{ width: NODE_WIDTH, transform: 'scale(0.8)', transformOrigin: 'top center' }}>
-                <FamilyTreeNode preview selected={false} data={{ id: 'preview', name: 'John Doe', dateOfBirth: '1980-01-01', occupation: 'Carpenter', image: '', gender: 'Male' }} id={''} type={''} zIndex={0} isConnectable={false} xPos={0} yPos={0} dragging={false} />
+                {nodeComponentType === 'AltFamilyTreeNode' ? (
+                  <AltFamilyTreeNode preview selected={false} data={{ id: 'preview', name: 'John Doe', dateOfBirth: '1980-01-01', occupation: 'Carpenter', image: '', gender: 'Male' }} id={''} type={''} zIndex={0} isConnectable={false} xPos={0} yPos={0} dragging={false} />
+                ) : (
+                  <FamilyTreeNode preview selected={false} data={{ id: 'preview', name: 'John Doe', dateOfBirth: '1980-01-01', occupation: 'Carpenter', image: '', gender: 'Male' }} id={''} type={''} zIndex={0} isConnectable={false} xPos={0} yPos={0} dragging={false} />
+                )}
               </Box>
             </Box>
+          </Box>
+
+          {/* Family Tree Title Appearance Section */}
+          <TextField
+            fullWidth
+            label="Family Tree Title"
+            value={exportTitle}
+            onChange={(e) => setExportTitle(e.target.value)}
+            placeholder="e.g., Smith Family Tree"
+            helperText="Leave empty to use default tree name"
+          />
+
+          <FormControlLabel
+            control={<Switch checked={showTitleDates} onChange={(e) => setShowTitleDates(e.target.checked)} />}
+            label="Show Title Dates"
+          />
+
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>Title Font Size: {titleFontSize}px</Typography>
+            <Slider
+              value={titleFontSize}
+              onChange={(_, value) => setTitleFontSize(value as number)}
+              min={10}
+              max={24}
+              step={1}
+              marks
+              valueLabelDisplay="auto"
+            />
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>Title Date Font Size: {titleDateFontSize}px</Typography>
+            <Slider
+              value={titleDateFontSize}
+              onChange={(_, value) => setTitleDateFontSize(value as number)}
+              min={8}
+              max={18}
+              step={1}
+              marks
+              valueLabelDisplay="auto"
+            />
+          </Box>
+
+          <Typography variant="subtitle1" gutterBottom>Title Preview</Typography>
+
+          {/* Live preview of a node using current configuration */}
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', overflowX: 'hidden' }}>
+            <FamilyTreeName name={exportTitle || `${currentTree?.name} Family Tree`} nodes={[]} boxSx={{ position: "relative", transform: "none", left: "0%"}} />
           </Box>
 
         </Stack>
