@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/Liammarwood/family-tree-builder/compare/v1.1.0...v1.1.1) (2025-10-30)
+
+
+### Bug Fixes
+
+* Update TODO and modify the ICONs for the PWA ([61ab321](https://github.com/Liammarwood/family-tree-builder/commit/61ab321fe10cf9a5b7e325613fc7510bde1b8e5e))
+
 # [1.1.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.0.1...v1.1.0) (2025-10-30)
 
 
