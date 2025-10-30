@@ -66,8 +66,7 @@ export default function HelpModal({ open, onClose }: Props) {
           </AccordionSummary>
           <AccordionDetails>
             <Typography variant="body2" paragraph>
-              When you first open the app, you'll see your family tree canvas. Click on any person (node) to select them, 
-              which will reveal additional actions in the toolbar and details pane on the left.
+              {`When you first open the app, you'll see your family tree canvas. Click on any person (node) to select them, which will reveal additional actions in the toolbar and details pane on the left.`}
             </Typography>
             <Typography variant="body2">
               <strong>Navigation:</strong>
@@ -99,7 +98,7 @@ export default function HelpModal({ open, onClose }: Props) {
           </AccordionSummary>
           <AccordionDetails>
             <Typography variant="body2" paragraph>
-              To add people to your family tree, first select an existing person (or start with "Add Person" for the first member).
+              {`To add people to your family tree, first select an existing person (or start with "Add Person" for the first member).`}
             </Typography>
             <List>
               <ListItem>
@@ -159,8 +158,7 @@ export default function HelpModal({ open, onClose }: Props) {
             </List>
             <Box sx={{ mt: 2, p: 2, bgcolor: 'info.main', color: 'info.contrastText', borderRadius: 1 }}>
               <Typography variant="body2">
-                <strong>Tip:</strong> After clicking an "Add" button, fill in the person's details in the left panel, 
-                then click "Save" to add them to your tree.
+                <strong>Tip:</strong> {`After clicking an "Add" button, fill in the person's details in the left panel, then click "Save" to add them to your tree.`}
               </Typography>
             </Box>
           </AccordionDetails>
@@ -260,8 +258,7 @@ export default function HelpModal({ open, onClose }: Props) {
             </List>
             <Box sx={{ mt: 2, p: 2, bgcolor: 'success.main', color: 'success.contrastText', borderRadius: 1 }}>
               <Typography variant="body2">
-                <strong>Pro Tip:</strong> After adding multiple people, click "Auto Layout" to organize your tree beautifully. 
-                The algorithm uses ELK.js to create a hierarchical structure that's easy to read.
+                <strong>Pro Tip:</strong> {`After adding multiple people, click "Auto Layout" to organize your tree beautifully. The algorithm uses ELK.js to create a hierarchical structure that's easy to read.`}
               </Typography>
             </Box>
           </AccordionDetails>
@@ -390,8 +387,7 @@ export default function HelpModal({ open, onClose }: Props) {
               </ListItem>
             </List>
             <Typography variant="body2" sx={{ mt: 1 }}>
-              Access appearance settings from the menu to personalize your tree's look and feel.
-              Settings are saved per-tree, so each family tree can have its own style.
+              {`Access appearance settings from the menu to personalize your tree's look and feel. Settings are saved per-tree, so each family tree can have its own style.`}
             </Typography>
           </AccordionDetails>
         </Accordion>
