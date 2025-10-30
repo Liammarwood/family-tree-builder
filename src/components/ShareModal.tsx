@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { useFirestoreSignaling } from "@/hooks/useFirestoreSignaling";
 import { logger } from '@/libs/logger';
-import { RequireAuthForFeature } from "@/components/RequireAuthForFeature";
+import { RequireAuth } from "@/components/RequireAuth";
 import { useError } from "@/hooks/useError";
 import { QRCodeSVG } from "qrcode.react";
 import { FamilyTreeObject } from "@/types/FamilyTreeObject";
@@ -376,5 +376,5 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     );
 
     // Only wrap in auth requirement when modal is open
-    return open ? <RequireAuthForFeature>{modalContent}</RequireAuthForFeature> : modalContent;
+    return open ? <RequireAuth forceAuth>{modalContent}</RequireAuth> : modalContent;
 };
