@@ -53,6 +53,30 @@ To use the auto-layout feature:
 
 The layout algorithm uses [ELK.js](https://www.eclipse.org/elk/) for sophisticated graph layout with relationship-aware positioning.
 
+### Generation Level Filtering
+
+Filter your family tree to focus on specific generations relative to a selected person. This powerful feature lets you:
+
+- **View immediate family**: Show only parents and children
+- **Explore ancestors**: Display up to great-great-great-grandparents and beyond
+- **Track descendants**: View multiple generations of children and grandchildren
+- **Create focused views**: Hide distant relatives to reduce visual clutter
+
+To use generation filtering:
+1. Select a person in your family tree by clicking on them
+2. Click the **Filter** icon (funnel) in the toolbar
+3. Enable the filter with the toggle switch
+4. Adjust the sliders to set how many ancestor and descendant generations to show
+5. The tree automatically updates to show only the selected generations
+
+The filter includes:
+- Selected person and their partners/siblings (generation 0)
+- Configurable ancestor levels (0-10 generations up)
+- Configurable descendant levels (0-10 generations down)
+- Partners of relatives at each generation level
+
+See [docs/GENERATION_FILTER.md](docs/GENERATION_FILTER.md) for detailed usage instructions and examples.
+
 ## Running tests (new)
 
 This project now includes unit tests for the auto-layout logic using Jest + ts-jest.
