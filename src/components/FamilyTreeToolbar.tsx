@@ -37,14 +37,48 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
   const { setNodes, setEdges, fitView } = useReactFlow();
   const nodes = useStore((state) => state.getNodes()) as Node<FamilyNodeData>[];
   const edges = useStore((state) => state.edges) as Edge<RelationshipEdgeData>[];
-  const selectedEdge = useMemo(() => edges.find((e) => e.selected), [edges]);
-  const selectedNode = useMemo(() => nodes.find((e) => e.selected), [nodes]);
-  const selectedNodes = useMemo(() => nodes.filter((e) => e.selected), [nodes]);
-  const isOneNodeSelected = useMemo(() => selectedNode !== undefined && selectedNodes.length === 1, [selectedNode, selectedNodes])
-  const isOneEdgeSelected = useMemo(() => selectedEdge !== undefined && edges.filter((e) => e.selected).length === 1, [selectedEdge, edges])
-  const isNodeSelected = useMemo(() => selectedNode != undefined && isOneNodeSelected, [selectedNode, isOneNodeSelected])
-  const isEdgeSelected = useMemo(() => selectedEdge != undefined && isOneEdgeSelected, [selectedEdge, isOneEdgeSelected])
-  const canAddSibling = useMemo(() => selectedNode !== undefined && edges.filter((e) => (e.target === selectedNode.id) && e.data?.relationship === RelationshipType.Parent).length > 0, [edges, selectedNode]);
+  
+  // Optimization: Combine related calculations into single memos to reduce passes
+  const selectionState = useMemo(() => {
+    let selectedNode: Node<FamilyNodeData> | undefined;
+    let selectedEdge: Edge<RelationshipEdgeData> | undefined;
+    let selectedNodeCount = 0;
+    let selectedEdgeCount = 0;
+    let hasParentEdge = false;
+    
+    // Single pass through nodes
+    for (const node of nodes) {
+      if (node.selected) {
+        selectedNodeCount++;
+        if (!selectedNode) selectedNode = node;
+      }
+    }
+    
+    // Single pass through edges
+    for (const edge of edges) {
+      if (edge.selected) {
+        selectedEdgeCount++;
+        if (!selectedEdge) selectedEdge = edge;
+      }
+      // Check parent edge for sibling capability while iterating
+      if (selectedNode && edge.target === selectedNode.id && 
+          edge.data?.relationship === RelationshipType.Parent) {
+        hasParentEdge = true;
+      }
+    }
+    
+    return {
+      selectedNode,
+      selectedEdge,
+      isOneNodeSelected: selectedNodeCount === 1,
+      isOneEdgeSelected: selectedEdgeCount === 1,
+      canAddSibling: hasParentEdge && selectedNodeCount === 1,
+    };
+  }, [nodes, edges]);
+  
+  const { selectedNode, selectedEdge, isOneNodeSelected, isOneEdgeSelected, canAddSibling } = selectionState;
+  const isNodeSelected = selectedNode !== undefined && isOneNodeSelected;
+  const isEdgeSelected = selectedEdge !== undefined && isOneEdgeSelected;
   
   // Toggle grid (no-op placeholder)
   const handleToggleGrid = () => { /* no-op */ };

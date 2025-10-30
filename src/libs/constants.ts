@@ -29,7 +29,8 @@ export const INITIAL_TREE = { nodes: [INITIAL_NODE], edges: [] };
 export const NODE_TYPES = { family: AltFamilyTreeNode };
 export const EDGE_TYPES = { partner: RelationshipEdge, draggable: DraggableEdge }
 export function GENERATE_ID() {
-    return Math.random().toString(36).substring(2, 9);
+    // Use crypto.randomUUID for better performance and uniqueness
+    return crypto.randomUUID();
 }
 export const DEFAULT_TREE_NAME = "Family Tree";
 export function NEW_TREE(name?: string) {

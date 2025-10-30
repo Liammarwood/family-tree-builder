@@ -170,13 +170,18 @@ function alignSiblings(
   
   originalNodes.forEach(node => {
     if (node.data.parents && node.data.parents.length > 0) {
-      // Create a key from sorted parent IDs to group siblings
-      const parentKey = [...node.data.parents].sort().join(',');
+      // Optimization: Sort once and cache the key
+      const parents = node.data.parents;
+      const parentKey = parents.length === 1 
+        ? parents[0] 
+        : parents.slice().sort().join(',');
       
-      if (!siblingGroups.has(parentKey)) {
-        siblingGroups.set(parentKey, []);
+      const group = siblingGroups.get(parentKey);
+      if (group) {
+        group.push(node.id);
+      } else {
+        siblingGroups.set(parentKey, [node.id]);
       }
-      siblingGroups.get(parentKey)!.push(node.id);
     }
   });
   
