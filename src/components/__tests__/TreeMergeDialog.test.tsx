@@ -422,12 +422,12 @@ describe('TreeMergeDialog', () => {
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 nodes: [
-                    createNodeWithMultipleFields('person-1', 'John Smith', '1990-01-02', '2020-12-31', 'Doctor'),
+                    createNodeWithMultipleFields('person-1', 'John Smith', '1990-01-01', '2020-12-31', 'Doctor'),
                 ],
                 edges: [],
             };
 
-            const { container } = render(
+            render(
                 <TreeMergeDialog
                     open={true}
                     onClose={mockOnClose}
@@ -437,17 +437,11 @@ describe('TreeMergeDialog', () => {
                 />
             );
 
-            // Expand the accordion to see field changes
-            const accordion = container.querySelector('[aria-label]');
-            if (accordion) {
-                // Accordion should be expanded by default
-            }
-
             const checkboxes = screen.getAllByRole('checkbox');
             
-            // We should have: parent checkbox + name + dateOfBirth + dateOfDeath + occupation = 5
-            // But dateOfBirth hasn't changed, so: parent + name + dateOfDeath + occupation = 4
-            expect(checkboxes.length).toBeGreaterThanOrEqual(4);
+            // We should have: parent checkbox + name + dateOfDeath + occupation = 4
+            // (dateOfBirth hasn't changed so no checkbox for it)
+            expect(checkboxes.length).toBe(4);
             
             // Uncheck all checkboxes first to verify we can selectively enable
             checkboxes.forEach(cb => {
@@ -456,11 +450,10 @@ describe('TreeMergeDialog', () => {
                 }
             });
             
-            // Re-enable all but the first field checkbox (after parent)
-            // Skip parent checkbox (index 0) and first field (index 1 - which should be Name)
-            for (let i = 2; i < checkboxes.length; i++) {
-                fireEvent.click(checkboxes[i]);
-            }
+            // Re-enable only the occupation and date of death fields (skip parent and name)
+            // Index 0 = parent, Index 1 = name, Index 2 = dateOfDeath, Index 3 = occupation
+            fireEvent.click(checkboxes[2]); // Select dateOfDeath
+            fireEvent.click(checkboxes[3]); // Select occupation
 
             const applyButton = screen.getByRole('button', { name: /Apply Selected Changes/i });
             fireEvent.click(applyButton);
@@ -471,8 +464,8 @@ describe('TreeMergeDialog', () => {
             
             // Name should remain unchanged (we didn't select it)
             expect(person1?.data.name).toBe('John Doe');
-            // Date of Birth should be updated
-            expect(person1?.data.dateOfBirth).toBe('1990-01-02');
+            // Date of Birth should remain unchanged (field didn't change)
+            expect(person1?.data.dateOfBirth).toBe('1990-01-01');
             // Date of Death should be updated
             expect(person1?.data.dateOfDeath).toBe('2020-12-31');
             // Occupation should be updated

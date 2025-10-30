@@ -357,7 +357,7 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
             setSelectedFieldChanges(prev => {
                 const newMap = new Map(prev);
                 const fieldMap = new Map<string, boolean>();
-                nodeChange.fieldChanges!.forEach(fc => {
+                nodeChange.fieldChanges.forEach(fc => {
                     fieldMap.set(fc.field, newValue);
                 });
                 newMap.set(id, fieldMap);
@@ -367,19 +367,20 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
     };
 
     const handleFieldToggle = (nodeId: string, field: string) => {
+        let newFieldMap: Map<string, boolean> | undefined;
+        
         setSelectedFieldChanges(prev => {
             const newMap = new Map(prev);
             const fieldMap = new Map(prev.get(nodeId) || new Map());
             fieldMap.set(field, !fieldMap.get(field));
             newMap.set(nodeId, fieldMap);
+            newFieldMap = fieldMap;
             return newMap;
         });
 
-        // Update parent node selection based on whether any fields are selected
-        const fieldMap = selectedFieldChanges.get(nodeId);
-        if (fieldMap) {
-            const anySelected = Array.from(fieldMap.values()).some(v => v) || 
-                                !fieldMap.get(field); // Account for the toggle we just made
+        // Update parent node selection based on whether any fields are selected after toggle
+        if (newFieldMap) {
+            const anySelected = Array.from(newFieldMap.values()).some(v => v);
             setSelectedNodeChanges(prev => {
                 const newMap = new Map(prev);
                 newMap.set(nodeId, anySelected);
@@ -428,40 +429,39 @@ export const TreeMergeDialog: React.FC<TreeMergeDialogProps> = ({
 
         // Apply selected node changes
         for (const change of nodeChanges) {
-            if (selectedNodeChanges.get(change.id)) {
-                if (change.type === 'added' && change.incomingNode) {
-                    existingNodeMap.set(change.id, change.incomingNode);
-                } else if (change.type === 'modified' && change.existingNode && change.incomingNode && change.fieldChanges) {
-                    // For modified nodes, apply only selected field changes
+            if (change.type === 'added' && change.incomingNode && selectedNodeChanges.get(change.id)) {
+                existingNodeMap.set(change.id, change.incomingNode);
+            } else if (change.type === 'modified' && change.existingNode && change.incomingNode && change.fieldChanges) {
+                // For modified nodes, check if any field changes are selected
+                const fieldSelections = selectedFieldChanges.get(change.id);
+                const hasSelectedFields = fieldSelections && Array.from(fieldSelections.values()).some(v => v);
+
+                if (hasSelectedFields && fieldSelections) {
+                    // Create a merged node starting from existing
                     const existingNode = change.existingNode;
                     const incomingNode = change.incomingNode;
-                    const fieldSelections = selectedFieldChanges.get(change.id);
+                    const mergedNode = { ...existingNode };
+                    const mergedData = { ...(existingNode.data as FamilyNodeData) };
 
-                    if (fieldSelections) {
-                        // Create a merged node starting from existing
-                        const mergedNode = { ...existingNode };
-                        const mergedData = { ...(existingNode.data as FamilyNodeData) };
-
-                        // Apply each selected field change
-                        change.fieldChanges.forEach(fc => {
-                            if (fieldSelections.get(fc.field)) {
-                                if (fc.field === 'position') {
-                                    mergedNode.position = { ...incomingNode.position };
-                                } else {
-                                    // Apply data field change
-                                    const incomingData = incomingNode.data as FamilyNodeData;
-                                    const key = fc.field as keyof FamilyNodeData;
-                                    (mergedData as Record<string, unknown>)[fc.field] = incomingData[key];
-                                }
+                    // Apply each selected field change
+                    change.fieldChanges.forEach(fc => {
+                        if (fieldSelections.get(fc.field)) {
+                            if (fc.field === 'position') {
+                                mergedNode.position = { ...incomingNode.position };
+                            } else {
+                                // Apply data field change
+                                const incomingData = incomingNode.data as FamilyNodeData;
+                                const key = fc.field as keyof FamilyNodeData;
+                                (mergedData as Record<string, unknown>)[fc.field] = incomingData[key];
                             }
-                        });
+                        }
+                    });
 
-                        mergedNode.data = mergedData;
-                        existingNodeMap.set(change.id, mergedNode);
-                    }
-                } else if (change.type === 'deleted') {
-                    existingNodeMap.delete(change.id);
+                    mergedNode.data = mergedData;
+                    existingNodeMap.set(change.id, mergedNode);
                 }
+            } else if (change.type === 'deleted' && selectedNodeChanges.get(change.id)) {
+                existingNodeMap.delete(change.id);
             }
         }
 
