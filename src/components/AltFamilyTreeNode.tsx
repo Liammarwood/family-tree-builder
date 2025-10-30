@@ -26,7 +26,7 @@ export const AltFamilyTreeNode = ({
   const { showHandles, avatarVariant, nodeColor, textColor, fontFamily, nodeStyle } = useConfiguration();
 
   // Get all nodes and edges from React Flow store to compute child handle groups
-  const nodes = useStore((state) => state.nodes);
+  const nodes = useStore((state) => state.getNodes());
   const edges = useStore((state) => state.edges);
 
   // Compute child handle groups for this node
