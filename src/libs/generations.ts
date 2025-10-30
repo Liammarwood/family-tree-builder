@@ -393,7 +393,7 @@ export function calculateExtendedGenerationInfo(
  * @param selectedNodeId - The ID of the selected node
  * @param ancestorGenerations - Number of ancestor generations to show (0 = none, 1 = parents, 2 = grandparents, etc.)
  * @param descendantGenerations - Number of descendant generations to show (0 = none, 1 = children, 2 = grandchildren, etc.)
- * @param siblingGenerations - Number of sibling generations to show (0 = none, 1 = aunts/uncles, 2 = great aunts/uncles, etc.). If undefined, shows all siblings.
+ * @param siblingGenerations - Number of sibling generation hops to show (0 = none, 1 = own siblings, 2 = aunts/uncles, 3 = great aunts/uncles, etc.). If undefined, shows all siblings.
  * @returns Filtered nodes and edges
  */
 export function filterByGenerationLevel(
@@ -456,8 +456,12 @@ export function filterByGenerationLevel(
     }
     
     // If it's a sibling at this generation, check if we should include siblings at this level
+    // siblingGenerations controls how many "hops" from direct lineage:
+    // - siblingGenerations = 1: show siblings of selected person (gen 0)
+    // - siblingGenerations = 2: show siblings of parents (gen 1) = aunts/uncles
+    // - siblingGenerations = 3: show siblings of grandparents (gen 2) = great aunts/uncles
     const absGeneration = Math.abs(generation);
-    return absGeneration <= siblingGenerations;
+    return siblingGenerations > absGeneration;
   });
   
   const visibleNodeIds = new Set(filteredNodes.map(n => n.id));

@@ -652,7 +652,7 @@ describe('filterByGenerationLevel', () => {
   });
   
   it('filters siblings at generation levels with siblingGenerations parameter', () => {
-    // Create a family tree with aunts/uncles
+    // Create a family tree with own siblings and aunts/uncles
     const nodes: Node<FamilyNodeData>[] = [
       {
         id: 'child',
@@ -668,6 +668,19 @@ describe('filterByGenerationLevel', () => {
         },
       },
       {
+        id: 'sibling',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'sibling',
+          name: 'Sibling',
+          dateOfBirth: '1992-01-01',
+          children: [],
+          parents: ['parent'],
+          partners: [],
+        },
+      },
+      {
         id: 'parent',
         type: 'family',
         position: { x: 0, y: 0 },
@@ -675,7 +688,7 @@ describe('filterByGenerationLevel', () => {
           id: 'parent',
           name: 'Parent',
           dateOfBirth: '1960-01-01',
-          children: ['child'],
+          children: ['child', 'sibling'],
           parents: ['grandparent'],
           partners: [],
         },
@@ -733,22 +746,39 @@ describe('filterByGenerationLevel', () => {
         target: 'child',
         data: { relationship: RelationshipType.Parent },
       },
+      {
+        id: 'parent-sibling',
+        source: 'parent',
+        target: 'sibling',
+        data: { relationship: RelationshipType.Parent },
+      },
+      {
+        id: 'child-sibling',
+        source: 'child',
+        target: 'sibling',
+        data: { relationship: RelationshipType.Sibling },
+      },
     ];
     
-    // Test 1: Show parents but not aunts/uncles (siblingGenerations: 0)
-    const result1 = filterByGenerationLevel(nodes, edges, 'child', 1, 0, 0);
-    expect(result1.nodes).toHaveLength(2); // child, parent (no aunt)
-    expect(result1.nodes.map(n => n.id).sort()).toEqual(['child', 'parent']);
+    // Test 0: Show parents but not own siblings or aunts/uncles (siblingGenerations: 0)
+    const result0 = filterByGenerationLevel(nodes, edges, 'child', 1, 0, 0);
+    expect(result0.nodes).toHaveLength(2); // child, parent only
+    expect(result0.nodes.map(n => n.id).sort()).toEqual(['child', 'parent']);
     
-    // Test 2: Show parents and aunts/uncles (siblingGenerations: 1)
-    const result2 = filterByGenerationLevel(nodes, edges, 'child', 1, 0, 1);
-    expect(result2.nodes).toHaveLength(3); // child, parent, aunt
-    expect(result2.nodes.map(n => n.id).sort()).toEqual(['aunt', 'child', 'parent']);
+    // Test 1: Show parents and own siblings but not aunts/uncles (siblingGenerations: 1)
+    const result1 = filterByGenerationLevel(nodes, edges, 'child', 1, 0, 1);
+    expect(result1.nodes).toHaveLength(3); // child, sibling, parent (no aunt)
+    expect(result1.nodes.map(n => n.id).sort()).toEqual(['child', 'parent', 'sibling']);
     
-    // Test 3: Show grandparents and aunts/uncles (siblingGenerations: 1)
-    const result3 = filterByGenerationLevel(nodes, edges, 'child', 2, 0, 1);
-    expect(result3.nodes).toHaveLength(4); // child, parent, aunt, grandparent
-    expect(result3.nodes.map(n => n.id).sort()).toEqual(['aunt', 'child', 'grandparent', 'parent']);
+    // Test 2: Show parents, own siblings, and aunts/uncles (siblingGenerations: 2)
+    const result2 = filterByGenerationLevel(nodes, edges, 'child', 1, 0, 2);
+    expect(result2.nodes).toHaveLength(4); // child, sibling, parent, aunt
+    expect(result2.nodes.map(n => n.id).sort()).toEqual(['aunt', 'child', 'parent', 'sibling']);
+    
+    // Test 3: Show grandparents, parents, own siblings, and aunts/uncles (siblingGenerations: 2)
+    const result3 = filterByGenerationLevel(nodes, edges, 'child', 2, 0, 2);
+    expect(result3.nodes).toHaveLength(5); // child, sibling, parent, aunt, grandparent
+    expect(result3.nodes.map(n => n.id).sort()).toEqual(['aunt', 'child', 'grandparent', 'parent', 'sibling']);
   });
   
   it('filters great aunts/uncles with siblingGenerations parameter', () => {
@@ -854,13 +884,13 @@ describe('filterByGenerationLevel', () => {
       },
     ];
     
-    // Test 1: Show up to great-grandparents but no great aunts/uncles (siblingGenerations: 1)
-    const result1 = filterByGenerationLevel(nodes, edges, 'child', 3, 0, 1);
+    // Test 1: Show up to great-grandparents but no great aunts/uncles (siblingGenerations: 2)
+    const result1 = filterByGenerationLevel(nodes, edges, 'child', 3, 0, 2);
     expect(result1.nodes).toHaveLength(4); // child, parent, grandparent, greatgrandparent (no greataunt)
     expect(result1.nodes.map(n => n.id).sort()).toEqual(['child', 'grandparent', 'greatgrandparent', 'parent']);
     
-    // Test 2: Show up to great-grandparents and great aunts/uncles (siblingGenerations: 2)
-    const result2 = filterByGenerationLevel(nodes, edges, 'child', 3, 0, 2);
+    // Test 2: Show up to great-grandparents and great aunts/uncles (siblingGenerations: 3)
+    const result2 = filterByGenerationLevel(nodes, edges, 'child', 3, 0, 3);
     expect(result2.nodes).toHaveLength(5); // all nodes
     expect(result2.nodes.map(n => n.id).sort()).toEqual(['child', 'grandparent', 'greataunt', 'greatgrandparent', 'parent']);
   });
