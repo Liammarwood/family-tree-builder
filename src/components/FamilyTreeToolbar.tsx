@@ -143,20 +143,14 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     if (!clipboard) return;
     
     const { nodes: newNodes, edges: newEdges } = pasteClipboardData(clipboard, nodes);
+    const newNodeIds = new Set(newNodes.map(n => n.id));
     
-    // Add new nodes and edges to the tree
-    setNodes((prevNodes) => [...prevNodes, ...newNodes]);
+    // Add new nodes and edges to the tree, selecting only the new nodes
+    setNodes((prevNodes) => [
+      ...prevNodes.map(n => ({ ...n, selected: false })),
+      ...newNodes.map(n => ({ ...n, selected: true }))
+    ]);
     setEdges((prevEdges) => [...prevEdges, ...newEdges]);
-    
-    // Deselect all existing nodes and select only the pasted nodes
-    setTimeout(() => {
-      setNodes((prevNodes) => 
-        prevNodes.map((n) => ({
-          ...n,
-          selected: newNodes.some((newNode) => newNode.id === n.id)
-        }))
-      );
-    }, 0);
   };
 
   const actions = [

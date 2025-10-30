@@ -2,7 +2,7 @@ import { Edge, Node } from "reactflow";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { GENERATE_ID } from "@/libs/constants";
 
-export type ClipboardData = {
+export interface ClipboardData {
   nodes: Node<FamilyNodeData>[];
   edges: Edge[];
 }
@@ -76,34 +76,35 @@ export function pasteClipboardData(
   }));
   
   // Create new edges with updated source and target IDs
-  const newEdges: Edge[] = clipboardData.edges.flatMap(edge => {
-    const newSourceId = idMapping.get(edge.source);
-    const newTargetId = idMapping.get(edge.target);
-    
-    // Skip edge if we can't find the mapping (shouldn't happen)
-    if (!newSourceId || !newTargetId) {
-      return [];
-    }
-    
-    // Generate new edge ID based on the edge type and new node IDs
-    let newEdgeId = edge.id;
-    if (edge.id.startsWith('partner-')) {
-      newEdgeId = `partner-${newSourceId}-${newTargetId}`;
-    } else if (edge.id.startsWith('divorced-')) {
-      newEdgeId = `divorced-${newSourceId}-${newTargetId}`;
-    } else if (edge.id.startsWith('parent-')) {
-      // Parent edge format is parent-{parent}-{child}
-      newEdgeId = `parent-${newSourceId}-${newTargetId}`;
-    }
-    
-    return [{
-      ...edge,
-      id: newEdgeId,
-      source: newSourceId,
-      target: newTargetId,
-      selected: false
-    }];
-  });
+  const newEdges: Edge[] = clipboardData.edges
+    .filter(edge => {
+      const newSourceId = idMapping.get(edge.source);
+      const newTargetId = idMapping.get(edge.target);
+      return newSourceId && newTargetId;
+    })
+    .map(edge => {
+      const newSourceId = idMapping.get(edge.source)!;
+      const newTargetId = idMapping.get(edge.target)!;
+      
+      // Generate new edge ID based on the edge type and new node IDs
+      let newEdgeId = edge.id;
+      if (edge.id.startsWith('partner-')) {
+        newEdgeId = `partner-${newSourceId}-${newTargetId}`;
+      } else if (edge.id.startsWith('divorced-')) {
+        newEdgeId = `divorced-${newSourceId}-${newTargetId}`;
+      } else if (edge.id.startsWith('parent-')) {
+        // Parent edge format is parent-{parent}-{child}
+        newEdgeId = `parent-${newSourceId}-${newTargetId}`;
+      }
+      
+      return {
+        ...edge,
+        id: newEdgeId,
+        source: newSourceId,
+        target: newTargetId,
+        selected: false
+      };
+    });
   
   return {
     nodes: newNodes,

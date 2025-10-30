@@ -19,7 +19,6 @@ import { RelationshipForm } from "@/types/RelationshipForm";
 import { DetailsPane } from "./DetailsPane";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 import { RelationshipType } from "@/types/RelationshipEdgeData";
-import { useClipboard } from "@/hooks/useClipboard";
 
 type FamilyTreeProps = {
   showGrid: boolean;
@@ -33,8 +32,6 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [connectDialog, setConnectDialog] = useState<{ open: boolean; source: string; target: string } | null>(null);
-  // Initialize clipboard context (used by toolbar)
-  useClipboard();
   // Optimization: Combine selection calculations to avoid multiple array iterations
   const selectionInfo = useMemo(() => {
     let selectedEdge: Edge | undefined;
