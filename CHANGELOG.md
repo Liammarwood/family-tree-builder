@@ -1,3 +1,17 @@
+## [1.2.2](https://github.com/Liammarwood/family-tree-builder/compare/v1.2.1...v1.2.2) (2025-10-30)
+
+
+### Performance Improvements
+
+* eliminate rendering bottlenecks in core React Flow operations ([#23](https://github.com/Liammarwood/family-tree-builder/issues/23)) ([8ae9494](https://github.com/Liammarwood/family-tree-builder/commit/8ae9494618cb5923386aedca388d6b52c5eaf9cc))
+* optimize core rendering and data processing ([a2952aa](https://github.com/Liammarwood/family-tree-builder/commit/a2952aa5383a414999d1d59983adadd5b60f1083))
+* optimize database retry logic and sync effect ([3745828](https://github.com/Liammarwood/family-tree-builder/commit/374582891d52a280e72ab7feae02920d0c5c37b6))
+
+
+### Reverts
+
+* restore PNG export pixelRatio to 5 for better quality ([b67cf05](https://github.com/Liammarwood/family-tree-builder/commit/b67cf059d2d105d7cfed0fb90942b39a812954c9))
+
 ## [1.2.1](https://github.com/Liammarwood/family-tree-builder/compare/v1.2.0...v1.2.1) (2025-10-30)
 
 
