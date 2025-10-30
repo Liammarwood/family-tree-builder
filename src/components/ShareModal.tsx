@@ -150,7 +150,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     const initPeerConnection = () => {
         const peer = new RTCPeerConnection();
         peer.onconnectionstatechange = () => {
-            if (peer.connectionState === "connected") setConnected(true);
+            logger.info(`Peer connection state changed to: ${peer.connectionState}`);
+            if (peer.connectionState === "connected") {
+                setConnected(true);
+            } else if (peer.connectionState === "failed" || peer.connectionState === "disconnected") {
+                logger.warn(`Peer connection ${peer.connectionState}`);
+            }
         };
         return peer;
     };
@@ -236,10 +241,28 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             // If this is the remote-created channel (receiver), do nothing and wait for onmessage.
             if (isLocalInitiator) {
                 try {
-                    dc.send(JSON.stringify(currentTree));
-                    setSuccessMessage(`${currentTree?.name} Family Tree Sent`);
+                    // Verify we have a tree to send
+                    if (!currentTree) {
+                        logger.error("Cannot send family tree: currentTree is null or undefined");
+                        showError("Cannot share tree: No tree is currently loaded.");
+                        return;
+                    }
+
+                    // Verify the data channel is in the correct state
+                    if (dc.readyState !== 'open') {
+                        logger.error(`Cannot send data: data channel state is ${dc.readyState}, expected 'open'`);
+                        showError("Cannot share tree: Connection not ready.");
+                        return;
+                    }
+
+                    const treeData = JSON.stringify(currentTree);
+                    logger.info(`Sending family tree data, size: ${treeData.length} bytes`);
+                    dc.send(treeData);
+                    setSuccessMessage(`${currentTree.name} Family Tree Sent`);
+                    logger.info("Family tree sent successfully");
                 } catch (e) {
-                    logger.warn("Failed to send family tree over data channel", e);
+                    logger.error("Failed to send family tree over data channel", e);
+                    showError("Failed to send the family tree. Please try again.");
                 }
             }
             setConnected(true);
@@ -247,10 +270,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
         dc.onmessage = (e) => {
             try {
+                logger.info(`Received data, size: ${e.data.length} bytes`);
                 const receivedJson: FamilyTreeObject = JSON.parse(e.data);
+                logger.info(`Successfully parsed family tree: ${receivedJson.name}`);
                 handleReceivedTree(receivedJson);
             } catch (err) {
-                logger.warn("Received non-JSON message:", e.data, err);
+                logger.error("Failed to parse received message as family tree", err);
+                logger.warn("Received data:", e.data);
+                showError("Received invalid data. The transfer may have failed.");
             }
         };
 
@@ -261,8 +288,20 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 logger.info("Suppressed data channel error during cleanup", e);
                 return;
             }
+            logger.error("Data channel error occurred", e);
+            // Log the error details for debugging
+            if (typeof RTCErrorEvent !== 'undefined' && e instanceof RTCErrorEvent) {
+                logger.error("RTCErrorEvent details:", {
+                    error: e.error,
+                    message: e.message
+                });
+            }
             showError("A data channel error occurred. The transfer may have failed.");
         }
+
+        dc.onclose = () => {
+            logger.info("Data channel closed");
+        };
     };
 
     const handleCopyLink = async () => {
