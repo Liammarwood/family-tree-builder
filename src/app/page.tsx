@@ -11,6 +11,7 @@ import FamilyTreeToolbar from "@/components/FamilyTreeToolbar";
 import NavigationBar from "@/components/NavigationBar";
 import { Box, useMediaQuery } from "@mui/material";
 import { EditMode } from "@/types/EditMode";
+import { ClipboardProvider } from "@/hooks/useClipboard";
 
 export default function Home() {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -21,13 +22,15 @@ export default function Home() {
       <RequireAuth>
         <ConfigurationProvider>
           <FamilyTreeProvider>
-            <ReactFlowProvider>
-              <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
-                <NavigationBar editMode={editMode} setEditMode={setEditMode} />
-                <FamilyTree  showGrid editMode={editMode} setEditMode={setEditMode} />
-                {isMobile && editMode === null && <FamilyTreeToolbar setEditMode={setEditMode} hidden={!isMobile || editMode !== null} />}
-              </Box>
-            </ReactFlowProvider>
+            <ClipboardProvider>
+              <ReactFlowProvider>
+                <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
+                  <NavigationBar editMode={editMode} setEditMode={setEditMode} />
+                  <FamilyTree  showGrid editMode={editMode} setEditMode={setEditMode} />
+                  {isMobile && editMode === null && <FamilyTreeToolbar setEditMode={setEditMode} hidden={!isMobile || editMode !== null} />}
+                </Box>
+              </ReactFlowProvider>
+            </ClipboardProvider>
           </FamilyTreeProvider>
         </ConfigurationProvider>
       </RequireAuth>

@@ -36,6 +36,9 @@ import ForestIcon from '@mui/icons-material/Forest';
 import TuneIcon from '@mui/icons-material/Tune';
 import AddIcon from '@mui/icons-material/Add';
 import LinkIcon from '@mui/icons-material/Link';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ContentPasteIcon from '@mui/icons-material/ContentPaste';
+import KeyboardIcon from '@mui/icons-material/Keyboard';
 
 type Props = {
   open: boolean;
@@ -203,6 +206,62 @@ export default function HelpModal({ open, onClose }: Props) {
               <Chip label="Maiden Name" size="small" />
               <Chip label="Photo" size="small" />
             </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Copy and Paste */}
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6">Copy and Paste Nodes</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Typography variant="body2" paragraph>
+              Copy and paste multiple family members to create subtrees or duplicate parts of your family tree. 
+              This is useful for creating focused trees for export or organizing related family groups.
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemIcon>
+                  <ContentCopyIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Copy Selected Nodes"
+                  secondary="Select one or more people (hold Ctrl/Cmd or Shift while clicking), then click Copy button or press Ctrl+C (Cmd+C on Mac)"
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemIcon>
+                  <ContentPasteIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Paste Nodes"
+                  secondary="After copying, click Paste button or press Ctrl+V (Cmd+V on Mac) to create new copies with new IDs"
+                />
+              </ListItem>
+            </List>
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'info.main', color: 'info.contrastText', borderRadius: 1 }}>
+              <Typography variant="body2">
+                <strong>Important:</strong> Only relationships between the selected people are copied. 
+                External relationships (to people not in the selection) are excluded, allowing you to extract clean subtrees.
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ mt: 2, fontWeight: 'bold' }}>
+              How it works:
+            </Typography>
+            <List dense>
+              <ListItem>
+                <ListItemText primary="• Pasted nodes get new unique IDs to avoid conflicts" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="• Pasted nodes appear offset by 200px (right and down)" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="• All person details (names, dates, photos) are preserved" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="• Partner, parent-child, and sibling relationships are maintained" />
+              </ListItem>
+            </List>
           </AccordionDetails>
         </Accordion>
 
@@ -419,7 +478,78 @@ export default function HelpModal({ open, onClose }: Props) {
         {/* Keyboard Shortcuts */}
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6">Tips and Shortcuts</Typography>
+            <Typography variant="h6">Keyboard Shortcuts</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Typography variant="body2" paragraph>
+              Use keyboard shortcuts for faster workflow when editing your family tree:
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemIcon>
+                  <KeyboardIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" component="span">Copy Selected Nodes</Typography>
+                      <Chip label="Ctrl+C" size="small" sx={{ fontFamily: 'monospace' }} />
+                      <Typography variant="body2" component="span" color="text.secondary">or</Typography>
+                      <Chip label="Cmd+C" size="small" sx={{ fontFamily: 'monospace' }} />
+                      <Typography variant="body2" component="span" color="text.secondary">(Mac)</Typography>
+                    </Box>
+                  }
+                  secondary="Copy selected people and their interlinking relationships to clipboard"
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemIcon>
+                  <KeyboardIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" component="span">Paste Nodes</Typography>
+                      <Chip label="Ctrl+V" size="small" sx={{ fontFamily: 'monospace' }} />
+                      <Typography variant="body2" component="span" color="text.secondary">or</Typography>
+                      <Chip label="Cmd+V" size="small" sx={{ fontFamily: 'monospace' }} />
+                      <Typography variant="body2" component="span" color="text.secondary">(Mac)</Typography>
+                    </Box>
+                  }
+                  secondary="Paste copied nodes with new IDs at offset position"
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemIcon>
+                  <KeyboardIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" component="span">Delete Selected</Typography>
+                      <Chip label="Delete" size="small" sx={{ fontFamily: 'monospace' }} />
+                      <Typography variant="body2" component="span" color="text.secondary">or</Typography>
+                      <Chip label="Backspace" size="small" sx={{ fontFamily: 'monospace' }} />
+                      <Typography variant="body2" component="span" color="text.secondary">(Mac)</Typography>
+                    </Box>
+                  }
+                  secondary="Delete selected person or relationship. Removes all connected edges."
+                />
+              </ListItem>
+            </List>
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'success.main', color: 'success.contrastText', borderRadius: 1 }}>
+              <Typography variant="body2">
+                <strong>Note:</strong> Keyboard shortcuts are automatically disabled when typing in input fields, 
+                so you can safely enter names and dates without triggering actions.
+              </Typography>
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Tips and Tricks */}
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6">Tips and Best Practices</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
@@ -448,6 +578,26 @@ export default function HelpModal({ open, onClose }: Props) {
               </ListItem>
               <ListItem>
                 <ListItemText primary="• Click and drag nodes to reposition manually" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="• Hold Ctrl/Cmd or Shift while clicking to select multiple people" />
+              </ListItem>
+            </List>
+            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, mt: 2 }}>
+              Workflow Tips:
+            </Typography>
+            <List dense>
+              <ListItem>
+                <ListItemText primary="• After adding several people, use Auto Layout to organize your tree hierarchically" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="• Use copy-paste to duplicate family branches for focused subtrees" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="• Export your tree regularly as JSON backup to prevent data loss" />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="• Customize appearance per tree to visually distinguish different family lines" />
               </ListItem>
             </List>
             <Box sx={{ mt: 2, p: 2, bgcolor: 'warning.main', color: 'warning.contrastText', borderRadius: 1 }}>
