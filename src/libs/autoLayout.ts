@@ -83,9 +83,9 @@ export async function autoLayoutFamilyTree(
     });
 
     // Post-process to ensure layout requirements:
-    // 1. Adjust partner positions (same Y, proper X spacing)
+    // 1. Adjust partner positions (same Y, proper X spacing, directly adjacent)
     // 2. Align siblings to same Y within their family groups
-    // 3. Detect and resolve any node overlaps
+    // 3. Detect and resolve any node overlaps (keeping partner pairs together)
     
     let adjustedNodes = [...layoutedNodes];
     
@@ -96,7 +96,8 @@ export async function autoLayoutFamilyTree(
     adjustedNodes = alignSiblings(adjustedNodes, nodes, edges);
     
     // Detect and resolve any node overlaps (HARD requirement)
-    adjustedNodes = resolveCollisions(adjustedNodes);
+    // Partners must remain adjacent with no nodes between them
+    adjustedNodes = resolveCollisions(adjustedNodes, edges);
 
     return adjustedNodes;
   } catch (error) {
@@ -229,11 +230,23 @@ function alignSiblings(
  * Nodes are considered overlapping if they are too close horizontally at the same Y level.
  * 
  * HARD REQUIREMENT: Nodes must NEVER overlap each other.
+ * HARD REQUIREMENT: Partner pairs must remain adjacent with no nodes between them.
  */
 function resolveCollisions(
-  nodes: Node<FamilyNodeData>[]
+  nodes: Node<FamilyNodeData>[],
+  edges: Edge[]
 ): Node<FamilyNodeData>[] {
   const adjustedNodes = [...nodes];
+  
+  // Build partner pairs map to keep partners together
+  const partnerPairs = new Map<string, string>();
+  edges
+    .filter(edge => edge.data?.relationship === RelationshipType.Partner || 
+                    edge.data?.relationship === RelationshipType.Divorced)
+    .forEach(edge => {
+      partnerPairs.set(edge.source, edge.target);
+      partnerPairs.set(edge.target, edge.source);
+    });
   
   // Group nodes by Y position (with small tolerance for floating point comparison)
   const yTolerance = 5; // pixels
@@ -256,9 +269,16 @@ function resolveCollisions(
     rowNodes.sort((a, b) => a.position.x - b.position.x);
     
     // Detect and resolve overlaps by spreading nodes apart
+    // IMPORTANT: Keep partner pairs together - they move as a unit
     for (let i = 0; i < rowNodes.length - 1; i++) {
       const currentNode = rowNodes[i];
       const nextNode = rowNodes[i + 1];
+      
+      // Check if these are partners - if so, skip collision check between them
+      const arePartners = partnerPairs.get(currentNode.id) === nextNode.id;
+      if (arePartners) {
+        continue; // Partners should stay adjacent as positioned by adjustPartnerPositions
+      }
       
       const currentRight = currentNode.position.x + NODE_WIDTH;
       const nextLeft = nextNode.position.x;
@@ -269,8 +289,17 @@ function resolveCollisions(
         // Push the next node (and all subsequent nodes) to the right
         const adjustment = BASE_SPACING - gap;
         
+        // Check if nextNode has a partner - if so, move both together
+        const nextPartner = partnerPairs.get(nextNode.id);
+        const nextPartnerNode = nextPartner ? adjustedNodes.find(n => n.id === nextPartner) : null;
+        
         for (let j = i + 1; j < rowNodes.length; j++) {
           rowNodes[j].position.x += adjustment;
+        }
+        
+        // Also move the partner if it's not in this row (shouldn't happen, but be safe)
+        if (nextPartnerNode && !rowNodes.includes(nextPartnerNode)) {
+          nextPartnerNode.position.x += adjustment;
         }
       }
     }

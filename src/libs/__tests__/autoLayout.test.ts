@@ -977,4 +977,67 @@ describe('autoLayoutFamilyTree', () => {
     // Partners MUST be at same Y level
     expect(child1.position.y).toBe(partner1.position.y);
   });
+
+  it('ensures partners are directly adjacent with no room for nodes between', async () => {
+    // Test that partners have minimal spacing with no room for another node
+    const nodes: Node<FamilyNodeData>[] = [
+      {
+        id: 'person1',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'person1',
+          name: 'Person 1',
+          dateOfBirth: '1980-01-01',
+          createdAt: Date.now(),
+          children: [],
+          parents: [],
+          partners: ['person2'],
+        },
+      },
+      {
+        id: 'person2',
+        type: 'family',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'person2',
+          name: 'Person 2',
+          dateOfBirth: '1982-01-01',
+          createdAt: Date.now(),
+          children: [],
+          parents: [],
+          partners: ['person1'],
+        },
+      },
+    ];
+
+    const edges: Edge[] = [
+      {
+        id: 'partner-person1-person2',
+        source: 'person1',
+        target: 'person2',
+        data: { relationship: RelationshipType.Partner, dateOfMarriage: '2005-06-15' },
+      },
+    ];
+
+    const result = await autoLayoutFamilyTree(nodes, edges);
+    expect(result).toHaveLength(2);
+
+    const person1 = result.find(n => n.id === 'person1')!;
+    const person2 = result.find(n => n.id === 'person2')!;
+
+    // Partners should be at same Y level
+    expect(person1.position.y).toBe(person2.position.y);
+
+    // Calculate gap between partners
+    const leftNode = person1.position.x < person2.position.x ? person1 : person2;
+    const rightNode = leftNode === person1 ? person2 : person1;
+    const gap = rightNode.position.x - (leftNode.position.x + NODE_WIDTH);
+
+    // Gap should be exactly BASE_SPACING (no room for another node)
+    expect(gap).toBe(BASE_SPACING);
+    
+    // Verify there's no room for another node (NODE_WIDTH + BASE_SPACING minimum)
+    expect(gap).toBeLessThan(NODE_WIDTH);
+  });
 });
