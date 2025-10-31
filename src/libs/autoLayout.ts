@@ -12,8 +12,7 @@ const elk = new ELK();
  * Layout rules:
  * - Parents are positioned above their children
  * - Partners are positioned next to each other (horizontally) at the same Y level
- * - Siblings are positioned at the same Y level
- * - All nodes in the same generation are at the same Y level
+ * - Siblings (nodes with the same parents) are positioned at the same Y level
  * - Nodes NEVER overlap each other
  * 
  * @param nodes - React Flow nodes with family data
@@ -84,25 +83,17 @@ export async function autoLayoutFamilyTree(
     });
 
     // Post-process to ensure layout requirements:
-    // 1. Identify generations and establish Y coordinates
-    // 2. Adjust partner positions (same Y, proper X spacing)
-    // 3. Align siblings to same Y
-    // 4. Ensure all nodes in same generation have same Y
-    // 5. Detect and resolve any node overlaps
+    // 1. Adjust partner positions (same Y, proper X spacing)
+    // 2. Align siblings to same Y within their family groups
+    // 3. Detect and resolve any node overlaps
     
     let adjustedNodes = [...layoutedNodes];
-    
-    // Calculate generations for all nodes
-    const generations = calculateGenerations(adjustedNodes, edges);
     
     // Position partners together (highest priority)
     adjustedNodes = adjustPartnerPositions(adjustedNodes, edges);
     
-    // Align siblings to the same Y coordinate within their generation
+    // Align siblings to the same Y coordinate within their family groups
     adjustedNodes = alignSiblings(adjustedNodes, nodes, edges);
-    
-    // Ensure all nodes in the same generation have the same Y coordinate
-    adjustedNodes = alignGenerations(adjustedNodes, generations);
     
     // Detect and resolve any node overlaps (HARD requirement)
     adjustedNodes = resolveCollisions(adjustedNodes);
@@ -113,92 +104,6 @@ export async function autoLayoutFamilyTree(
     // Return original nodes if layout fails
     return nodes;
   }
-}
-
-/**
- * Calculate the generation level for each node based on parent relationships.
- * Generation 0 = nodes with no parents, Generation N = max(parent generations) + 1
- * 
- * IMPORTANT: Partners are always in the same generation, regardless of their parent relationships.
- */
-function calculateGenerations(
-  nodes: Node<FamilyNodeData>[],
-  edges: Edge[]
-): Map<string, number> {
-  const generations = new Map<string, number>();
-  
-  // Build parent map from edges
-  const parentMap = new Map<string, Set<string>>();
-  edges
-    .filter(edge => edge.data?.relationship === RelationshipType.Parent)
-    .forEach(edge => {
-      if (!parentMap.has(edge.target)) {
-        parentMap.set(edge.target, new Set());
-      }
-      parentMap.get(edge.target)!.add(edge.source);
-    });
-  
-  // Build partner map
-  const partnerMap = new Map<string, Set<string>>();
-  edges
-    .filter(edge => edge.data?.relationship === RelationshipType.Partner || 
-                    edge.data?.relationship === RelationshipType.Divorced)
-    .forEach(edge => {
-      if (!partnerMap.has(edge.source)) {
-        partnerMap.set(edge.source, new Set());
-      }
-      if (!partnerMap.has(edge.target)) {
-        partnerMap.set(edge.target, new Set());
-      }
-      partnerMap.get(edge.source)!.add(edge.target);
-      partnerMap.get(edge.target)!.add(edge.source);
-    });
-  
-  // Recursive function to calculate generation
-  const getGeneration = (nodeId: string, visited = new Set<string>()): number => {
-    const existingGen = generations.get(nodeId);
-    if (existingGen !== undefined) {
-      return existingGen;
-    }
-    
-    // Prevent infinite loops
-    if (visited.has(nodeId)) {
-      return 0;
-    }
-    visited.add(nodeId);
-    
-    const parents = parentMap.get(nodeId);
-    if (!parents || parents.size === 0) {
-      // No parents - this is generation 0
-      generations.set(nodeId, 0);
-      return 0;
-    }
-    
-    // Generation is 1 + max generation of parents
-    const parentGenerations = Array.from(parents).map(parentId => 
-      getGeneration(parentId, new Set(visited))
-    );
-    const generation = Math.max(...parentGenerations) + 1;
-    generations.set(nodeId, generation);
-    return generation;
-  };
-  
-  // Calculate generation for all nodes
-  nodes.forEach(node => getGeneration(node.id));
-  
-  // Adjust generations so partners are always in the same generation
-  // Partners take the maximum generation of the pair
-  partnerMap.forEach((partners, nodeId) => {
-    const nodeGen = generations.get(nodeId) ?? 0;
-    partners.forEach(partnerId => {
-      const partnerGen = generations.get(partnerId) ?? 0;
-      const maxGen = Math.max(nodeGen, partnerGen);
-      generations.set(nodeId, maxGen);
-      generations.set(partnerId, maxGen);
-    });
-  });
-  
-  return generations;
 }
 
 /**
@@ -313,43 +218,6 @@ function alignSiblings(
           sibling.position.y = targetY;
         });
       }
-    }
-  });
-  
-  return adjustedNodes;
-}
-
-/**
- * Align all nodes in the same generation to have the same Y coordinate.
- * This ensures that all nodes at the same hierarchical level are visually aligned.
- */
-function alignGenerations(
-  nodes: Node<FamilyNodeData>[],
-  generations: Map<string, number>
-): Node<FamilyNodeData>[] {
-  const adjustedNodes = [...nodes];
-  
-  // Group nodes by generation
-  const generationGroups = new Map<number, Node<FamilyNodeData>[]>();
-  
-  adjustedNodes.forEach(node => {
-    const gen = generations.get(node.id) ?? 0;
-    if (!generationGroups.has(gen)) {
-      generationGroups.set(gen, []);
-    }
-    generationGroups.get(gen)!.push(node);
-  });
-  
-  // For each generation, calculate the average Y and align all nodes
-  generationGroups.forEach((genNodes) => {
-    if (genNodes.length > 0) {
-      // Calculate average Y position for this generation
-      const avgY = genNodes.reduce((sum, node) => sum + node.position.y, 0) / genNodes.length;
-      
-      // Align all nodes in this generation to the same Y
-      genNodes.forEach(node => {
-        node.position.y = avgY;
-      });
     }
   });
   
