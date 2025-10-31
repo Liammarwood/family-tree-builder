@@ -20,6 +20,7 @@ describe('HelpModal', () => {
     expect(screen.getByText('Getting Started')).toBeInTheDocument();
     expect(screen.getByText('Adding People')).toBeInTheDocument();
     expect(screen.getByText('Editing and Deleting')).toBeInTheDocument();
+    expect(screen.getByText('Copy and Paste Nodes')).toBeInTheDocument();
     expect(screen.getByText('Creating Manual Connections')).toBeInTheDocument();
     expect(screen.getByText('Layout and View Controls')).toBeInTheDocument();
     expect(screen.getByText('Export and Save')).toBeInTheDocument();
@@ -28,7 +29,8 @@ describe('HelpModal', () => {
     expect(screen.getByText('Tree Management')).toBeInTheDocument();
     expect(screen.getByText('Appearance Settings')).toBeInTheDocument();
     expect(screen.getByText('Sharing Your Tree')).toBeInTheDocument();
-    expect(screen.getByText('Tips and Shortcuts')).toBeInTheDocument();
+    expect(screen.getByText('Keyboard Shortcuts')).toBeInTheDocument();
+    expect(screen.getByText('Tips and Best Practices')).toBeInTheDocument();
   });
 
   it('does not render content when closed', () => {
