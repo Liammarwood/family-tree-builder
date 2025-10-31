@@ -11,8 +11,9 @@ const elk = new ELK();
  * 
  * Layout rules:
  * - Parents are positioned above their children
- * - Partners are positioned next to each other (horizontally)
- * - Siblings are positioned next to each other at the same level
+ * - Partners are positioned next to each other (horizontally) at the same Y level
+ * - Siblings (nodes with the same parents) are positioned at the same Y level
+ * - Nodes NEVER overlap each other
  * 
  * @param nodes - React Flow nodes with family data
  * @param edges - React Flow edges representing relationships
@@ -81,10 +82,22 @@ export async function autoLayoutFamilyTree(
       return node;
     });
 
-    // Post-process to adjust partner and sibling positions
-    // IMPORTANT: Partner positioning has highest priority
-    let adjustedNodes = adjustPartnerPositions(layoutedNodes, edges);
+    // Post-process to ensure layout requirements:
+    // 1. Adjust partner positions (same Y, proper X spacing, directly adjacent)
+    // 2. Align siblings to same Y within their family groups
+    // 3. Detect and resolve any node overlaps (keeping partner pairs together)
+    
+    let adjustedNodes = [...layoutedNodes];
+    
+    // Position partners together (highest priority)
+    adjustedNodes = adjustPartnerPositions(adjustedNodes, edges);
+    
+    // Align siblings to the same Y coordinate within their family groups
     adjustedNodes = alignSiblings(adjustedNodes, nodes, edges);
+    
+    // Detect and resolve any node overlaps (HARD requirement)
+    // Partners must remain adjacent with no nodes between them
+    adjustedNodes = resolveCollisions(adjustedNodes, edges);
 
     return adjustedNodes;
   } catch (error) {
@@ -123,7 +136,7 @@ function adjustPartnerPositions(
     const leftNode = sourceNode.position.x < targetNode.position.x ? sourceNode : targetNode;
     const rightNode = leftNode === sourceNode ? targetNode : sourceNode;
 
-    // Align Y positions
+    // Align Y positions - partners must be at same Y level (use average of their initial positions)
     const avgY = (leftNode.position.y + rightNode.position.y) / 2;
     leftNode.position.y = avgY;
     rightNode.position.y = avgY;
@@ -194,7 +207,6 @@ function alignSiblings(
       if (siblings.length > 1) {
         // Separate siblings into those with partners and those without
         const siblingsWithPartners = siblings.filter(s => nodesWithPartners.has(s.id));
-        const siblingsWithoutPartners = siblings.filter(s => !nodesWithPartners.has(s.id));
         
         let targetY: number;
         
@@ -207,10 +219,93 @@ function alignSiblings(
           targetY = siblings.reduce((sum, node) => sum + node.position.y, 0) / siblings.length;
         }
         
-        // Only move siblings without partners
-        siblingsWithoutPartners.forEach(sibling => {
+        // Align all siblings to the same Y (including those with partners)
+        siblings.forEach(sibling => {
           sibling.position.y = targetY;
         });
+      }
+    }
+  });
+  
+  return adjustedNodes;
+}
+
+/**
+ * Detect and resolve node overlaps by adjusting X positions.
+ * Nodes are considered overlapping if they are too close horizontally at the same Y level.
+ * 
+ * HARD REQUIREMENT: Nodes must NEVER overlap each other.
+ * HARD REQUIREMENT: Partner pairs must remain adjacent with no nodes between them.
+ */
+function resolveCollisions(
+  nodes: Node<FamilyNodeData>[],
+  edges: Edge[]
+): Node<FamilyNodeData>[] {
+  const adjustedNodes = [...nodes];
+  
+  // Build partner pairs map to keep partners together
+  const partnerPairs = new Map<string, string>();
+  edges
+    .filter(edge => edge.data?.relationship === RelationshipType.Partner || 
+                    edge.data?.relationship === RelationshipType.Divorced)
+    .forEach(edge => {
+      partnerPairs.set(edge.source, edge.target);
+      partnerPairs.set(edge.target, edge.source);
+    });
+  
+  // Group nodes by Y position (with small tolerance for floating point comparison)
+  const yTolerance = 5; // pixels
+  const rowGroups = new Map<number, Node<FamilyNodeData>[]>();
+  
+  adjustedNodes.forEach(node => {
+    // Round Y to nearest tolerance to group nodes in same row
+    const roundedY = Math.round(node.position.y / yTolerance) * yTolerance;
+    if (!rowGroups.has(roundedY)) {
+      rowGroups.set(roundedY, []);
+    }
+    rowGroups.get(roundedY)!.push(node);
+  });
+  
+  // For each row, sort nodes by X position and resolve overlaps
+  rowGroups.forEach(rowNodes => {
+    if (rowNodes.length <= 1) return;
+    
+    // Sort nodes by X position
+    rowNodes.sort((a, b) => a.position.x - b.position.x);
+    
+    // Detect and resolve overlaps by spreading nodes apart
+    // IMPORTANT: Keep partner pairs together - they move as a unit
+    for (let i = 0; i < rowNodes.length - 1; i++) {
+      const currentNode = rowNodes[i];
+      const nextNode = rowNodes[i + 1];
+      
+      // Check if these are partners - if so, skip collision check between them
+      const arePartners = partnerPairs.get(currentNode.id) === nextNode.id;
+      if (arePartners) {
+        continue; // Partners should stay adjacent as positioned by adjustPartnerPositions
+      }
+      
+      const currentRight = currentNode.position.x + NODE_WIDTH;
+      const nextLeft = nextNode.position.x;
+      const gap = nextLeft - currentRight;
+      
+      if (gap < BASE_SPACING) {
+        // Nodes are too close or overlapping
+        // Push the next node (and all subsequent nodes) to the right
+        const adjustment = BASE_SPACING - gap;
+        
+        // Check if nextNode has a partner - if so, move both together
+        const nextPartner = partnerPairs.get(nextNode.id);
+        const nextPartnerNode = nextPartner ? adjustedNodes.find(n => n.id === nextPartner) : null;
+        
+        for (let j = i + 1; j < rowNodes.length; j++) {
+          rowNodes[j].position.x += adjustment;
+        }
+        
+        // Also move the partner if it's not in this row (shouldn't happen, but be safe)
+        if (nextPartnerNode && !rowNodes.includes(nextPartnerNode)) {
+          nextPartnerNode.position.x += adjustment;
+        }
       }
     }
   });
