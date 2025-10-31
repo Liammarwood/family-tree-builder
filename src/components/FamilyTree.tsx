@@ -19,6 +19,9 @@ import { RelationshipForm } from "@/types/RelationshipForm";
 import { DetailsPane } from "./DetailsPane";
 import { useFamilyTreeContext } from "@/hooks/useFamilyTree";
 import { RelationshipType } from "@/types/RelationshipEdgeData";
+import { useClipboard } from "@/hooks/useClipboard";
+import { copySelectedNodes, pasteClipboardData } from "@/libs/clipboard";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 type FamilyTreeProps = {
   showGrid: boolean;
@@ -32,6 +35,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [connectDialog, setConnectDialog] = useState<{ open: boolean; source: string; target: string } | null>(null);
+  const { clipboard, setClipboard } = useClipboard();
   // Optimization: Combine selection calculations to avoid multiple array iterations
   const selectionInfo = useMemo(() => {
     let selectedEdge: Edge | undefined;
@@ -379,6 +383,47 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
       deselectAll();
     }
   }
+
+  // Keyboard shortcut handlers
+  const handleCopyShortcut = useCallback(() => {
+    const clipboardData = copySelectedNodes(nodes, edges);
+    if (clipboardData) {
+      setClipboard(clipboardData);
+    }
+  }, [nodes, edges, setClipboard]);
+
+  const handlePasteShortcut = useCallback(() => {
+    if (!clipboard) return;
+    
+    const { nodes: newNodes, edges: newEdges } = pasteClipboardData(clipboard, nodes);
+    
+    // Add new nodes and edges to the tree, selecting only the new nodes
+    setNodes((prevNodes) => [
+      ...prevNodes.map(n => ({ ...n, selected: false })),
+      ...newNodes.map(n => ({ ...n, selected: true }))
+    ]);
+    setEdges((prevEdges) => [...prevEdges, ...newEdges]);
+  }, [clipboard, nodes, setNodes, setEdges]);
+
+  const handleDeleteShortcut = useCallback(() => {
+    if (selectedEdge) {
+      // Delete selected edge
+      setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
+    } else if (selectedNode && isOneNodeSelected) {
+      // Delete selected node and its edges
+      setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+      setEdges((eds) =>
+        eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id)
+      );
+    }
+  }, [selectedEdge, selectedNode, isOneNodeSelected, setNodes, setEdges]);
+
+  // Register keyboard shortcuts
+  useKeyboardShortcuts({
+    onCopy: handleCopyShortcut,
+    onPaste: handlePasteShortcut,
+    onDelete: handleDeleteShortcut,
+  }, isTreeLoaded);
 
   return (
     <Stack
