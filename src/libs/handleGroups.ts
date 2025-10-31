@@ -64,16 +64,23 @@ export function getChildHandleGroups(
   });
 
   // Convert map to array of handle groups
-  const groups: ChildHandleGroup[] = [];
-  let groupIndex = 0;
+  // Sort to ensure consistent handle assignment:
+  // 1. Groups with no other parent ("none") come first
+  // 2. Then sort by other parent ID alphabetically for deterministic ordering
+  const sortedKeys = Array.from(groupsByOtherParent.keys()).sort((a, b) => {
+    if (a === "none" && b !== "none") return -1;
+    if (a !== "none" && b === "none") return 1;
+    // Both are actual parent IDs (not "none"), sort alphabetically
+    return (a || "").localeCompare(b || "");
+  });
 
-  groupsByOtherParent.forEach((childIds, otherParentKey) => {
-    groups.push({
+  const groups: ChildHandleGroup[] = sortedKeys.map((otherParentKey, groupIndex) => {
+    const childIds = groupsByOtherParent.get(otherParentKey)!;
+    return {
       handleId: `child-${groupIndex}`,
       childIds,
       otherParentId: otherParentKey === "none" ? undefined : otherParentKey,
-    });
-    groupIndex++;
+    };
   });
 
   return groups;

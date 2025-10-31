@@ -202,6 +202,74 @@ describe('handleGroups', () => {
       expect(groups[0].otherParentId).toBeUndefined();
       expect(groups[0].childIds).toEqual(['child1']);
     });
+
+    it('maintains consistent handle assignment regardless of child creation order', () => {
+      // Scenario: add child first (no other parent), then add partner and second child
+      // Both should still get consistent handle IDs
+      const nodes: Node<FamilyNodeData>[] = [
+        {
+          id: 'parent1',
+          type: 'family',
+          position: { x: 0, y: 0 },
+          data: { id: 'parent1', name: 'Parent 1', dateOfBirth: '1980-01-01' },
+        },
+        {
+          id: 'parent2',
+          type: 'family',
+          position: { x: 100, y: 0 },
+          data: { id: 'parent2', name: 'Parent 2', dateOfBirth: '1981-01-01' },
+        },
+        {
+          id: 'child1',
+          type: 'family',
+          position: { x: 0, y: 200 },
+          data: {
+            id: 'child1',
+            name: 'Child 1',
+            dateOfBirth: '2000-01-01',
+            parents: ['parent1'], // Only one parent initially
+          },
+        },
+        {
+          id: 'child2',
+          type: 'family',
+          position: { x: 100, y: 200 },
+          data: {
+            id: 'child2',
+            name: 'Child 2',
+            dateOfBirth: '2002-01-01',
+            parents: ['parent1', 'parent2'], // Has both parents
+          },
+        },
+      ];
+      const edges: Edge[] = [
+        {
+          id: 'parent-parent1-child1',
+          source: 'parent1',
+          target: 'child1',
+          data: { relationship: RelationshipType.Parent },
+        },
+        {
+          id: 'parent-parent1-child2',
+          source: 'parent1',
+          target: 'child2',
+          data: { relationship: RelationshipType.Parent },
+        },
+      ];
+
+      const groups = getChildHandleGroups('parent1', nodes, edges);
+      expect(groups).toHaveLength(2);
+      
+      // Children with no other parent should be in child-0 (sorted first)
+      expect(groups[0].handleId).toBe('child-0');
+      expect(groups[0].otherParentId).toBeUndefined();
+      expect(groups[0].childIds).toContain('child1');
+      
+      // Children with parent2 should be in child-1
+      expect(groups[1].handleId).toBe('child-1');
+      expect(groups[1].otherParentId).toBe('parent2');
+      expect(groups[1].childIds).toContain('child2');
+    });
   });
 
   describe('getChildHandleId', () => {
