@@ -1,3 +1,12 @@
+# [1.4.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.3.0...v1.4.0) (2025-10-31)
+
+
+### Features
+
+* Add copy-paste for multiple nodes with keyboard shortcuts and documentation ([#27](https://github.com/Liammarwood/family-tree-builder/issues/27)) ([d7ab983](https://github.com/Liammarwood/family-tree-builder/commit/d7ab983f336d77814121e42cf714b50c5f5e6202))
+* Add copy-paste functionality for multiple nodes with interlinking edges only ([8ea674f](https://github.com/Liammarwood/family-tree-builder/commit/8ea674f9496280dc08fccc02e4e280e4a39b6f43))
+* Add keyboard shortcuts for copy (Ctrl+C), paste (Ctrl+V), and delete (Delete) ([8ccf5ec](https://github.com/Liammarwood/family-tree-builder/commit/8ccf5ec2f4202b59bcf82b15db4564d05a600cd4))
+
 # [1.3.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.2.2...v1.3.0) (2025-10-30)
 
 
