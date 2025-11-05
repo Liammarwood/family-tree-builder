@@ -10,6 +10,8 @@ interface ConfigurationState {
   setObjectStoreName: (name: string) => void;
   avatarVariant: AvatarTypes;
   setAvatarVariant: (type: AvatarTypes) => void
+  avatarSize: number;
+  setAvatarSize: (size: number) => void;
   // theme / styling
   nodeColor: string;
   setNodeColor: (c: string) => void;
@@ -54,6 +56,7 @@ export const useConfiguration = (): ConfigurationState => {
 export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [showHandles, setShowHandles] = useState<boolean>(true);
   const [avatarVariant, setAvatarVariant] = useState<AvatarTypes>(AvatarTypes.Circular)
+  const [avatarSize, setAvatarSize] = useState<number>(150);
   const [objectStoreName, setObjectStoreName] = useState<string>("");
   const [nodeColor, setNodeColor] = useState<string>('#ffffff');
   const [edgeColor, setEdgeColor] = useState<string>('#b1b1b7');
@@ -81,6 +84,8 @@ export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children })
       setObjectStoreName,
       setAvatarVariant,
       avatarVariant,
+      avatarSize,
+      setAvatarSize,
       nodeColor,
       setNodeColor,
       edgeColor,

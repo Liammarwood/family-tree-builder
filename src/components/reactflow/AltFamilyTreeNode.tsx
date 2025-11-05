@@ -21,7 +21,7 @@ export const AltFamilyTreeNode = ({
   data,
   preview,
 }: NodeProps<FamilyNodeData> & { preview?: boolean }) => {
-  const { showHandles, avatarVariant, nodeColor, textColor, fontFamily, nodeStyle, showDates, nameFontSize, dateFontSize } = useConfiguration();
+  const { showHandles, avatarVariant, avatarSize, nodeColor, textColor, fontFamily, nodeStyle, showDates, nameFontSize, dateFontSize } = useConfiguration();
 
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
@@ -37,7 +37,7 @@ export const AltFamilyTreeNode = ({
       sx={{
         width: NODE_WIDTH,
         position: 'relative',
-        paddingTop: '55px', // Space for the overlapping avatar
+        paddingTop: `${avatarSize / 2}px`, // Space for the overlapping avatar
       }}
     >
       {/* Overlapping Avatar */}
@@ -66,8 +66,8 @@ export const AltFamilyTreeNode = ({
             alt={data.name}
             variant={avatarVariant}
             sx={{
-              width: 110,
-              height: 110,
+              width: avatarSize,
+              height: avatarSize,
               border: '5px solid',
               borderColor: 'background.paper',
               boxShadow: selected
@@ -102,7 +102,7 @@ export const AltFamilyTreeNode = ({
           },
         }}
       >
-        <CardContent sx={{ pt: 7, px: 2.5, pb: 2, '&:last-child': { pb: 2 } }}>
+        <CardContent sx={{ pt: `${(avatarSize / 2) + 6}px`, px: 2.5, pb: 2, '&:last-child': { pb: 2 } }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
             {/* Name and Maiden Name */}
             <Box sx={{ textAlign: 'center', width: '100%' }}>

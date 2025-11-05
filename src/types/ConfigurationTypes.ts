@@ -22,5 +22,6 @@ export type ThemeConfig = {
     fontFamily: string;
     nodeStyle: NodeStyle;
     textColor?: string;
+    avatarSize?: number;
     exportConfig?: ExportConfig;
 }

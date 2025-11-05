@@ -23,6 +23,7 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
     textColor, setTextColor,
     fontFamily, setFontFamily,
     nodeStyle, setNodeStyle,
+    avatarSize, setAvatarSize,
     exportTitle, setExportTitle,
     showDates, setShowDates,
     nameFontSize, setNameFontSize,
@@ -44,6 +45,7 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
       setTextColor(cfg.textColor || textColor || '#5d4e37');
       setFontFamily(cfg.fontFamily || fontFamily);
       setNodeStyle(cfg.nodeStyle || nodeStyle);
+      setAvatarSize(cfg.avatarSize || avatarSize || 150);
       // Load export config if available
       if (cfg.exportConfig) {
         setExportTitle(cfg.exportConfig.title || '');
@@ -65,6 +67,19 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
           <div>
             <AvatarVariantDropdown />
           </div>
+
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>Avatar Size: {avatarSize}px</Typography>
+            <Slider
+              value={avatarSize}
+              onChange={(_, value) => setAvatarSize(value as number)}
+              min={150}
+              max={500}
+              step={5}
+              marks
+              valueLabelDisplay="auto"
+            />
+          </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography variant="subtitle2">Node color</Typography>
@@ -116,9 +131,16 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
             <Select labelId="font-select-label" value={fontFamily} label="Font family" onChange={(e) => setFontFamily(e.target.value)}>
               <MenuItem value={'Inter, Roboto, "Helvetica Neue", Arial'}>System (Inter/Roboto)</MenuItem>
               <MenuItem value={'Georgia, serif'}>Serif (Georgia)</MenuItem>
+              <MenuItem value={'"Times New Roman", Times, serif'}>Times New Roman</MenuItem>
               <MenuItem value={'"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'}>UI (Segoe)</MenuItem>
+              <MenuItem value={'Arial, Helvetica, sans-serif'}>Arial</MenuItem>
+              <MenuItem value={'Verdana, Geneva, sans-serif'}>Verdana</MenuItem>
               <MenuItem value={'"Courier New", Courier, monospace'}>Monospace (Courier New)</MenuItem>
+              <MenuItem value={'"Trebuchet MS", Helvetica, sans-serif'}>Trebuchet MS</MenuItem>
+              <MenuItem value={'"Palatino Linotype", "Book Antiqua", Palatino, serif'}>Palatino</MenuItem>
+              <MenuItem value={'"Lucida Sans Unicode", "Lucida Grande", sans-serif'}>Lucida Sans</MenuItem>
               <MenuItem value={'"Comic Sans MS", "Comic Sans", cursive'}>Casual (Comic Sans)</MenuItem>
+              <MenuItem value={'Impact, Charcoal, sans-serif'}>Impact</MenuItem>
             </Select>
           </FormControl>
 
@@ -254,6 +276,7 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
                 textColor,
                 fontFamily,
                 nodeStyle,
+                avatarSize,
                 exportConfig: {
                   title: exportTitle,
                   showDates,
