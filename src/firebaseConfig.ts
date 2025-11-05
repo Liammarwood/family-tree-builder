@@ -5,7 +5,7 @@ import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBS_SyGbSlojmIz9ys6dGMp5gMklqCf6rk",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
   authDomain: "offline-family-tree-builder.firebaseapp.com",
   projectId: "offline-family-tree-builder",
   storageBucket: "offline-family-tree-builder.firebasestorage.app",

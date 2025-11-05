@@ -49,6 +49,7 @@ jobs:
           NEXT_PUBLIC_COMMIT_SHA: ${{ env.NEXT_PUBLIC_COMMIT_SHA }}
           NEXT_PUBLIC_BUILD_TIME: ${{ env.NEXT_PUBLIC_BUILD_TIME }}
           NEXT_PUBLIC_REPOSITORY: ${{ env.NEXT_PUBLIC_REPOSITORY }}
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
         run: npm run build
 
       - name: Deploy to Firebase Hosting
