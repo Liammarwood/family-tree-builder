@@ -16,6 +16,7 @@ import {
   TextField,
 } from "@mui/material";
 import { useState, useEffect } from "react";
+import { NEW_TREE_OPTION_VALUE } from "@/libs/constants";
 
 export type FamilyTreeSectionProps = {
   open: boolean;
@@ -41,7 +42,7 @@ export const FamilyTreeSection: React.FC<FamilyTreeSectionProps> = ({
   }, [open, selectedTreeId]);
 
   const hasTrees = trees.length > 0;
-  const isCreatingNew = !hasTrees || localSelectedTreeId === "NEW";
+  const isCreatingNew = !hasTrees || localSelectedTreeId === NEW_TREE_OPTION_VALUE;
 
   const handleSave = () => {
     if (isCreatingNew && newTreeName.trim() !== "") {
@@ -115,7 +116,7 @@ export const FamilyTreeSection: React.FC<FamilyTreeSectionProps> = ({
                   {tree.name ? tree.name : tree.id}
                 </MenuItem>
               ))}
-              <MenuItem value="NEW">+ Create New Family Tree</MenuItem>
+              <MenuItem value={NEW_TREE_OPTION_VALUE}>+ Create New Family Tree</MenuItem>
             </Select>
           </FormControl>
         )}

@@ -8,6 +8,7 @@ import { ManualConnectionDialog, ManualConnectionForm } from "@/components/Manua
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { ChildEdge, DivorcedEdge, ParentEdge, PartnerEdge, SiblingEdge } from "@/libs/edges";
 import { EDGE_TYPES, GENERATE_ID, GRID_SIZE, NODE_TYPES, LOCAL_STORAGE_FIRST_VISIT_KEY } from "@/libs/constants";
+import { hasVisitedBefore, setLocalStorageItem } from "@/libs/storage";
 import ThemeFromConfig from '@/components/ThemeFromConfig';
 import { useConfiguration } from '@/hooks/useConfiguration';
 import { EditMode } from "@/types/EditMode";
@@ -108,13 +109,9 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
       hasCheckedFirstVisit.current = true;
 
       // Check if this is the user's first visit
-      const hasVisitedBefore = typeof window !== "undefined" 
-        ? localStorage.getItem(LOCAL_STORAGE_FIRST_VISIT_KEY) 
-        : null;
-
-      if (!hasVisitedBefore) {
+      if (!hasVisitedBefore(LOCAL_STORAGE_FIRST_VISIT_KEY)) {
         // First-time user: show help modal first
-        localStorage.setItem(LOCAL_STORAGE_FIRST_VISIT_KEY, "true");
+        setLocalStorageItem(LOCAL_STORAGE_FIRST_VISIT_KEY, "true");
         setHelpModalOpen(true);
         return; // Don't open tree selection yet, wait for help modal to close
       }
