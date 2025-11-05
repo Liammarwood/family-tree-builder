@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.5.0...v1.6.0) (2025-11-05)
+
+
+### Features
+
+* Add font family options and avatar size slider to appearance settings ([#31](https://github.com/Liammarwood/family-tree-builder/issues/31)) ([ca3e50a](https://github.com/Liammarwood/family-tree-builder/commit/ca3e50a631ea010a7a299e83d0689b984897c649))
+
 # [1.5.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.4.0...v1.5.0) (2025-11-05)
 
 
