@@ -25,5 +25,6 @@ export type ThemeConfig = {
     avatarSize?: number;
     nodeOpacity?: number;
     titleOpacity?: number;
+    showBorder?: boolean;
     exportConfig?: ExportConfig;
 }

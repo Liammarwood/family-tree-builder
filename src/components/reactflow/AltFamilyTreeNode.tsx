@@ -21,7 +21,7 @@ export const AltFamilyTreeNode = ({
   data,
   preview,
 }: NodeProps<FamilyNodeData> & { preview?: boolean }) => {
-  const { showHandles, avatarVariant, avatarSize, nodeColor, textColor, fontFamily, nodeStyle, showDates, nameFontSize, dateFontSize, nodeOpacity } = useConfiguration();
+  const { showHandles, avatarVariant, avatarSize, nodeColor, textColor, fontFamily, nodeStyle, showDates, nameFontSize, dateFontSize, nodeOpacity, showBorder } = useConfiguration();
 
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
@@ -105,7 +105,7 @@ export const AltFamilyTreeNode = ({
       <Card
         sx={{
           borderRadius: 3,
-          border: '2.5px solid',
+          border: showBorder ? '2.5px solid' : 'none',
           borderColor: selected ? '#ff9800' : (isDeceased ? 'grey.300' : (nodeColor || 'primary.light')),
           position: 'relative',
           background: 'transparent',

@@ -27,6 +27,8 @@ interface ConfigurationState {
   setNodeOpacity: (opacity: number) => void;
   titleOpacity: number;
   setTitleOpacity: (opacity: number) => void;
+  showBorder: boolean;
+  setShowBorder: (show: boolean) => void;
   // export configuration
   exportTitle: string;
   setExportTitle: (title: string) => void;
@@ -69,6 +71,7 @@ export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children })
   const [nodeStyle, setNodeStyle] = useState<import('@/types/ConfigurationTypes').NodeStyle>('card');
   const [nodeOpacity, setNodeOpacity] = useState<number>(1.0);
   const [titleOpacity, setTitleOpacity] = useState<number>(0.9);
+  const [showBorder, setShowBorder] = useState<boolean>(true);
   const [exportTitle, setExportTitle] = useState<string>('');
   const [showDates, setShowDates] = useState<boolean>(true);
   const [nameFontSize, setNameFontSize] = useState<number>(16);
@@ -106,6 +109,8 @@ export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children })
       setNodeOpacity,
       titleOpacity,
       setTitleOpacity,
+      showBorder,
+      setShowBorder,
       exportTitle,
       setExportTitle,
       showDates,

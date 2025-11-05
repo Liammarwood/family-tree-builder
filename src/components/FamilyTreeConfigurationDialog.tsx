@@ -26,6 +26,7 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
     avatarSize, setAvatarSize,
     nodeOpacity, setNodeOpacity,
     titleOpacity, setTitleOpacity,
+    showBorder, setShowBorder,
     exportTitle, setExportTitle,
     showDates, setShowDates,
     nameFontSize, setNameFontSize,
@@ -50,6 +51,7 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
       setAvatarSize(cfg.avatarSize || avatarSize || 150);
       setNodeOpacity(cfg.nodeOpacity ?? nodeOpacity);
       setTitleOpacity(cfg.titleOpacity ?? titleOpacity);
+      setShowBorder(cfg.showBorder ?? showBorder);
       // Load export config if available
       if (cfg.exportConfig) {
         setExportTitle(cfg.exportConfig.title || '');
@@ -174,6 +176,11 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
               valueLabelFormat={(value) => `${(value * 100).toFixed(0)}%`}
             />
           </Box>
+
+          <FormControlLabel 
+            control={<Switch checked={showBorder} onChange={(e) => setShowBorder(e.target.checked)} />} 
+            label="Show Border" 
+          />
 
           <FormControl fullWidth>
             <InputLabel id="node-component-label">Person Panel Style</InputLabel>
@@ -319,6 +326,7 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
                 avatarSize,
                 nodeOpacity,
                 titleOpacity,
+                showBorder,
                 exportConfig: {
                   title: exportTitle,
                   showDates,

@@ -43,15 +43,18 @@ function ExportConfigTestComponent() {
 function OpacityTestComponent() {
   const { 
     nodeOpacity, setNodeOpacity,
-    titleOpacity, setTitleOpacity
+    titleOpacity, setTitleOpacity,
+    showBorder, setShowBorder
   } = useConfiguration();
   
   return (
     <div>
       <span data-testid="nodeOpacity">{nodeOpacity}</span>
       <span data-testid="titleOpacity">{titleOpacity}</span>
+      <span data-testid="showBorder">{String(showBorder)}</span>
       <button onClick={() => setNodeOpacity(0.5)}>Set Node Opacity</button>
       <button onClick={() => setTitleOpacity(0.75)}>Set Title Opacity</button>
+      <button onClick={() => setShowBorder(false)}>Hide Border</button>
     </div>
   );
 }
@@ -178,5 +181,27 @@ describe('useConfiguration', () => {
     expect(screen.getByTestId('titleOpacity').textContent).toBe('0.9');
     fireEvent.click(screen.getByText('Set Title Opacity'));
     expect(screen.getByTestId('titleOpacity').textContent).toBe('0.75');
+  });
+
+  it('provides default showBorder value', () => {
+    render(
+      <ConfigurationProvider>
+        <OpacityTestComponent />
+      </ConfigurationProvider>
+    );
+
+    expect(screen.getByTestId('showBorder').textContent).toBe('true');
+  });
+
+  it('allows toggling border visibility', () => {
+    render(
+      <ConfigurationProvider>
+        <OpacityTestComponent />
+      </ConfigurationProvider>
+    );
+
+    expect(screen.getByTestId('showBorder').textContent).toBe('true');
+    fireEvent.click(screen.getByText('Hide Border'));
+    expect(screen.getByTestId('showBorder').textContent).toBe('false');
   });
 });
