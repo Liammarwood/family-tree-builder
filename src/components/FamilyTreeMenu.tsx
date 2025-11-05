@@ -11,6 +11,7 @@ import { auth } from "@/firebaseConfig";
 import { signOut } from "firebase/auth";
 import { useFamilyTreeContext } from '@/hooks/useFamilyTree';
 import { RenameTreeDialog } from '@/components/RenameTreeDialog';
+import { DeleteTreeConfirmDialog } from '@/components/DeleteTreeConfirmDialog';
 import { handleExport } from '@/libs/backup';
 import { useError } from '@/hooks/useError';
 import { ExportType } from '@/types/ExportTypes';
@@ -28,6 +29,7 @@ const FamilyTreeMenu: React.FC = () => {
     const { showError } = useError();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [isRenameTreeModalOpen, setRenameTreeModalOpen] = useState<boolean>(false);
+    const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState<boolean>(false);
     const [isSelectModalOpen, setSelectModalOpen] = useState<boolean>(false);
     const [isUploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
     const [isShareModalOpen, setShareModalOpen] = useState<boolean>(false);
@@ -105,7 +107,7 @@ const FamilyTreeMenu: React.FC = () => {
                     Rename Tree
                 </MenuItem>
 
-                <MenuItem onClick={() => currentTree ? deleteTree(currentTree.id) : null}>
+                <MenuItem onClick={() => setDeleteConfirmOpen(true)}>
                     <ListItemIcon>
                         <Delete fontSize="small" />
                     </ListItemIcon>
@@ -200,6 +202,17 @@ const FamilyTreeMenu: React.FC = () => {
                 </MenuItem>
             </Menu>
             <RenameTreeDialog open={isRenameTreeModalOpen} onClose={() => setRenameTreeModalOpen(false)} />
+            <DeleteTreeConfirmDialog
+                open={isDeleteConfirmOpen}
+                treeName={currentTree?.name}
+                onClose={() => setDeleteConfirmOpen(false)}
+                onConfirm={() => {
+                    if (currentTree) {
+                        deleteTree(currentTree.id);
+                    }
+                    setDeleteConfirmOpen(false);
+                }}
+            />
             <UploadModal
                 open={isUploadModalOpen}
                 onClose={() => setUploadModalOpen(false)}
