@@ -40,6 +40,22 @@ function ExportConfigTestComponent() {
   );
 }
 
+function OpacityTestComponent() {
+  const { 
+    nodeOpacity, setNodeOpacity,
+    titleOpacity, setTitleOpacity
+  } = useConfiguration();
+  
+  return (
+    <div>
+      <span data-testid="nodeOpacity">{nodeOpacity}</span>
+      <span data-testid="titleOpacity">{titleOpacity}</span>
+      <button onClick={() => setNodeOpacity(0.5)}>Set Node Opacity</button>
+      <button onClick={() => setTitleOpacity(0.75)}>Set Title Opacity</button>
+    </div>
+  );
+}
+
 describe('useConfiguration', () => {
   it('provides default and toggles', () => {
     render(
@@ -127,5 +143,40 @@ describe('useConfiguration', () => {
     expect(screen.getByTestId('avatarSize').textContent).toBe('150');
     fireEvent.click(screen.getByText('Set Avatar Size'));
     expect(screen.getByTestId('avatarSize').textContent).toBe('250');
+  });
+  
+  it('provides default opacity values', () => {
+    render(
+      <ConfigurationProvider>
+        <OpacityTestComponent />
+      </ConfigurationProvider>
+    );
+
+    expect(screen.getByTestId('nodeOpacity').textContent).toBe('1');
+    expect(screen.getByTestId('titleOpacity').textContent).toBe('0.9');
+  });
+
+  it('allows setting node opacity', () => {
+    render(
+      <ConfigurationProvider>
+        <OpacityTestComponent />
+      </ConfigurationProvider>
+    );
+
+    expect(screen.getByTestId('nodeOpacity').textContent).toBe('1');
+    fireEvent.click(screen.getByText('Set Node Opacity'));
+    expect(screen.getByTestId('nodeOpacity').textContent).toBe('0.5');
+  });
+
+  it('allows setting title opacity', () => {
+    render(
+      <ConfigurationProvider>
+        <OpacityTestComponent />
+      </ConfigurationProvider>
+    );
+
+    expect(screen.getByTestId('titleOpacity').textContent).toBe('0.9');
+    fireEvent.click(screen.getByText('Set Title Opacity'));
+    expect(screen.getByTestId('titleOpacity').textContent).toBe('0.75');
   });
 });
