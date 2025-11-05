@@ -11,6 +11,7 @@ import { auth } from "@/firebaseConfig";
 import { signOut } from "firebase/auth";
 import { useFamilyTreeContext } from '@/hooks/useFamilyTree';
 import { RenameTreeDialog } from '@/components/RenameTreeDialog';
+import { DeleteTreeDialog } from '@/components/DeleteTreeDialog';
 import { handleExport } from '@/libs/backup';
 import { useError } from '@/hooks/useError';
 import { ExportType } from '@/types/ExportTypes';
@@ -24,10 +25,11 @@ import HelpModal from '@/components/HelpModal';
 import AboutModal from '@/components/AboutModal';
 
 const FamilyTreeMenu: React.FC = () => {
-    const { currentTree, deleteTree } = useFamilyTreeContext();
+    const { currentTree } = useFamilyTreeContext();
     const { showError } = useError();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [isRenameTreeModalOpen, setRenameTreeModalOpen] = useState<boolean>(false);
+    const [isDeleteTreeModalOpen, setDeleteTreeModalOpen] = useState<boolean>(false);
     const [isSelectModalOpen, setSelectModalOpen] = useState<boolean>(false);
     const [isUploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
     const [isShareModalOpen, setShareModalOpen] = useState<boolean>(false);
@@ -105,7 +107,7 @@ const FamilyTreeMenu: React.FC = () => {
                     Rename Tree
                 </MenuItem>
 
-                <MenuItem onClick={() => currentTree ? deleteTree(currentTree.id) : null}>
+                <MenuItem onClick={() => setDeleteTreeModalOpen(true)}>
                     <ListItemIcon>
                         <Delete fontSize="small" />
                     </ListItemIcon>
@@ -200,6 +202,7 @@ const FamilyTreeMenu: React.FC = () => {
                 </MenuItem>
             </Menu>
             <RenameTreeDialog open={isRenameTreeModalOpen} onClose={() => setRenameTreeModalOpen(false)} />
+            <DeleteTreeDialog open={isDeleteTreeModalOpen} onClose={() => setDeleteTreeModalOpen(false)} />
             <UploadModal
                 open={isUploadModalOpen}
                 onClose={() => setUploadModalOpen(false)}
