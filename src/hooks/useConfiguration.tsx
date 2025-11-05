@@ -56,7 +56,7 @@ export const useConfiguration = (): ConfigurationState => {
 export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [showHandles, setShowHandles] = useState<boolean>(true);
   const [avatarVariant, setAvatarVariant] = useState<AvatarTypes>(AvatarTypes.Circular)
-  const [avatarSize, setAvatarSize] = useState<number>(100);
+  const [avatarSize, setAvatarSize] = useState<number>(150);
   const [objectStoreName, setObjectStoreName] = useState<string>("");
   const [nodeColor, setNodeColor] = useState<string>('#ffffff');
   const [edgeColor, setEdgeColor] = useState<string>('#b1b1b7');

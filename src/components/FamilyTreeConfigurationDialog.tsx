@@ -45,7 +45,7 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
       setTextColor(cfg.textColor || textColor || '#5d4e37');
       setFontFamily(cfg.fontFamily || fontFamily);
       setNodeStyle(cfg.nodeStyle || nodeStyle);
-      setAvatarSize(cfg.avatarSize || avatarSize || 100);
+      setAvatarSize(cfg.avatarSize || avatarSize || 150);
       // Load export config if available
       if (cfg.exportConfig) {
         setExportTitle(cfg.exportConfig.title || '');
@@ -73,8 +73,8 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
             <Slider
               value={avatarSize}
               onChange={(_, value) => setAvatarSize(value as number)}
-              min={60}
-              max={150}
+              min={150}
+              max={500}
               step={5}
               marks
               valueLabelDisplay="auto"
