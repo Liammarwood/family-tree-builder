@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/Liammarwood/family-tree-builder/compare/v1.7.0...v1.7.1) (2025-11-05)
+
+
+### Bug Fixes
+
+* Move Firebase API key from hardcoded value to GitHub Secret ([#34](https://github.com/Liammarwood/family-tree-builder/issues/34)) ([7bb842b](https://github.com/Liammarwood/family-tree-builder/commit/7bb842b2fbd3ed2dfc35ef3c6d6921725b23c4b9))
+
 # [1.7.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.6.0...v1.7.0) (2025-11-05)
 
 
