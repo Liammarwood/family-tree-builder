@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.4.0...v1.5.0) (2025-11-05)
+
+
+### Features
+
+* Add confirmation dialog for Delete Tree action ([#28](https://github.com/Liammarwood/family-tree-builder/issues/28)) ([6938fb8](https://github.com/Liammarwood/family-tree-builder/commit/6938fb875b6cbcf8fdc719d3fb1757285ac303a2))
+
 # [1.4.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.3.0...v1.4.0) (2025-10-31)
 
 
