@@ -23,5 +23,7 @@ export type ThemeConfig = {
     nodeStyle: NodeStyle;
     textColor?: string;
     avatarSize?: number;
+    nodeOpacity?: number;
+    titleOpacity?: number;
     exportConfig?: ExportConfig;
 }

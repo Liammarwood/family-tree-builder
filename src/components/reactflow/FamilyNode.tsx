@@ -21,7 +21,7 @@ export const FamilyTreeNode = ({
   // preview prop when rendering standalone preview outside React Flow
   preview,
 }: NodeProps<FamilyNodeData> & { preview?: boolean }) => {
-  const { showHandles, avatarVariant, avatarSize, nodeColor, fontFamily, nodeStyle, textColor, showDates, nameFontSize, dateFontSize } = useConfiguration();
+  const { showHandles, avatarVariant, avatarSize, nodeColor, fontFamily, nodeStyle, textColor, showDates, nameFontSize, dateFontSize, nodeOpacity } = useConfiguration();
 
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
@@ -42,6 +42,7 @@ export const FamilyTreeNode = ({
         background: isDeceased
           ? 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)'
           : (nodeStyle === 'card' ? `linear-gradient(135deg, ${nodeColor} 0%, #f8f9fa 100%)` : nodeStyle === 'compact' ? nodeColor : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'),
+        opacity: nodeOpacity,
         boxShadow: selected
           ? '0 0 0 6px #ffe0b2, 0 2px 12px #ff980033'
           : 1,

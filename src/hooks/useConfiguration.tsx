@@ -23,6 +23,10 @@ interface ConfigurationState {
   setFontFamily: (f: string) => void;
   nodeStyle: import('@/types/ConfigurationTypes').NodeStyle;
   setNodeStyle: (s: import('@/types/ConfigurationTypes').NodeStyle) => void;
+  nodeOpacity: number;
+  setNodeOpacity: (opacity: number) => void;
+  titleOpacity: number;
+  setTitleOpacity: (opacity: number) => void;
   // export configuration
   exportTitle: string;
   setExportTitle: (title: string) => void;
@@ -63,6 +67,8 @@ export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children })
   const [textColor, setTextColor] = useState<string>('#5d4e37');
   const [fontFamily, setFontFamily] = useState<string>('Inter, Roboto, "Helvetica Neue", Arial');
   const [nodeStyle, setNodeStyle] = useState<import('@/types/ConfigurationTypes').NodeStyle>('card');
+  const [nodeOpacity, setNodeOpacity] = useState<number>(1.0);
+  const [titleOpacity, setTitleOpacity] = useState<number>(0.9);
   const [exportTitle, setExportTitle] = useState<string>('');
   const [showDates, setShowDates] = useState<boolean>(true);
   const [nameFontSize, setNameFontSize] = useState<number>(16);
@@ -96,6 +102,10 @@ export const ConfigurationProvider: FC<{ children: ReactNode }> = ({ children })
       setFontFamily,
       nodeStyle,
       setNodeStyle,
+      nodeOpacity,
+      setNodeOpacity,
+      titleOpacity,
+      setTitleOpacity,
       exportTitle,
       setExportTitle,
       showDates,
