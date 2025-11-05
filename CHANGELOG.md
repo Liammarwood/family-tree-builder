@@ -1,3 +1,15 @@
+# [1.7.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.6.0...v1.7.0) (2025-11-05)
+
+
+### Bug Fixes
+
+* tree selection modal default value and add first-time user flow ([#32](https://github.com/Liammarwood/family-tree-builder/issues/32)) ([ecf59f0](https://github.com/Liammarwood/family-tree-builder/commit/ecf59f0317c2e30ef244096e11e0ad922c60a903))
+
+
+### Features
+
+* fix tree selection modal and add first-time user flow ([cb46136](https://github.com/Liammarwood/family-tree-builder/commit/cb46136b60dbd99f5acfc697496c54483033616e))
+
 # [1.6.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.5.0...v1.6.0) (2025-11-05)
 
 
