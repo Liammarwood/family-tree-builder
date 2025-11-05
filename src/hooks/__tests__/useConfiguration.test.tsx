@@ -18,7 +18,8 @@ function ExportConfigTestComponent() {
     showDates, setShowDates,
     nameFontSize, setNameFontSize,
     dateFontSize, setDateFontSize,
-    nodeComponentType, setNodeComponentType
+    nodeComponentType, setNodeComponentType,
+    avatarSize, setAvatarSize
   } = useConfiguration();
   
   return (
@@ -28,11 +29,13 @@ function ExportConfigTestComponent() {
       <span data-testid="nameFontSize">{nameFontSize}</span>
       <span data-testid="dateFontSize">{dateFontSize}</span>
       <span data-testid="nodeComponentType">{nodeComponentType}</span>
+      <span data-testid="avatarSize">{avatarSize}</span>
       <button onClick={() => setExportTitle('Test Family Tree')}>Set Title</button>
       <button onClick={() => setShowDates(false)}>Hide Dates</button>
       <button onClick={() => setNameFontSize(20)}>Set Name Font Size</button>
       <button onClick={() => setDateFontSize(14)}>Set Date Font Size</button>
       <button onClick={() => setNodeComponentType('FamilyTreeNode')}>Set Node Type</button>
+      <button onClick={() => setAvatarSize(120)}>Set Avatar Size</button>
     </div>
   );
 }
@@ -62,6 +65,7 @@ describe('useConfiguration', () => {
     expect(screen.getByTestId('nameFontSize').textContent).toBe('16');
     expect(screen.getByTestId('dateFontSize').textContent).toBe('12');
     expect(screen.getByTestId('nodeComponentType').textContent).toBe('AltFamilyTreeNode');
+    expect(screen.getByTestId('avatarSize').textContent).toBe('100');
   });
 
   it('allows setting export title', () => {
@@ -111,5 +115,17 @@ describe('useConfiguration', () => {
     expect(screen.getByTestId('nodeComponentType').textContent).toBe('AltFamilyTreeNode');
     fireEvent.click(screen.getByText('Set Node Type'));
     expect(screen.getByTestId('nodeComponentType').textContent).toBe('FamilyTreeNode');
+  });
+
+  it('allows setting avatar size', () => {
+    render(
+      <ConfigurationProvider>
+        <ExportConfigTestComponent />
+      </ConfigurationProvider>
+    );
+
+    expect(screen.getByTestId('avatarSize').textContent).toBe('100');
+    fireEvent.click(screen.getByText('Set Avatar Size'));
+    expect(screen.getByTestId('avatarSize').textContent).toBe('120');
   });
 });
