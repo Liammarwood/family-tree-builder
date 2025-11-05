@@ -1,3 +1,11 @@
+## [1.7.2](https://github.com/Liammarwood/family-tree-builder/compare/v1.7.1...v1.7.2) (2025-11-05)
+
+
+### Bug Fixes
+
+* Add calculation for Add Node positioning ([b069ee2](https://github.com/Liammarwood/family-tree-builder/commit/b069ee2b5c59b6292ceb3f1a677b44cd25aa83a4))
+* Add calculation for Add Node positioning ([#35](https://github.com/Liammarwood/family-tree-builder/issues/35)) ([daf931c](https://github.com/Liammarwood/family-tree-builder/commit/daf931c155db13a346b578c7c0e11ea41241dc25))
+
 ## [1.7.1](https://github.com/Liammarwood/family-tree-builder/compare/v1.7.0...v1.7.1) (2025-11-05)
 
 
