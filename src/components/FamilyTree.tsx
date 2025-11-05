@@ -25,6 +25,7 @@ import { copySelectedNodes, pasteClipboardData } from "@/libs/clipboard";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import HelpModal from "@/components/HelpModal";
 import { FamilyTreeSection } from "@/components/FamilyTreeSelection";
+import { calculateAddNodePosition } from "@/libs/spacing";
 
 type FamilyTreeProps = {
   showGrid: boolean;
@@ -273,10 +274,7 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
       const newNode: Node = {
         id: newId,
         type: "family",
-        position: {
-          x: selectedNode ? selectedNode.position.x + 200 : 0, // simple offset
-          y: selectedNode ? selectedNode.position.y + 200 : 0,
-        },
+        position: {...calculateAddNodePosition(editMode.relation, selectedNode)},
         data: {
           name: form.name,
           dateOfBirth: form.dateOfBirth,
