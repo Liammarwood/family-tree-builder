@@ -36,39 +36,49 @@ export const FamilyTreeNode = ({
     : (nodeStyle === 'card' ? `linear-gradient(135deg, ${nodeColor} 0%, #f8f9fa 100%)` : nodeStyle === 'compact' ? nodeColor : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)');
 
   return (
-    <Card
+    <Box
       sx={{
         width: NODE_WIDTH,
-        borderRadius: 3,
-        border: '2.5px solid',
-        fontFamily: fontFamily,
-        borderColor: selected ? '#ff9800' : (isDeceased ? 'grey.300' : nodeColor || 'primary.light'),
         position: 'relative',
-        background: 'transparent',
-        boxShadow: selected
-          ? '0 0 0 6px #ffe0b2, 0 2px 12px #ff980033'
-          : 1,
-        transition: 'border 0.2s, box-shadow 0.2s',
-        animation: selected ? 'pulse-border 1.1s cubic-bezier(.4,0,.2,1) infinite alternate' : 'none',
-        '@keyframes pulse-border': {
-          '0%': { boxShadow: '0 0 0 6px #ffe0b2, 0 2px 12px #ff980033' },
-          '100%': { boxShadow: '0 0 0 14px #ffecb3, 0 2px 24px #ff980033' },
-        },
-        '&::before': {
-          content: '""',
+        isolation: 'isolate',
+      }}
+    >
+      {/* Background layer with opacity */}
+      <Box
+        sx={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          borderRadius: 'inherit',
+          borderRadius: 3,
           background: backgroundStyle,
           opacity: nodeOpacity,
-          zIndex: 0,
-        },
-      }}
-    >
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 }, position: 'relative', zIndex: 1 }}>
+          zIndex: -1,
+        }}
+      />
+      
+      {/* Main card content */}
+      <Card
+        sx={{
+          width: NODE_WIDTH,
+          borderRadius: 3,
+          border: '2.5px solid',
+          fontFamily: fontFamily,
+          borderColor: selected ? '#ff9800' : (isDeceased ? 'grey.300' : nodeColor || 'primary.light'),
+          background: 'transparent',
+          boxShadow: selected
+            ? '0 0 0 6px #ffe0b2, 0 2px 12px #ff980033'
+            : 1,
+          transition: 'border 0.2s, box-shadow 0.2s',
+          animation: selected ? 'pulse-border 1.1s cubic-bezier(.4,0,.2,1) infinite alternate' : 'none',
+          '@keyframes pulse-border': {
+            '0%': { boxShadow: '0 0 0 6px #ffe0b2, 0 2px 12px #ff980033' },
+            '100%': { boxShadow: '0 0 0 14px #ffecb3, 0 2px 24px #ff980033' },
+          },
+        }}
+      >
+        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
           {/* Avatar with gender icon */}
           <Badge
@@ -174,10 +184,11 @@ export const FamilyTreeNode = ({
           </Box>
         </Box>
       </CardContent>
-      <Handle type="target" position={Position.Top} id="parent" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }} />
-      <Handle type="source" position={Position.Bottom} id="child" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }} />
-      <Handle type="source" position={Position.Right} id="right" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", top: "50%" }} />
-      <Handle type="target" position={Position.Left} id="left" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", top: "50%" }} />
-    </Card>
+        <Handle type="target" position={Position.Top} id="parent" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }} />
+        <Handle type="source" position={Position.Bottom} id="child" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", left: '50%' }} />
+        <Handle type="source" position={Position.Right} id="right" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", top: "50%" }} />
+        <Handle type="target" position={Position.Left} id="left" style={{ ...bigHandle, visibility: showHandles && !preview ? "visible" : "hidden", top: "50%" }} />
+      </Card>
+    </Box>
   );
 };

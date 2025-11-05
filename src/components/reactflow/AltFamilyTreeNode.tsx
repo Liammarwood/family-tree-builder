@@ -86,6 +86,21 @@ export const AltFamilyTreeNode = ({
         </Badge>
       </Box>
 
+      {/* Background layer with opacity - positioned relative to card area */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: `${avatarSize / 2}px`,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: 3,
+          background: backgroundStyle,
+          opacity: nodeOpacity,
+          zIndex: 0,
+        }}
+      />
+
       {/* Card Content */}
       <Card
         sx={{
@@ -103,21 +118,9 @@ export const AltFamilyTreeNode = ({
             '0%': { boxShadow: '0 0 0 6px #ffe0b2, 0 8px 24px #ff980033' },
             '100%': { boxShadow: '0 0 0 14px #ffecb3, 0 8px 32px #ff980033' },
           },
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            borderRadius: 'inherit',
-            background: backgroundStyle,
-            opacity: nodeOpacity,
-            zIndex: 0,
-          },
         }}
       >
-        <CardContent sx={{ pt: `${(avatarSize / 2) + 6}px`, px: 2.5, pb: 2, '&:last-child': { pb: 2 }, position: 'relative', zIndex: 1 }}>
+        <CardContent sx={{ pt: `${(avatarSize / 2) + 6}px`, px: 2.5, pb: 2, '&:last-child': { pb: 2 } }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
             {/* Name and Maiden Name */}
             <Box sx={{ textAlign: 'center', width: '100%' }}>
