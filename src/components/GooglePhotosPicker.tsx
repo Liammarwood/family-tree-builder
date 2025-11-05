@@ -157,7 +157,8 @@ export default function GooglePhotosPicker({ onImageSelected }: GooglePhotosPick
         const baseUrl = doc.url || doc.thumbnails?.[0]?.url;
         
         if (!baseUrl) {
-          setError('Could not get photo URL');
+          console.error('Google Photos API returned incomplete data:', doc);
+          setError('Could not get photo URL from Google Photos. The photo may not be accessible.');
           return;
         }
 
@@ -170,7 +171,9 @@ export default function GooglePhotosPicker({ onImageSelected }: GooglePhotosPick
         const compressedBase64 = await compressImageFile(blob);
         onImageSelected(compressedBase64);
       } catch (err) {
-        setError('Failed to load photo: ' + (err as Error).message);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        setError('Failed to load photo: ' + errorMessage);
+        console.error('Error loading photo from Google Photos:', err);
       }
     }
   };
