@@ -31,6 +31,10 @@ export const FamilyTreeNode = ({
     borderRadius: '50%',
     border: '2px solid white',
   }
+  const backgroundStyle = isDeceased
+    ? 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)'
+    : (nodeStyle === 'card' ? `linear-gradient(135deg, ${nodeColor} 0%, #f8f9fa 100%)` : nodeStyle === 'compact' ? nodeColor : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)');
+
   return (
     <Card
       sx={{
@@ -39,10 +43,8 @@ export const FamilyTreeNode = ({
         border: '2.5px solid',
         fontFamily: fontFamily,
         borderColor: selected ? '#ff9800' : (isDeceased ? 'grey.300' : nodeColor || 'primary.light'),
-        background: isDeceased
-          ? 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)'
-          : (nodeStyle === 'card' ? `linear-gradient(135deg, ${nodeColor} 0%, #f8f9fa 100%)` : nodeStyle === 'compact' ? nodeColor : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'),
-        opacity: nodeOpacity,
+        position: 'relative',
+        background: 'transparent',
         boxShadow: selected
           ? '0 0 0 6px #ffe0b2, 0 2px 12px #ff980033'
           : 1,
@@ -52,9 +54,21 @@ export const FamilyTreeNode = ({
           '0%': { boxShadow: '0 0 0 6px #ffe0b2, 0 2px 12px #ff980033' },
           '100%': { boxShadow: '0 0 0 14px #ffecb3, 0 2px 24px #ff980033' },
         },
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: 'inherit',
+          background: backgroundStyle,
+          opacity: nodeOpacity,
+          zIndex: 0,
+        },
       }}
     >
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 }, position: 'relative', zIndex: 1 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
           {/* Avatar with gender icon */}
           <Badge

@@ -32,6 +32,10 @@ export const AltFamilyTreeNode = ({
     border: '2px solid white',
   };
 
+  const backgroundStyle = isDeceased
+    ? 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)'
+    : (nodeStyle === 'card' ? `linear-gradient(135deg, ${nodeColor} 0%, #f8f9fa 100%)` : nodeStyle === 'compact' ? nodeColor : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)');
+
   return (
     <Box
       sx={{
@@ -88,10 +92,8 @@ export const AltFamilyTreeNode = ({
           borderRadius: 3,
           border: '2.5px solid',
           borderColor: selected ? '#ff9800' : (isDeceased ? 'grey.300' : (nodeColor || 'primary.light')),
-          background: isDeceased
-            ? 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)'
-            : (nodeStyle === 'card' ? `linear-gradient(135deg, ${nodeColor} 0%, #f8f9fa 100%)` : nodeStyle === 'compact' ? nodeColor : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'),
-          opacity: nodeOpacity,
+          position: 'relative',
+          background: 'transparent',
           boxShadow: selected
             ? '0 0 0 6px #ffe0b2, 0 8px 24px #ff980033'
             : '0 8px 24px rgba(0,0,0,0.12)',
@@ -101,9 +103,21 @@ export const AltFamilyTreeNode = ({
             '0%': { boxShadow: '0 0 0 6px #ffe0b2, 0 8px 24px #ff980033' },
             '100%': { boxShadow: '0 0 0 14px #ffecb3, 0 8px 32px #ff980033' },
           },
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: 'inherit',
+            background: backgroundStyle,
+            opacity: nodeOpacity,
+            zIndex: 0,
+          },
         }}
       >
-        <CardContent sx={{ pt: `${(avatarSize / 2) + 6}px`, px: 2.5, pb: 2, '&:last-child': { pb: 2 } }}>
+        <CardContent sx={{ pt: `${(avatarSize / 2) + 6}px`, px: 2.5, pb: 2, '&:last-child': { pb: 2 }, position: 'relative', zIndex: 1 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
             {/* Name and Maiden Name */}
             <Box sx={{ textAlign: 'center', width: '100%' }}>
