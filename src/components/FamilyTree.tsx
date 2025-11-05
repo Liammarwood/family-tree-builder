@@ -7,7 +7,7 @@ import { Box, Stack, useMediaQuery } from "@mui/material";
 import { ManualConnectionDialog, ManualConnectionForm } from "@/components/ManualConnectionDialog";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { ChildEdge, DivorcedEdge, ParentEdge, PartnerEdge, SiblingEdge } from "@/libs/edges";
-import { EDGE_TYPES, GENERATE_ID, GRID_SIZE, NODE_TYPES } from "@/libs/constants";
+import { EDGE_TYPES, GENERATE_ID, GRID_SIZE, NODE_TYPES, LOCAL_STORAGE_FIRST_VISIT_KEY } from "@/libs/constants";
 import ThemeFromConfig from '@/components/ThemeFromConfig';
 import { useConfiguration } from '@/hooks/useConfiguration';
 import { EditMode } from "@/types/EditMode";
@@ -22,6 +22,8 @@ import { RelationshipType } from "@/types/RelationshipEdgeData";
 import { useClipboard } from "@/hooks/useClipboard";
 import { copySelectedNodes, pasteClipboardData } from "@/libs/clipboard";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import HelpModal from "@/components/HelpModal";
+import { FamilyTreeSection } from "@/components/FamilyTreeSelection";
 
 type FamilyTreeProps = {
   showGrid: boolean;
@@ -29,13 +31,16 @@ type FamilyTreeProps = {
   setEditMode: (edit: EditMode | null) => void;
 }
 export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTreeProps) {
-  const { selectedTreeId, currentTree, isTreeLoaded, saveTree } = useFamilyTreeContext();
+  const { selectedTreeId, currentTree, isTreeLoaded, saveTree, isDbReady } = useFamilyTreeContext();
   const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, edgeColor } = useConfiguration();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [connectDialog, setConnectDialog] = useState<{ open: boolean; source: string; target: string } | null>(null);
   const { clipboard, setClipboard } = useClipboard();
+  const [isHelpModalOpen, setHelpModalOpen] = useState(false);
+  const [isTreeSelectionOpen, setTreeSelectionOpen] = useState(false);
+  const hasCheckedFirstVisit = useRef(false);
   // Optimization: Combine selection calculations to avoid multiple array iterations
   const selectionInfo = useMemo(() => {
     let selectedEdge: Edge | undefined;
@@ -91,12 +96,37 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
       setEdges([]);
     }
 
-    // Handles when a Tree is deleted or none initially selected by the user.
-    if (!selectedTreeId) {
-      // TODO Fix Up setSelectModalOpen(true);
-    }
     initialized.current = false; // mark as "not synced yet"
   }, [selectedTreeId, currentTree, setEdges, setNodes]);
+
+  // Handle first-time user flow and force tree selection when no tree is selected
+  useEffect(() => {
+    // Only run once when DB is ready and we haven't checked yet
+    if (!isDbReady || hasCheckedFirstVisit.current) return;
+
+    hasCheckedFirstVisit.current = true;
+
+    // Check if this is the user's first visit
+    const hasVisitedBefore = typeof window !== "undefined" 
+      ? localStorage.getItem(LOCAL_STORAGE_FIRST_VISIT_KEY) 
+      : null;
+
+    if (!hasVisitedBefore) {
+      // First-time user: show help modal first
+      localStorage.setItem(LOCAL_STORAGE_FIRST_VISIT_KEY, "true");
+      setHelpModalOpen(true);
+    } else if (!selectedTreeId) {
+      // Returning user without selected tree: force tree selection
+      setTreeSelectionOpen(true);
+    }
+  }, [isDbReady, selectedTreeId]);
+
+  // Force tree selection modal when no tree is selected (e.g., after deletion)
+  useEffect(() => {
+    if (isDbReady && hasCheckedFirstVisit.current && !selectedTreeId) {
+      setTreeSelectionOpen(true);
+    }
+  }, [isDbReady, selectedTreeId]);
 
   // 2️⃣ Sync effect
   // Store previous values to detect actual changes
@@ -522,6 +552,20 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
       )}
 
       {/* Application Modals */}
+      <HelpModal 
+        open={isHelpModalOpen} 
+        onClose={() => {
+          setHelpModalOpen(false);
+          // After closing help modal for first-time users, open tree selection
+          if (!selectedTreeId) {
+            setTreeSelectionOpen(true);
+          }
+        }} 
+      />
+      <FamilyTreeSection
+        open={isTreeSelectionOpen}
+        onClose={() => setTreeSelectionOpen(false)}
+      />
 
     </Stack>
   );

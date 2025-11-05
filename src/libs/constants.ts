@@ -11,6 +11,7 @@ export const DB_VERSION = 1;
 export const DB_NAME = "family-tree-builder";
 export const STORE_NAME = "family-tree-store";
 export const LOCAL_STORAGE_SELECTED_TREE_KEY = "selected-tree-id";
+export const LOCAL_STORAGE_FIRST_VISIT_KEY = "has-visited-before";
 export const INITIAL_ROOT_ID = "root"
 export const INITIAL_NODE: Node<FamilyNodeData> = {
     id: INITIAL_ROOT_ID,

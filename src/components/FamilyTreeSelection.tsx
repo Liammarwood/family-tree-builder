@@ -15,7 +15,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export type FamilyTreeSectionProps = {
   open: boolean;
@@ -31,6 +31,14 @@ export const FamilyTreeSection: React.FC<FamilyTreeSectionProps> = ({
     selectedTreeId
   );
   const [newTreeName, setNewTreeName] = useState<string>("");
+
+  // Reset local state when modal opens to always show current selection
+  useEffect(() => {
+    if (open) {
+      setLocalSelectedId(selectedTreeId);
+      setNewTreeName("");
+    }
+  }, [open, selectedTreeId]);
 
   const hasTrees = trees.length > 0;
   const isCreatingNew = !hasTrees || localSelectedTreeId === "NEW";
