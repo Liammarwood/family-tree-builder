@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom';
 
+// Set Firebase API key for tests
+process.env.NEXT_PUBLIC_FIREBASE_API_KEY = 'AIzaSyBS_SyGbSlojmIz9ys6dGMp5gMklqCf6rk';
+
 // Mock crypto.randomUUID for tests
 if (typeof global.crypto === 'undefined') {
   global.crypto = {
