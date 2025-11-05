@@ -54,11 +54,10 @@ export const FamilyTreeSection: React.FC<FamilyTreeSectionProps> = ({
   };
 
   const handleClose = () => {
-    if(selectedTreeId === null) {
-        return;
-    } else {
-        onClose();
+    if (selectedTreeId === null) {
+      return;
     }
+    onClose();
   }
 
   return (

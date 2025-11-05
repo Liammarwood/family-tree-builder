@@ -101,29 +101,28 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
 
   // Handle first-time user flow and force tree selection when no tree is selected
   useEffect(() => {
-    // Only run once when DB is ready and we haven't checked yet
-    if (!isDbReady || hasCheckedFirstVisit.current) return;
+    if (!isDbReady) return;
 
-    hasCheckedFirstVisit.current = true;
+    // First-time check: only run once on initial load
+    if (!hasCheckedFirstVisit.current) {
+      hasCheckedFirstVisit.current = true;
 
-    // Check if this is the user's first visit
-    const hasVisitedBefore = typeof window !== "undefined" 
-      ? localStorage.getItem(LOCAL_STORAGE_FIRST_VISIT_KEY) 
-      : null;
+      // Check if this is the user's first visit
+      const hasVisitedBefore = typeof window !== "undefined" 
+        ? localStorage.getItem(LOCAL_STORAGE_FIRST_VISIT_KEY) 
+        : null;
 
-    if (!hasVisitedBefore) {
-      // First-time user: show help modal first
-      localStorage.setItem(LOCAL_STORAGE_FIRST_VISIT_KEY, "true");
-      setHelpModalOpen(true);
-    } else if (!selectedTreeId) {
-      // Returning user without selected tree: force tree selection
-      setTreeSelectionOpen(true);
+      if (!hasVisitedBefore) {
+        // First-time user: show help modal first
+        localStorage.setItem(LOCAL_STORAGE_FIRST_VISIT_KEY, "true");
+        setHelpModalOpen(true);
+        return; // Don't open tree selection yet, wait for help modal to close
+      }
     }
-  }, [isDbReady, selectedTreeId]);
 
-  // Force tree selection modal when no tree is selected (e.g., after deletion)
-  useEffect(() => {
-    if (isDbReady && hasCheckedFirstVisit.current && !selectedTreeId) {
+    // For all cases (first-time after help modal, or returning user): 
+    // force tree selection when no tree is selected
+    if (!selectedTreeId) {
       setTreeSelectionOpen(true);
     }
   }, [isDbReady, selectedTreeId]);
