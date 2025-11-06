@@ -32,6 +32,25 @@ describe('storage autosave functions', () => {
       expect(payload.createdAt).toBeDefined();
       expect(payload.savedAt).toBeDefined();
     });
+    
+    it('preserves original createdAt on subsequent saves', () => {
+      const testData = { nodes: [], edges: [], id: 'test-tree' };
+      
+      // First save
+      saveTreeToLocal(testData);
+      const firstSave = JSON.parse(localStorage.getItem('family-tree-autosave:v1')!) as PersistedPayload<typeof testData>;
+      const originalCreatedAt = firstSave.createdAt;
+      
+      // Wait a bit and save again
+      const updatedData = { ...testData, nodes: [{ id: '1' }] };
+      saveTreeToLocal(updatedData);
+      
+      const secondSave = JSON.parse(localStorage.getItem('family-tree-autosave:v1')!) as PersistedPayload<typeof updatedData>;
+      
+      // createdAt should be preserved, savedAt should be different
+      expect(secondSave.createdAt).toBe(originalCreatedAt);
+      expect(secondSave.data).toEqual(updatedData);
+    });
 
     it('handles localStorage errors gracefully', () => {
       // Mock localStorage.setItem to throw an error

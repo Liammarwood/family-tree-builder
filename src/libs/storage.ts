@@ -48,9 +48,13 @@ const AUTOSAVE_KEY = "family-tree-autosave:v1";
 
 export function saveTreeToLocal<T>(tree: T): boolean {
   try {
+    // Preserve original createdAt if it exists, otherwise use current time
+    const existing = loadTreeFromLocal<T>();
+    const createdAt = existing?.createdAt ?? new Date().toISOString();
+    
     const payload: PersistedPayload<T> = {
       version: 1,
-      createdAt: new Date().toISOString(),
+      createdAt,
       savedAt: new Date().toISOString(),
       data: tree,
     };
