@@ -28,6 +28,7 @@ import { FamilyTreeSection } from "@/components/FamilyTreeSelection";
 import { calculateAddNodePosition } from "@/libs/spacing";
 import { useAutosave } from "@/hooks/useAutosave";
 import { FamilyTreeObject } from "@/types/FamilyTreeObject";
+import { useError } from "@/hooks/useError";
 
 type FamilyTreeProps = {
   showGrid: boolean;
@@ -38,6 +39,7 @@ type FamilyTreeProps = {
 export default function FamilyTree({ showGrid, editMode, setEditMode, onAutosaveStateChange }: FamilyTreeProps) {
   const { selectedTreeId, currentTree, isTreeLoaded, saveTree, isDbReady } = useFamilyTreeContext();
   const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, edgeColor } = useConfiguration();
+  const { showError } = useError();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -99,6 +101,13 @@ export default function FamilyTree({ showGrid, editMode, setEditMode, onAutosave
   }, [currentTree, nodes, edges]);
   
   // Autosave hook
+  // Note: suspend/resume functions are available for pausing autosave during batch operations
+  // Current implementation doesn't require explicit suspend/resume because:
+  // - Import operations reload the tree, which naturally resets autosave
+  // - Export operations don't modify tree data
+  // - Autosave only activates when isTreeLoaded is true
+  // If future batch operations need to temporarily pause autosave, use suspend() before 
+  // the operation and resume() after completion.
   const { isSaved, saveNow } = useAutosave<FamilyTreeObject>(
     treeDataForAutosave ?? { id: '', name: '', nodes: [], edges: [], createdAt: 0, updatedAt: 0 },
     {
@@ -106,9 +115,11 @@ export default function FamilyTree({ showGrid, editMode, setEditMode, onAutosave
       enabled: !!treeDataForAutosave && isTreeLoaded,
       onSaved: ({ savedAt }) => {
         setSavedAt(savedAt);
+        // Optionally show success toast (can be disabled if too noisy)
+        // showError("Tree saved successfully", "success");
       },
-      onError: () => {
-        // Error handling can be added later if needed
+      onError: (err) => {
+        showError(`Failed to autosave: ${err.message}`, "error");
       },
     }
   );
