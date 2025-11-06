@@ -1,3 +1,18 @@
+# [1.8.0](https://github.com/Liammarwood/family-tree-builder/compare/v1.7.2...v1.8.0) (2025-11-06)
+
+
+### Bug Fixes
+
+* apply opacity only to background, not content ([2ed3c1b](https://github.com/Liammarwood/family-tree-builder/commit/2ed3c1bf2281f289355334baf2bb42d8e8d8ca0b))
+* use separate background layer for opacity to keep content fully visible ([f65acb2](https://github.com/Liammarwood/family-tree-builder/commit/f65acb2bc9f9b9d226567398634a81491ea73cc6))
+
+
+### Features
+
+* add opacity controls and border toggle for person panels and title background ([#30](https://github.com/Liammarwood/family-tree-builder/issues/30)) ([455b777](https://github.com/Liammarwood/family-tree-builder/commit/455b7779e95f77647473e6600c5504cc176ec041))
+* add option to remove node border ([c546f24](https://github.com/Liammarwood/family-tree-builder/commit/c546f242638fb00ea37dc4cbc2c1c8bdce2ef7b7))
+* add transparency options for Person Panel and Title background ([07f5776](https://github.com/Liammarwood/family-tree-builder/commit/07f5776dc9d2802067d83641b126262c10904c8c))
+
 ## [1.7.2](https://github.com/Liammarwood/family-tree-builder/compare/v1.7.1...v1.7.2) (2025-11-05)
 
 
