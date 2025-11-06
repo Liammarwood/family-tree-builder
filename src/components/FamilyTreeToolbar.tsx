@@ -6,6 +6,9 @@ import {
   SpeedDialIcon,
   Tooltip,
   useMediaQuery,
+  Box,
+  Typography,
+  CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
@@ -16,6 +19,9 @@ import GridOnIcon from "@mui/icons-material/GridOn";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
+import SaveIcon from "@mui/icons-material/Save";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
 import {
   Delete,
   Edit,
@@ -33,15 +39,39 @@ import { copySelectedNodes, pasteClipboardData } from "@/libs/clipboard";
 type FamilyTreeToolbarProps = {
   setEditMode: (edit: EditMode) => void;
   hidden?: boolean;
+  autosaveState?: { isSaved: boolean; savedAt: string | null; saveNow: () => Promise<boolean> };
 };
 
-export default function FamilyTreeToolbar({ setEditMode, hidden = false }: FamilyTreeToolbarProps) {
+export default function FamilyTreeToolbar({ setEditMode, hidden = false, autosaveState }: FamilyTreeToolbarProps) {
   const [open, setOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { setNodes, setEdges, fitView } = useReactFlow();
   const nodes = useStore((state) => state.getNodes()) as Node<FamilyNodeData>[];
   const edges = useStore((state) => state.edges) as Edge<RelationshipEdgeData>[];
   const { clipboard, setClipboard } = useClipboard();
+  
+  // Format saved time for display
+  const formattedSaveTime = useMemo(() => {
+    if (!autosaveState?.savedAt) return null;
+    try {
+      const date = new Date(autosaveState.savedAt);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return null;
+    }
+  }, [autosaveState?.savedAt]);
+  
+  // Handle manual save
+  const handleSaveNow = async () => {
+    if (!autosaveState?.saveNow) return;
+    setIsSaving(true);
+    try {
+      await autosaveState.saveNow();
+    } finally {
+      setIsSaving(false);
+    }
+  };
   
   // Optimization: Combine related calculations into single memos to reduce passes
   const selectionState = useMemo(() => {
@@ -143,7 +173,6 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     if (!clipboard) return;
     
     const { nodes: newNodes, edges: newEdges } = pasteClipboardData(clipboard, nodes);
-    const newNodeIds = new Set(newNodes.map(n => n.id));
     
     // Add new nodes and edges to the tree, selecting only the new nodes
     setNodes((prevNodes) => [
@@ -166,6 +195,7 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     { icon: <AccountTree fontSize={isMobile ? "small" : "medium"} />, name: 'Auto Layout', onClick: () => handleAutoLayout(), isShown: true },
     { icon: <GridOnIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Toggle Grid', onClick: () => handleToggleGrid(), isShown: true },
     { icon: <ZoomOutMapIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Zoom Fit', onClick: () => handleZoomFit(), isShown: true },
+    { icon: isSaving ? <CircularProgress size={isMobile ? 16 : 20} /> : <SaveIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Save Now (Ctrl/Cmd+S)', onClick: handleSaveNow, isShown: true },
     { icon: <Edit fontSize={isMobile ? "small" : "medium"} />, name: 'Edit Selected', onClick: () => handleEdit(), isShown: isMobile }
   ];
 
@@ -204,8 +234,48 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     );
   }
 
+  // Save indicator component
+  const SaveIndicator = () => {
+    if (!autosaveState) return null;
+    
+    const { isSaved } = autosaveState;
+    const tooltipText = isSaved && formattedSaveTime 
+      ? `Saved at ${formattedSaveTime}` 
+      : 'Unsaved changes';
+    
+    return (
+      <Tooltip title={tooltipText}>
+        <Box
+          role="status"
+          aria-live="polite"
+          aria-label={tooltipText}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            px: 1,
+            py: 0.5,
+            borderRadius: 1,
+            bgcolor: isSaved ? 'success.light' : 'warning.light',
+            color: isSaved ? 'success.dark' : 'warning.dark',
+          }}
+        >
+          {isSaved ? (
+            <CheckCircleIcon fontSize="small" sx={{ fontSize: 16 }} />
+          ) : (
+            <ErrorIcon fontSize="small" sx={{ fontSize: 16 }} />
+          )}
+          <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.7rem' }}>
+            {isSaved ? 'Saved' : 'Unsaved'}
+          </Typography>
+        </Box>
+      </Tooltip>
+    );
+  };
+
   return (
     <Fragment>
+      <SaveIndicator />
       {actions.map(action => action.isShown ? <Tooltip key={action.name} title={action.name}>
         <IconButton
           onClick={action.onClick}

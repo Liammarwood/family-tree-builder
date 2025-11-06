@@ -12,9 +12,10 @@ import React from 'react';
 type Props = {
     setEditMode: (edit: EditMode) => void;
     editMode: EditMode | null;
+    autosaveState?: { isSaved: boolean; savedAt: string | null; saveNow: () => Promise<boolean> };
 };
 
-export default function NavigationBar({ setEditMode }: Props) {
+export default function NavigationBar({ setEditMode, autosaveState }: Props) {
     const isMobile = useMediaQuery("(max-width: 768px)");
     const [aboutOpen, setAboutOpen] = React.useState(false);
     const [helpOpen, setHelpOpen] = React.useState(false);
@@ -37,7 +38,7 @@ export default function NavigationBar({ setEditMode }: Props) {
 
                 {/* Right side: toolbar actions + version */}
                 {!isMobile && <Box sx={{ display: "flex", gap: 1, alignItems: 'center' }}>
-                    <FamilyTreeToolbar setEditMode={setEditMode} />
+                    <FamilyTreeToolbar setEditMode={setEditMode} autosaveState={autosaveState} />
                     <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
                         v{APP_VERSION}
                     </Typography>

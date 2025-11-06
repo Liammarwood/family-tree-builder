@@ -26,13 +26,16 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import HelpModal from "@/components/HelpModal";
 import { FamilyTreeSection } from "@/components/FamilyTreeSelection";
 import { calculateAddNodePosition } from "@/libs/spacing";
+import { useAutosave } from "@/hooks/useAutosave";
+import { FamilyTreeObject } from "@/types/FamilyTreeObject";
 
 type FamilyTreeProps = {
   showGrid: boolean;
   editMode: EditMode | null;
   setEditMode: (edit: EditMode | null) => void;
+  onAutosaveStateChange?: (state: { isSaved: boolean; savedAt: string | null; saveNow: () => Promise<boolean> }) => void;
 }
-export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTreeProps) {
+export default function FamilyTree({ showGrid, editMode, setEditMode, onAutosaveStateChange }: FamilyTreeProps) {
   const { selectedTreeId, currentTree, isTreeLoaded, saveTree, isDbReady } = useFamilyTreeContext();
   const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, edgeColor } = useConfiguration();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
@@ -43,6 +46,9 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   const [isHelpModalOpen, setHelpModalOpen] = useState(false);
   const [isTreeSelectionOpen, setTreeSelectionOpen] = useState(false);
   const hasCheckedFirstVisit = useRef(false);
+  
+  // Autosave state
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   // Optimization: Combine selection calculations to avoid multiple array iterations
   const selectionInfo = useMemo(() => {
     let selectedEdge: Edge | undefined;
@@ -78,6 +84,34 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   // Memoize node/edge types to avoid recreating objects each render (React Flow warns otherwise)
   const memoNodeTypes = useMemo(() => NODE_TYPES, []);
   const memoEdgeTypes = useMemo(() => EDGE_TYPES, []);
+  
+  // Prepare tree data for autosave (only canonical data, no UI state like selection)
+  const treeDataForAutosave = useMemo<FamilyTreeObject | null>(() => {
+    if (!currentTree) return null;
+    // Remove selection state from nodes and edges before saving
+    const cleanNodes = nodes.map(n => ({ ...n, selected: false }));
+    const cleanEdges = edges.map(e => ({ ...e, selected: false }));
+    return {
+      ...currentTree,
+      nodes: cleanNodes,
+      edges: cleanEdges,
+    };
+  }, [currentTree, nodes, edges]);
+  
+  // Autosave hook
+  const { isSaved, saveNow } = useAutosave<FamilyTreeObject>(
+    treeDataForAutosave ?? { id: '', name: '', nodes: [], edges: [], createdAt: 0, updatedAt: 0 },
+    {
+      debounceMs: 2000,
+      enabled: !!treeDataForAutosave && isTreeLoaded,
+      onSaved: ({ savedAt }) => {
+        setSavedAt(savedAt);
+      },
+      onError: () => {
+        // Error handling can be added later if needed
+      },
+    }
+  );
 
   // 1️⃣ Reset nodes/edges when tree selection changes
   useEffect(() => {
@@ -100,6 +134,11 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
 
     initialized.current = false; // mark as "not synced yet"
   }, [selectedTreeId, currentTree, setEdges, setNodes]);
+  
+  // Notify parent of autosave state changes
+  useEffect(() => {
+    onAutosaveStateChange?.({ isSaved, savedAt, saveNow });
+  }, [isSaved, savedAt, saveNow, onAutosaveStateChange]);
 
   // Handle first-time user flow and force tree selection when no tree is selected
   useEffect(() => {

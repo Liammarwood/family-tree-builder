@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { saveTreeToLocal, loadTreeFromLocal } from "../libs/storage";
+import { saveTreeToLocal, loadTreeFromLocal } from "@/libs/storage";
 
 type Options<T> = {
   debounceMs?: number;
@@ -47,8 +47,8 @@ export function useAutosave<T>(
         setIsSaved(false);
       }
       return ok;
-    } catch (err: any) {
-      onError?.(err);
+    } catch (err) {
+      onError?.(err as Error);
       setIsSaved(false);
       return false;
     }

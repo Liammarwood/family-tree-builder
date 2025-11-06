@@ -85,7 +85,7 @@ export function removeAutosave(): void {
 
 export function getAutosaveSavedAt(): string | null {
   try {
-    const payload = loadTreeFromLocal<any>();
+    const payload = loadTreeFromLocal<Record<string, unknown>>();
     return payload?.savedAt ?? null;
   } catch {
     return null;
