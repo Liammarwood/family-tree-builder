@@ -19,6 +19,7 @@ import {
 import { getNames } from "country-list";
 import { EditMode } from "@/types/EditMode";
 import ImageModal from "@/components/ImageModal";
+import GooglePhotosPicker from "@/components/GooglePhotosPicker";
 import { PersonDetailsForm } from "@/types/PersonDetailsForm";
 
 const initialFormState: PersonDetailsForm = {
@@ -81,16 +82,31 @@ export default function FamilyDetailsPane({
     return "Edit Person";
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setCropSrc(reader.result as string);
+    try {
+      // Compress the image before cropping to reduce memory usage
+      const { compressImageFile } = await import('@/libs/imageCompression');
+      const compressedImage = await compressImageFile(file);
+      setCropSrc(compressedImage);
       setImageModalOpen(true);
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      // Fallback to original behavior if compression fails
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropSrc(reader.result as string);
+        setImageModalOpen(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGooglePhotosSelect = (imageUrl: string) => {
+    setCropSrc(imageUrl);
+    setImageModalOpen(true);
   };
 
   const showRelationshipSection =
@@ -175,14 +191,17 @@ export default function FamilyDetailsPane({
                 {!form.image && "Photo"}
               </Avatar>
 
-              <Box>
-                <input accept="image/*" id="avatar-upload" type="file" hidden onChange={handleFileChange} />
-                <label htmlFor="avatar-upload">
-                  <Button variant="contained" component="span">
-                    {form.image ? "Change Avatar" : "Upload Avatar"}
-                  </Button>
-                </label>
-              </Box>
+              <Stack direction="row" spacing={1}>
+                <Box>
+                  <input accept="image/*" id="avatar-upload" type="file" hidden onChange={handleFileChange} />
+                  <label htmlFor="avatar-upload">
+                    <Button variant="contained" component="span">
+                      {form.image ? "Change Avatar" : "Upload Avatar"}
+                    </Button>
+                  </label>
+                </Box>
+                <GooglePhotosPicker onImageSelected={handleGooglePhotosSelect} />
+              </Stack>
 
               <TextField
                 label="Name"
