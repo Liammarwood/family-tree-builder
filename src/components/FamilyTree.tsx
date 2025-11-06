@@ -481,11 +481,16 @@ export default function FamilyTree({ showGrid, editMode, setEditMode, onAutosave
     }
   }, [selectedEdge, selectedNode, isOneNodeSelected, setNodes, setEdges]);
 
+  const handleSaveShortcut = useCallback(() => {
+    saveNow();
+  }, [saveNow]);
+
   // Register keyboard shortcuts
   useKeyboardShortcuts({
     onCopy: handleCopyShortcut,
     onPaste: handlePasteShortcut,
     onDelete: handleDeleteShortcut,
+    onSave: handleSaveShortcut,
   }, isTreeLoaded);
 
   return (
