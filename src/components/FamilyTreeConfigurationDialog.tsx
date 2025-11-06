@@ -24,6 +24,9 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
     fontFamily, setFontFamily,
     nodeStyle, setNodeStyle,
     avatarSize, setAvatarSize,
+    nodeOpacity, setNodeOpacity,
+    titleOpacity, setTitleOpacity,
+    showBorder, setShowBorder,
     exportTitle, setExportTitle,
     showDates, setShowDates,
     nameFontSize, setNameFontSize,
@@ -46,6 +49,9 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
       setFontFamily(cfg.fontFamily || fontFamily);
       setNodeStyle(cfg.nodeStyle || nodeStyle);
       setAvatarSize(cfg.avatarSize || avatarSize || 150);
+      setNodeOpacity(cfg.nodeOpacity ?? nodeOpacity);
+      setTitleOpacity(cfg.titleOpacity ?? titleOpacity);
+      setShowBorder(cfg.showBorder ?? showBorder);
       // Load export config if available
       if (cfg.exportConfig) {
         setExportTitle(cfg.exportConfig.title || '');
@@ -153,6 +159,29 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
             </Select>
           </FormControl>
 
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>Person Panel Opacity: {(nodeOpacity * 100).toFixed(0)}%</Typography>
+            <Slider
+              value={nodeOpacity}
+              onChange={(_, value) => setNodeOpacity(value as number)}
+              min={0}
+              max={1}
+              step={0.05}
+              marks={[
+                { value: 0, label: '0%' },
+                { value: 0.5, label: '50%' },
+                { value: 1, label: '100%' }
+              ]}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => `${(value * 100).toFixed(0)}%`}
+            />
+          </Box>
+
+          <FormControlLabel 
+            control={<Switch checked={showBorder} onChange={(e) => setShowBorder(e.target.checked)} />} 
+            label="Show Border" 
+          />
+
           <FormControl fullWidth>
             <InputLabel id="node-component-label">Person Panel Style</InputLabel>
             <Select
@@ -254,6 +283,24 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
             />
           </Box>
 
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>Title Background Opacity: {(titleOpacity * 100).toFixed(0)}%</Typography>
+            <Slider
+              value={titleOpacity}
+              onChange={(_, value) => setTitleOpacity(value as number)}
+              min={0}
+              max={1}
+              step={0.05}
+              marks={[
+                { value: 0, label: '0%' },
+                { value: 0.5, label: '50%' },
+                { value: 1, label: '100%' }
+              ]}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => `${(value * 100).toFixed(0)}%`}
+            />
+          </Box>
+
           <Typography variant="subtitle1" gutterBottom>Title Preview</Typography>
 
           {/* Live preview of a node using current configuration */}
@@ -277,6 +324,9 @@ export default function FamilyTreeConfigurationDialog({ open, onClose }: Props) 
                 fontFamily,
                 nodeStyle,
                 avatarSize,
+                nodeOpacity,
+                titleOpacity,
+                showBorder,
                 exportConfig: {
                   title: exportTitle,
                   showDates,

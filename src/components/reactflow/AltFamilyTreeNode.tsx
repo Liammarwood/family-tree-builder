@@ -21,7 +21,7 @@ export const AltFamilyTreeNode = ({
   data,
   preview,
 }: NodeProps<FamilyNodeData> & { preview?: boolean }) => {
-  const { showHandles, avatarVariant, avatarSize, nodeColor, textColor, fontFamily, nodeStyle, showDates, nameFontSize, dateFontSize } = useConfiguration();
+  const { showHandles, avatarVariant, avatarSize, nodeColor, textColor, fontFamily, nodeStyle, showDates, nameFontSize, dateFontSize, nodeOpacity, showBorder } = useConfiguration();
 
   const isDeceased = !!data.dateOfDeath;
   const bigHandle = {
@@ -31,6 +31,10 @@ export const AltFamilyTreeNode = ({
     borderRadius: '50%',
     border: '2px solid white',
   };
+
+  const backgroundStyle = isDeceased
+    ? 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)'
+    : (nodeStyle === 'card' ? `linear-gradient(135deg, ${nodeColor} 0%, #f8f9fa 100%)` : nodeStyle === 'compact' ? nodeColor : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)');
 
   return (
     <Box
@@ -82,15 +86,29 @@ export const AltFamilyTreeNode = ({
         </Badge>
       </Box>
 
+      {/* Background layer with opacity - positioned relative to card area */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: `${avatarSize / 2}px`,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: 3,
+          background: backgroundStyle,
+          opacity: nodeOpacity,
+          zIndex: 0,
+        }}
+      />
+
       {/* Card Content */}
       <Card
         sx={{
           borderRadius: 3,
-          border: '2.5px solid',
+          border: showBorder ? '2.5px solid' : 'none',
           borderColor: selected ? '#ff9800' : (isDeceased ? 'grey.300' : (nodeColor || 'primary.light')),
-          background: isDeceased
-            ? 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)'
-            : (nodeStyle === 'card' ? `linear-gradient(135deg, ${nodeColor} 0%, #f8f9fa 100%)` : nodeStyle === 'compact' ? nodeColor : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'),
+          position: 'relative',
+          background: 'transparent',
           boxShadow: selected
             ? '0 0 0 6px #ffe0b2, 0 8px 24px #ff980033'
             : '0 8px 24px rgba(0,0,0,0.12)',

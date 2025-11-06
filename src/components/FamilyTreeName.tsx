@@ -4,7 +4,7 @@ import { Box, SxProps, Theme, Typography } from "@mui/material";
 import { Node } from "reactflow";
 
 export const FamilyTreeName: React.FC<{ name: string, nodes: Node[], boxSx?: SxProps<Theme> }> = ({ name, nodes, boxSx }) => {
-    const { fontFamily, textColor, showTitleDates, titleFontSize, titleDateFontSize } = useConfiguration();
+    const { fontFamily, textColor, showTitleDates, titleFontSize, titleDateFontSize, titleOpacity } = useConfiguration();
 
     return (
         <Box
@@ -18,7 +18,7 @@ export const FamilyTreeName: React.FC<{ name: string, nodes: Node[], boxSx?: SxP
                 transform: "translateX(-50%)",
                 zIndex: 10,
                 p: "12px 24px",
-                bgcolor: "rgba(255, 255, 255, 0.9)",
+                bgcolor: `rgba(255, 255, 255, ${titleOpacity})`,
                 borderRadius: 1,
                 border: "2px solid black",
                 boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
