@@ -4,6 +4,9 @@ export interface KeyboardShortcutHandlers {
   onCopy?: () => void;
   onPaste?: () => void;
   onDelete?: () => void;
+  onSave?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 /**
@@ -28,8 +31,14 @@ export function useKeyboardShortcuts(handlers: KeyboardShortcutHandlers, enabled
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const modifier = isMac ? event.metaKey : event.ctrlKey;
 
+      // Save: Ctrl+S (Windows/Linux) or Cmd+S (Mac)
+      if (modifier && event.key === 's' && handlers.onSave) {
+        event.preventDefault();
+        handlers.onSave();
+      }
+      
       // Copy: Ctrl+C (Windows/Linux) or Cmd+C (Mac)
-      if (modifier && event.key === 'c' && handlers.onCopy) {
+      else if (modifier && event.key === 'c' && handlers.onCopy) {
         event.preventDefault();
         handlers.onCopy();
       }
@@ -38,6 +47,18 @@ export function useKeyboardShortcuts(handlers: KeyboardShortcutHandlers, enabled
       else if (modifier && event.key === 'v' && handlers.onPaste) {
         event.preventDefault();
         handlers.onPaste();
+      }
+      
+      // Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac) - but NOT with Shift
+      else if (modifier && !event.shiftKey && (event.key === 'z' || event.key === 'Z') && handlers.onUndo) {
+        event.preventDefault();
+        handlers.onUndo();
+      }
+      
+      // Redo: Ctrl+Y (Windows/Linux) or Cmd+Shift+Z (Mac) or Ctrl+Shift+Z
+      else if (((modifier && (event.key === 'y' || event.key === 'Y')) || (modifier && event.shiftKey && (event.key === 'z' || event.key === 'Z'))) && handlers.onRedo) {
+        event.preventDefault();
+        handlers.onRedo();
       }
       
       // Delete: Delete key or Backspace (Mac)

@@ -26,13 +26,13 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import HelpModal from "@/components/HelpModal";
 import { FamilyTreeSection } from "@/components/FamilyTreeSelection";
 import { calculateAddNodePosition } from "@/libs/spacing";
-
 type FamilyTreeProps = {
   showGrid: boolean;
   editMode: EditMode | null;
   setEditMode: (edit: EditMode | null) => void;
+  onSaveStateChange?: (state: { isSaving: boolean; lastSavedAt: number | null; triggerSave: () => void }) => void;
 }
-export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTreeProps) {
+export default function FamilyTree({ showGrid, editMode, setEditMode, onSaveStateChange }: FamilyTreeProps) {
   const { selectedTreeId, currentTree, isTreeLoaded, saveTree, isDbReady } = useFamilyTreeContext();
   const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, edgeColor } = useConfiguration();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
@@ -43,6 +43,10 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   const [isHelpModalOpen, setHelpModalOpen] = useState(false);
   const [isTreeSelectionOpen, setTreeSelectionOpen] = useState(false);
   const hasCheckedFirstVisit = useRef(false);
+  
+  // Track save state for UI feedback
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   // Optimization: Combine selection calculations to avoid multiple array iterations
   const selectionInfo = useMemo(() => {
     let selectedEdge: Edge | undefined;
@@ -78,6 +82,27 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
   // Memoize node/edge types to avoid recreating objects each render (React Flow warns otherwise)
   const memoNodeTypes = useMemo(() => NODE_TYPES, []);
   const memoEdgeTypes = useMemo(() => EDGE_TYPES, []);
+  
+  // Manual save function that triggers IndexedDB save
+  const triggerSave = useCallback(() => {
+    if (!currentTree || !isTreeLoaded) return;
+    
+    setIsSaving(true);
+    
+    // Trigger the IndexedDB save (synchronous call, async persistence)
+    // Note: saveTree queues the save operation but doesn't return a promise
+    // The actual IndexedDB transaction happens asynchronously in the background
+    saveTree({ ...currentTree, nodes, edges });
+    
+    // Update UI state after a brief delay to show feedback
+    // 300ms is sufficient for IndexedDB to queue the transaction
+    // Errors are handled by the saveTree function internally with toast notifications
+    const SAVE_FEEDBACK_DELAY = 300;
+    setTimeout(() => {
+      setIsSaving(false);
+      setLastSavedAt(Date.now());
+    }, SAVE_FEEDBACK_DELAY);
+  }, [currentTree, nodes, edges, saveTree, isTreeLoaded]);
 
   // 1️⃣ Reset nodes/edges when tree selection changes
   useEffect(() => {
@@ -100,6 +125,11 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
 
     initialized.current = false; // mark as "not synced yet"
   }, [selectedTreeId, currentTree, setEdges, setNodes]);
+  
+  // Notify parent of save state changes for UI feedback
+  useEffect(() => {
+    onSaveStateChange?.({ isSaving, lastSavedAt, triggerSave });
+  }, [isSaving, lastSavedAt, triggerSave, onSaveStateChange]);
 
   // Handle first-time user flow and force tree selection when no tree is selected
   useEffect(() => {
@@ -442,11 +472,16 @@ export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTr
     }
   }, [selectedEdge, selectedNode, isOneNodeSelected, setNodes, setEdges]);
 
+  const handleSaveShortcut = useCallback(() => {
+    triggerSave();
+  }, [triggerSave]);
+
   // Register keyboard shortcuts
   useKeyboardShortcuts({
     onCopy: handleCopyShortcut,
     onPaste: handlePasteShortcut,
     onDelete: handleDeleteShortcut,
+    onSave: handleSaveShortcut,
   }, isTreeLoaded);
 
   return (

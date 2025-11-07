@@ -16,6 +16,11 @@ import { ClipboardProvider } from "@/hooks/useClipboard";
 export default function Home() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [editMode, setEditMode] = useState<EditMode | null>(null);
+  const [saveState, setSaveState] = useState<{ isSaving: boolean; lastSavedAt: number | null; triggerSave: () => void }>({
+    isSaving: false,
+    lastSavedAt: null,
+    triggerSave: () => {},
+  });
 
   return (
     <ErrorProvider>
@@ -25,9 +30,9 @@ export default function Home() {
             <ClipboardProvider>
               <ReactFlowProvider>
                 <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
-                  <NavigationBar editMode={editMode} setEditMode={setEditMode} />
-                  <FamilyTree  showGrid editMode={editMode} setEditMode={setEditMode} />
-                  {isMobile && editMode === null && <FamilyTreeToolbar setEditMode={setEditMode} hidden={!isMobile || editMode !== null} />}
+                  <NavigationBar editMode={editMode} setEditMode={setEditMode} saveState={saveState} />
+                  <FamilyTree  showGrid editMode={editMode} setEditMode={setEditMode} onSaveStateChange={setSaveState} />
+                  {isMobile && editMode === null && <FamilyTreeToolbar setEditMode={setEditMode} saveState={saveState} hidden={!isMobile || editMode !== null} />}
                 </Box>
               </ReactFlowProvider>
             </ClipboardProvider>

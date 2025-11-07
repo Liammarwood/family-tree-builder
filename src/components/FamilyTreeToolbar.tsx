@@ -6,6 +6,9 @@ import {
   SpeedDialIcon,
   Tooltip,
   useMediaQuery,
+  Box,
+  Typography,
+  CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
@@ -16,6 +19,8 @@ import GridOnIcon from "@mui/icons-material/GridOn";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
+import SaveIcon from "@mui/icons-material/Save";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import {
   Delete,
   Edit,
@@ -33,15 +38,33 @@ import { copySelectedNodes, pasteClipboardData } from "@/libs/clipboard";
 type FamilyTreeToolbarProps = {
   setEditMode: (edit: EditMode) => void;
   hidden?: boolean;
+  saveState?: { isSaving: boolean; lastSavedAt: number | null; triggerSave: () => void };
 };
 
-export default function FamilyTreeToolbar({ setEditMode, hidden = false }: FamilyTreeToolbarProps) {
+export default function FamilyTreeToolbar({ setEditMode, hidden = false, saveState }: FamilyTreeToolbarProps) {
   const [open, setOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { setNodes, setEdges, fitView } = useReactFlow();
   const nodes = useStore((state) => state.getNodes()) as Node<FamilyNodeData>[];
   const edges = useStore((state) => state.edges) as Edge<RelationshipEdgeData>[];
   const { clipboard, setClipboard } = useClipboard();
+  
+  // Format saved time for display
+  const formattedSaveTime = useMemo(() => {
+    if (!saveState?.lastSavedAt) return null;
+    try {
+      const date = new Date(saveState.lastSavedAt);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return null;
+    }
+  }, [saveState?.lastSavedAt]);
+  
+  // Handle manual save
+  const handleSaveNow = () => {
+    if (!saveState?.triggerSave) return;
+    saveState.triggerSave();
+  };
   
   // Optimization: Combine related calculations into single memos to reduce passes
   const selectionState = useMemo(() => {
@@ -143,7 +166,6 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     if (!clipboard) return;
     
     const { nodes: newNodes, edges: newEdges } = pasteClipboardData(clipboard, nodes);
-    const newNodeIds = new Set(newNodes.map(n => n.id));
     
     // Add new nodes and edges to the tree, selecting only the new nodes
     setNodes((prevNodes) => [
@@ -166,6 +188,7 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     { icon: <AccountTree fontSize={isMobile ? "small" : "medium"} />, name: 'Auto Layout', onClick: () => handleAutoLayout(), isShown: true },
     { icon: <GridOnIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Toggle Grid', onClick: () => handleToggleGrid(), isShown: true },
     { icon: <ZoomOutMapIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Zoom Fit', onClick: () => handleZoomFit(), isShown: true },
+    { icon: saveState?.isSaving ? <CircularProgress size={isMobile ? 16 : 20} /> : <SaveIcon fontSize={isMobile ? "small" : "medium"} />, name: 'Save Now (Ctrl/Cmd+S)', onClick: handleSaveNow, isShown: true },
     { icon: <Edit fontSize={isMobile ? "small" : "medium"} />, name: 'Edit Selected', onClick: () => handleEdit(), isShown: isMobile }
   ];
 
@@ -204,8 +227,52 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     );
   }
 
+  // Save indicator component - shows status of IndexedDB saves
+  const SaveIndicator = () => {
+    if (!saveState) return null;
+    
+    const { isSaving, lastSavedAt } = saveState;
+    const tooltipText = isSaving 
+      ? 'Saving...' 
+      : lastSavedAt && formattedSaveTime
+        ? `Last saved at ${formattedSaveTime}` 
+        : 'Ready to save';
+    
+    return (
+      <Tooltip title={tooltipText}>
+        <Box
+          role="status"
+          aria-live="polite"
+          aria-label={tooltipText}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            px: 1,
+            py: 0.5,
+            borderRadius: 1,
+            bgcolor: isSaving ? 'info.light' : lastSavedAt ? 'success.light' : 'grey.300',
+            color: isSaving ? 'info.dark' : lastSavedAt ? 'success.dark' : 'grey.700',
+          }}
+        >
+          {isSaving ? (
+            <CircularProgress size={16} sx={{ color: 'info.dark' }} />
+          ) : lastSavedAt ? (
+            <CheckCircleIcon fontSize="small" sx={{ fontSize: 16 }} />
+          ) : (
+            <SaveIcon fontSize="small" sx={{ fontSize: 16 }} />
+          )}
+          <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.7rem' }}>
+            {isSaving ? 'Saving' : lastSavedAt ? 'Saved' : 'Ready'}
+          </Typography>
+        </Box>
+      </Tooltip>
+    );
+  };
+
   return (
     <Fragment>
+      <SaveIndicator />
       {actions.map(action => action.isShown ? <Tooltip key={action.name} title={action.name}>
         <IconButton
           onClick={action.onClick}
