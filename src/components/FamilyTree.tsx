@@ -88,14 +88,20 @@ export default function FamilyTree({ showGrid, editMode, setEditMode, onSaveStat
     if (!currentTree || !isTreeLoaded) return;
     
     setIsSaving(true);
-    // The saveTree function already handles the IndexedDB persistence
+    
+    // Trigger the IndexedDB save (synchronous call, async persistence)
+    // Note: saveTree queues the save operation but doesn't return a promise
+    // The actual IndexedDB transaction happens asynchronously in the background
     saveTree({ ...currentTree, nodes, edges });
     
-    // Mark as saved after a short delay (IndexedDB save is async but fast)
+    // Update UI state after a brief delay to show feedback
+    // 300ms is sufficient for IndexedDB to queue the transaction
+    // Errors are handled by the saveTree function internally with toast notifications
+    const SAVE_FEEDBACK_DELAY = 300;
     setTimeout(() => {
       setIsSaving(false);
       setLastSavedAt(Date.now());
-    }, 300);
+    }, SAVE_FEEDBACK_DELAY);
   }, [currentTree, nodes, edges, saveTree, isTreeLoaded]);
 
   // 1️⃣ Reset nodes/edges when tree selection changes
