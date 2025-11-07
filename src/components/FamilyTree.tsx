@@ -26,20 +26,15 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import HelpModal from "@/components/HelpModal";
 import { FamilyTreeSection } from "@/components/FamilyTreeSelection";
 import { calculateAddNodePosition } from "@/libs/spacing";
-import { useAutosave } from "@/hooks/useAutosave";
-import { FamilyTreeObject } from "@/types/FamilyTreeObject";
-import { useError } from "@/hooks/useError";
-
 type FamilyTreeProps = {
   showGrid: boolean;
   editMode: EditMode | null;
   setEditMode: (edit: EditMode | null) => void;
-  onAutosaveStateChange?: (state: { isSaved: boolean; savedAt: string | null; saveNow: () => Promise<boolean> }) => void;
+  onSaveStateChange?: (state: { isSaving: boolean; lastSavedAt: number | null; triggerSave: () => void }) => void;
 }
-export default function FamilyTree({ showGrid, editMode, setEditMode, onAutosaveStateChange }: FamilyTreeProps) {
+export default function FamilyTree({ showGrid, editMode, setEditMode, onSaveStateChange }: FamilyTreeProps) {
   const { selectedTreeId, currentTree, isTreeLoaded, saveTree, isDbReady } = useFamilyTreeContext();
   const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, edgeColor } = useConfiguration();
-  const { showError } = useError();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -49,8 +44,9 @@ export default function FamilyTree({ showGrid, editMode, setEditMode, onAutosave
   const [isTreeSelectionOpen, setTreeSelectionOpen] = useState(false);
   const hasCheckedFirstVisit = useRef(false);
   
-  // Autosave state
-  const [savedAt, setSavedAt] = useState<string | null>(null);
+  // Track save state for UI feedback
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   // Optimization: Combine selection calculations to avoid multiple array iterations
   const selectionInfo = useMemo(() => {
     let selectedEdge: Edge | undefined;
@@ -87,42 +83,20 @@ export default function FamilyTree({ showGrid, editMode, setEditMode, onAutosave
   const memoNodeTypes = useMemo(() => NODE_TYPES, []);
   const memoEdgeTypes = useMemo(() => EDGE_TYPES, []);
   
-  // Prepare tree data for autosave (only canonical data, no UI state like selection)
-  const treeDataForAutosave = useMemo<FamilyTreeObject | null>(() => {
-    if (!currentTree) return null;
-    // Remove selection state from nodes and edges before saving
-    const cleanNodes = nodes.map(n => ({ ...n, selected: false }));
-    const cleanEdges = edges.map(e => ({ ...e, selected: false }));
-    return {
-      ...currentTree,
-      nodes: cleanNodes,
-      edges: cleanEdges,
-    };
-  }, [currentTree, nodes, edges]);
-  
-  // Autosave hook
-  // Note: suspend/resume functions are available for pausing autosave during batch operations
-  // Current implementation doesn't require explicit suspend/resume because:
-  // - Import operations reload the tree, which naturally resets autosave
-  // - Export operations don't modify tree data
-  // - Autosave only activates when isTreeLoaded is true
-  // If future batch operations need to temporarily pause autosave, use suspend() before 
-  // the operation and resume() after completion.
-  const { isSaved, saveNow } = useAutosave<FamilyTreeObject>(
-    treeDataForAutosave ?? { id: '', name: '', nodes: [], edges: [], createdAt: 0, updatedAt: 0 },
-    {
-      debounceMs: 2000,
-      enabled: !!treeDataForAutosave && isTreeLoaded,
-      onSaved: ({ savedAt }) => {
-        setSavedAt(savedAt);
-        // Optionally show success toast (can be disabled if too noisy)
-        // showError("Tree saved successfully", "success");
-      },
-      onError: (err) => {
-        showError(`Failed to autosave: ${err.message}`, "error");
-      },
-    }
-  );
+  // Manual save function that triggers IndexedDB save
+  const triggerSave = useCallback(() => {
+    if (!currentTree || !isTreeLoaded) return;
+    
+    setIsSaving(true);
+    // The saveTree function already handles the IndexedDB persistence
+    saveTree({ ...currentTree, nodes, edges });
+    
+    // Mark as saved after a short delay (IndexedDB save is async but fast)
+    setTimeout(() => {
+      setIsSaving(false);
+      setLastSavedAt(Date.now());
+    }, 300);
+  }, [currentTree, nodes, edges, saveTree, isTreeLoaded]);
 
   // 1️⃣ Reset nodes/edges when tree selection changes
   useEffect(() => {
@@ -146,10 +120,10 @@ export default function FamilyTree({ showGrid, editMode, setEditMode, onAutosave
     initialized.current = false; // mark as "not synced yet"
   }, [selectedTreeId, currentTree, setEdges, setNodes]);
   
-  // Notify parent of autosave state changes
+  // Notify parent of save state changes for UI feedback
   useEffect(() => {
-    onAutosaveStateChange?.({ isSaved, savedAt, saveNow });
-  }, [isSaved, savedAt, saveNow, onAutosaveStateChange]);
+    onSaveStateChange?.({ isSaving, lastSavedAt, triggerSave });
+  }, [isSaving, lastSavedAt, triggerSave, onSaveStateChange]);
 
   // Handle first-time user flow and force tree selection when no tree is selected
   useEffect(() => {
@@ -493,8 +467,8 @@ export default function FamilyTree({ showGrid, editMode, setEditMode, onAutosave
   }, [selectedEdge, selectedNode, isOneNodeSelected, setNodes, setEdges]);
 
   const handleSaveShortcut = useCallback(() => {
-    saveNow();
-  }, [saveNow]);
+    triggerSave();
+  }, [triggerSave]);
 
   // Register keyboard shortcuts
   useKeyboardShortcuts({

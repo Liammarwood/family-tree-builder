@@ -16,10 +16,10 @@ import { ClipboardProvider } from "@/hooks/useClipboard";
 export default function Home() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [editMode, setEditMode] = useState<EditMode | null>(null);
-  const [autosaveState, setAutosaveState] = useState<{ isSaved: boolean; savedAt: string | null; saveNow: () => Promise<boolean> }>({
-    isSaved: true,
-    savedAt: null,
-    saveNow: async () => false,
+  const [saveState, setSaveState] = useState<{ isSaving: boolean; lastSavedAt: number | null; triggerSave: () => void }>({
+    isSaving: false,
+    lastSavedAt: null,
+    triggerSave: () => {},
   });
 
   return (
@@ -30,9 +30,9 @@ export default function Home() {
             <ClipboardProvider>
               <ReactFlowProvider>
                 <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: '#f3f6fa' }}>
-                  <NavigationBar editMode={editMode} setEditMode={setEditMode} autosaveState={autosaveState} />
-                  <FamilyTree  showGrid editMode={editMode} setEditMode={setEditMode} onAutosaveStateChange={setAutosaveState} />
-                  {isMobile && editMode === null && <FamilyTreeToolbar setEditMode={setEditMode} autosaveState={autosaveState} hidden={!isMobile || editMode !== null} />}
+                  <NavigationBar editMode={editMode} setEditMode={setEditMode} saveState={saveState} />
+                  <FamilyTree  showGrid editMode={editMode} setEditMode={setEditMode} onSaveStateChange={setSaveState} />
+                  {isMobile && editMode === null && <FamilyTreeToolbar setEditMode={setEditMode} saveState={saveState} hidden={!isMobile || editMode !== null} />}
                 </Box>
               </ReactFlowProvider>
             </ClipboardProvider>
