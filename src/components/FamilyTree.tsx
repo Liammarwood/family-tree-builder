@@ -26,6 +26,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import HelpModal from "@/components/HelpModal";
 import { FamilyTreeSection } from "@/components/FamilyTreeSelection";
 import { calculateAddNodePosition } from "@/libs/spacing";
+import { useMode } from "@/contexts/ModeContext";
 
 type FamilyTreeProps = {
   showGrid: boolean;
@@ -35,6 +36,9 @@ type FamilyTreeProps = {
 export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTreeProps) {
   const { selectedTreeId, currentTree, isTreeLoaded, saveTree, isDbReady } = useFamilyTreeContext();
   const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, edgeColor } = useConfiguration();
+  // Mode scaffolding: consumed by GenericNode via context. Future PRs will add mode-specific logic here.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-vars
+  const { mode } = useMode();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
