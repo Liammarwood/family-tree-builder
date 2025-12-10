@@ -6,6 +6,9 @@ import {
   SpeedDialIcon,
   Tooltip,
   useMediaQuery,
+  ToggleButtonGroup,
+  ToggleButton,
+  Box,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
@@ -29,6 +32,7 @@ import { FamilyNodeData } from "@/types/FamilyNodeData";
 import { autoLayoutFamilyTree } from "@/libs/autoLayout";
 import { useClipboard } from "@/hooks/useClipboard";
 import { copySelectedNodes, pasteClipboardData } from "@/libs/clipboard";
+import { useMode, Mode, MODE_LABELS } from "@/contexts/ModeContext";
 
 type FamilyTreeToolbarProps = {
   setEditMode: (edit: EditMode) => void;
@@ -42,6 +46,7 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
   const nodes = useStore((state) => state.getNodes()) as Node<FamilyNodeData>[];
   const edges = useStore((state) => state.edges) as Edge<RelationshipEdgeData>[];
   const { clipboard, setClipboard } = useClipboard();
+  const { mode, setMode } = useMode();
   
   // Optimization: Combine related calculations into single memos to reduce passes
   const selectionState = useMemo(() => {
@@ -206,6 +211,35 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
 
   return (
     <Fragment>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 2 }}>
+        <ToggleButtonGroup
+          value={mode}
+          exclusive
+          onChange={(_, newMode: Mode) => {
+            if (newMode !== null) {
+              setMode(newMode);
+            }
+          }}
+          size="small"
+          aria-label="tree mode"
+        >
+          <ToggleButton value="family" aria-label="family tree">
+            <Tooltip title={MODE_LABELS.family}>
+              <FamilyRestroomIcon fontSize="small" />
+            </Tooltip>
+          </ToggleButton>
+          <ToggleButton value="org" aria-label="organization chart">
+            <Tooltip title={MODE_LABELS.org}>
+              <AccountTree fontSize="small" />
+            </Tooltip>
+          </ToggleButton>
+          <ToggleButton value="generic" aria-label="generic tree">
+            <Tooltip title={MODE_LABELS.generic}>
+              <AccountTree fontSize="small" />
+            </Tooltip>
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
       {actions.map(action => action.isShown ? <Tooltip key={action.name} title={action.name}>
         <IconButton
           onClick={action.onClick}

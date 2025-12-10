@@ -1,5 +1,6 @@
 import { AltFamilyTreeNode } from "@/components/reactflow/AltFamilyTreeNode";
 import { FamilyTreeNode } from "@/components/reactflow/FamilyNode";
+import { GenericNode } from "@/components/reactflow/GenericNode";
 import DraggableEdge from "@/components/DraggableEdge";
 import { RelationshipEdge } from "@/components/reactflow/RelationshipEdge";
 import { FamilyNodeData } from "@/types/FamilyNodeData";
@@ -31,7 +32,8 @@ export const INITIAL_NODE: Node<FamilyNodeData> = {
     },
 };
 export const INITIAL_TREE = { nodes: [INITIAL_NODE], edges: [] };
-export const NODE_TYPES = { family: AltFamilyTreeNode };
+// Use GenericNode as the default to support mode switching
+export const NODE_TYPES = { family: GenericNode };
 export const EDGE_TYPES = { partner: RelationshipEdge, family: FamilyTreeEdge, draggable: DraggableEdge }
 export const getNodeTypes = (nodeComponentType: NodeComponentType) => ({
     family: nodeComponentType === 'FamilyTreeNode' ? FamilyTreeNode : AltFamilyTreeNode
