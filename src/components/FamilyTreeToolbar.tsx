@@ -24,6 +24,7 @@ import {
   Edit,
   HeartBroken,
   AccountTree,
+  Category,
 } from "@mui/icons-material";
 import { useReactFlow, useStore, Node, Edge } from "reactflow";
 import { RelationshipEdgeData, RelationshipType } from "@/types/RelationshipEdgeData";
@@ -234,7 +235,7 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
           </ToggleButton>
           <ToggleButton value="generic" aria-label="generic tree">
             <Tooltip title={MODE_LABELS.generic}>
-              <AccountTree fontSize="small" />
+              <Category fontSize="small" />
             </Tooltip>
           </ToggleButton>
         </ToggleButtonGroup>
