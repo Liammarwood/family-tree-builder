@@ -148,7 +148,6 @@ export default function FamilyTreeToolbar({ setEditMode, hidden = false }: Famil
     if (!clipboard) return;
     
     const { nodes: newNodes, edges: newEdges } = pasteClipboardData(clipboard, nodes);
-    const newNodeIds = new Set(newNodes.map(n => n.id));
     
     // Add new nodes and edges to the tree, selecting only the new nodes
     setNodes((prevNodes) => [

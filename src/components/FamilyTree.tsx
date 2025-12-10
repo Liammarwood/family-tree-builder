@@ -36,6 +36,8 @@ type FamilyTreeProps = {
 export default function FamilyTree({ showGrid, editMode, setEditMode }: FamilyTreeProps) {
   const { selectedTreeId, currentTree, isTreeLoaded, saveTree, isDbReady } = useFamilyTreeContext();
   const { setNodeColor, setEdgeColor, setFontFamily, setNodeStyle, setTextColor, edgeColor } = useConfiguration();
+  // Mode scaffolding: consumed by GenericNode via context. Future PRs will add mode-specific logic here.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-vars
   const { mode } = useMode();
   const [nodes, setNodes, onNodesChange] = useNodesState<FamilyNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
